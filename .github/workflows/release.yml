@@ -1,0 +1,55 @@
+name: Build and Release
+
+# This workflow only triggers when you push a tag that starts with 'v' (e.g., v0.1.0-alpha)
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-tarball:
+    name: Build Linux Binary
+    runs-on: ubuntu-20.04 # Using older Ubuntu ensures broad glibc compatibility
+    permissions:
+      contents: write # Required to create the GitHub Release
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Build Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          # Install our actual package to resolve PyQt6 and other dependencies
+          pip install .
+
+      - name: Build Standalone Binary
+        run: |
+          # Compile the main.py into a single executable named 'qwarp'
+          pyinstaller --onefile --noconsole --name qwarp src/qwarp/main.py
+
+      - name: Package the Release Tarball
+        run: |
+          # Create a staging folder
+          mkdir -p qwarp-release
+          
+          # Move the compiled binary and essential assets into it
+          cp dist/qwarp qwarp-release/
+          cp qwarp.desktop qwarp-release/
+          cp LICENSE qwarp-release/
+          cp README.md qwarp-release/
+          
+          # Compress it into a standard tarball
+          tar -czvf qwarp-linux-x86_64.tar.gz -C qwarp-release .
+
+      - name: Publish to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          files: qwarp-linux-x86_64.tar.gz
+          generate_release_notes: true
