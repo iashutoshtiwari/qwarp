@@ -1,30 +1,51 @@
-# QWarp
+# **QWarp**
 
-A lightweight, Wayland-native Qt6 wrapper for cloudflare-warp-bin.
+QWarp is a lightweight, Wayland-native Qt6 GUI wrapper for the cloudflare-warp-bin service. It is designed for minimal resource usage, deep system integration, and high performance on modern Linux desktops.
 
-**Disclaimer:** This is an unofficial community project and is in no way affiliated with, authorized, maintained, sponsored, or endorsed by Cloudflare or any of its affiliates or subsidiaries.
+**Disclaimer:** This is an unofficial community project. It is not affiliated with, authorized, maintained, sponsored, or endorsed by Cloudflare or any of its affiliates.
 
-## Features
-- Clean, frameless Qt6 UI designed for modern Wayland compositors.
-- Uses system-native Freedesktop icons (adapting gracefully to your current KDE/GNOME theme).
-- Non-blocking asynchronous state polling.
-- Drops quietly into the system tray when not in focus.
+## **Features**
 
-## Installation
+* Frameless Qt6 interface optimized for Wayland compositors.  
+* Integration with system-native Freedesktop icon themes.  
+* Asynchronous state polling to ensure a responsive UI.  
+* Automatic backgrounding to the system tray when losing focus.  
+* Lightweight binary footprint.
 
-You can install QWarp natively on Arch Linux using the provided `PKGBUILD`:
+## **Installation**
 
-```bash
-makepkg -si
-```
+### **Arch Linux**
 
-This will automatically build the Python wheel and install `qwarp` natively into your system, along with its desktop entry.
+The recommended way to install QWarp on Arch Linux is via the provided PKGBUILD. *(Note: An AUR package is planned and will be available soon.)* This method ensures all Python dependencies, desktop entries, and system icons are managed by pacman.
 
-## Usage
+git clone \[https://github.com/yourusername/qwarp.git\](https://github.com/yourusername/qwarp.git)  
+cd qwarp  
+makepkg \-si
 
-Once installed, launch QWarp from your application launcher or by running:
-```bash
-qwarp
-```
+### **Generic Linux Binary**
 
-It will appear in your system tray. Click the tray icon to bring up the main interface, where you can connect or disconnect from the Cloudflare WARP network.
+For users on other distributions or for quick testing, a pre-compiled standalone binary is available in the Releases section.
+
+1. Download the qwarp-linux-x86\_64.tar.gz archive.  
+2. Extract the archive: tar \-xzvf qwarp-linux-x86\_64.tar.gz.  
+3. Execute the binary: ./qwarp.
+
+### **Development Build**
+
+To run the project from source in a development environment:
+
+pip install .  
+PYTHONPATH=src python \-m qwarp.main
+
+## **Usage**
+
+Launch QWarp from your application menu or via the terminal using the qwarp command.
+
+* **System Tray:** The application resides in the system tray. Left-click the icon to toggle the main control window. Right-click to access the quick-action menu (Connect, Disconnect, or Quit).  
+* **Auto-Hide:** The main window will automatically hide when it loses focus, behaving like a native system utility.
+
+## **Requirements**
+
+* **Cloudflare WARP:** The official cloudflare-warp-bin package must be installed and the warp-svc daemon must be active.  
+* **Icon Theme:** QWarp relies on standard system icons (e.g., network-vpn). Ensure a modern icon theme such as Breeze, Papirus, or Adwaita is installed.  
+* **GNOME Compatibility:** GNOME users require the AppIndicator/KStatusNotifierItem extension to display the system tray icon.
