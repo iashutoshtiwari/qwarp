@@ -43,6 +43,8 @@ class ActionWorker(QRunnable):
             mode = self.kwargs.get('mode')
             if mode:
                 self.engine.set_mode(mode)
+        elif self.action == 'repair_service':
+            self.engine.repair_service()
         self.signals.finished.emit()
 
 class WarpStateManager(QObject):
@@ -98,5 +100,11 @@ class WarpStateManager(QObject):
     @pyqtSlot(str)
     def request_set_mode(self, mode: str):
         worker = ActionWorker(self.engine, 'set_mode', mode=mode)
+        worker.signals.finished.connect(self._poll_status)
+        self.thread_pool.start(worker)
+
+    @pyqtSlot()
+    def request_repair_service(self):
+        worker = ActionWorker(self.engine, 'repair_service')
         worker.signals.finished.connect(self._poll_status)
         self.thread_pool.start(worker)

@@ -14,6 +14,10 @@ def main():
 
     app = QApplication(sys.argv)
 
+    from qwarp.tray import get_asset_icon
+    app.setDesktopFileName("qwarp") # Tells Wayland to look for qwarp.desktop
+    app.setWindowIcon(get_asset_icon("app-icon.svg"))
+
     # CRITICAL: Prevent the application from exiting implicitly when a window is hidden
     app.setQuitOnLastWindowClosed(False)
 

@@ -1,8 +1,12 @@
 [Desktop Entry]
 Name=QWarp
-Comment=Unofficial Qt6 GUI for Cloudflare WARP
+GenericName=WARP Client GUI
+Comment=A lightweight, Wayland-native Qt6 wrapper for Cloudflare WARP
 Exec=qwarp
-Icon=network-vpn
+Icon=qwarp
 Terminal=false
 Type=Application
 Categories=Network;Utility;
+StartupNotify=true
+StartupWMClass=qwarp
+Keywords=cloudflare;warp;vpn;dns;network;

@@ -1,8 +1,50 @@
 import os
+from PyQt6.QtGui import QIcon, QPixmap, QPainter, QColor
+from PyQt6.QtWidgets import QApplication
+from PyQt6.QtCore import Qt
 
 def is_x11() -> bool:
-    """
-    Checks the session type to determine if the compositor is running X11.
-    Useful for conditionally adjusting UI offsets that are prohibited under Wayland.
-    """
+    """Checks if the compositor is running X11."""
     return os.environ.get('XDG_SESSION_TYPE', '').lower() == 'x11'
+
+def is_dark_mode() -> bool:
+    """Checks the actual window background color lightness instead of relying on OS portals."""
+    from PyQt6.QtWidgets import QApplication
+    app = QApplication.instance()
+    if not app:
+        return False
+    # Lightness ranges from 0 (Black) to 255 (White). < 128 means it's a dark theme.
+    return app.palette().window().color().lightness() < 128
+
+def get_tinted_icon(filename: str, fallback_theme_name: str = None) -> QIcon:
+    """
+    Loads an SVG from the assets folder and dynamically recolors it
+    based on the current system theme (Light/Dark).
+    """
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    asset_path = os.path.join(base_dir, "assets", filename)
+
+    if not os.path.exists(asset_path):
+        if fallback_theme_name:
+            return QIcon.fromTheme(fallback_theme_name)
+        return QIcon()
+
+    # Determine contrast color based on theme
+    color_hex = "#FFFFFF" if is_dark_mode() else "#333333"
+
+    # Render SVG to pixmap
+    pixmap = QPixmap(asset_path)
+
+    # Create an empty transparent pixmap of the same size
+    tinted = QPixmap(pixmap.size())
+    tinted.fill(Qt.GlobalColor.transparent)
+
+    # Paint the solid color, using the original SVG as an alpha mask
+    painter = QPainter(tinted)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    painter.drawPixmap(0, 0, pixmap)
+    painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
+    painter.fillRect(tinted.rect(), QColor(color_hex))
+    painter.end()
+
+    return QIcon(tinted)

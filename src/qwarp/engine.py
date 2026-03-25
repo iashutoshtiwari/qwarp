@@ -10,7 +10,8 @@ class WarpState(Enum):
     DISCONNECTED = auto()
     CONNECTING = auto()
     UNREGISTERED = auto()
-    DAEMON_DOWN = auto()
+    SERVICE_STOPPED = auto()
+    DAEMON_ERROR = auto()
     UNKNOWN = auto()
 
 class WarpEngine:
@@ -42,12 +43,49 @@ class WarpEngine:
             logger.error(f"Unexpected error: {e}")
             return False, str(e)
 
+    def is_service_active(self) -> bool:
+        """Check if warp-svc.service is active via systemctl."""
+        try:
+            result = subprocess.run(
+                ["systemctl", "is-active", "warp-svc"],
+                capture_output=True, text=True, timeout=self.timeout
+            )
+            return result.stdout.strip() == "active"
+        except Exception as e:
+            logger.error(f"systemctl is-active check failed: {e}")
+            return False
+
+    def is_service_enabled(self) -> bool:
+        """Check if warp-svc.service is enabled via systemctl."""
+        try:
+            result = subprocess.run(
+                ["systemctl", "is-enabled", "warp-svc"],
+                capture_output=True, text=True, timeout=self.timeout
+            )
+            return result.stdout.strip() == "enabled"
+        except Exception as e:
+            logger.error(f"systemctl is-enabled check failed: {e}")
+            return False
+
+    def repair_service(self) -> bool:
+        """Enable and start warp-svc.service via pkexec (triggers auth dialog)."""
+        try:
+            result = subprocess.run(
+                ["pkexec", "systemctl", "enable", "--now", "warp-svc"],
+                capture_output=True, text=True, timeout=30.0
+            )
+            return result.returncode == 0
+        except Exception as e:
+            logger.error(f"repair_service failed: {e}")
+            return False
+
     def status(self) -> WarpState:
         success, output = self._run_command("status")
         if not success:
-            if "not installed" in output.lower() or "daemon timeout" in output.lower():
-                return WarpState.DAEMON_DOWN
-            return WarpState.UNKNOWN
+            # Deep Check: distinguish between service stopped and daemon error
+            if self.is_service_active():
+                return WarpState.DAEMON_ERROR
+            return WarpState.SERVICE_STOPPED
 
         output_lower = output.lower()
         if "registration missing" in output_lower:

@@ -1,6 +1,6 @@
 # Maintainer: Ashutosh Tiwari <contact@ashutoshtiwari.dev>
 pkgname=qwarp
-pkgver=0.3.0_alpha
+pkgver=0.4.0_alpha
 pkgrel=1
 pkgdesc="A lightweight, Wayland-native Qt6 wrapper for cloudflare-warp-bin"
 arch=('any')
@@ -9,19 +9,20 @@ license=('MIT')
 depends=('python' 'python-pyqt6' 'cloudflare-warp-bin')
 makedepends=('python-build' 'python-installer' 'python-wheel' 'python-setuptools')
 
-# We use bash substitution ${pkgver/_/-} to convert "0.2.0_alpha" back to "0.2.0-alpha"
+# We use bash substitution ${pkgver/_/-} to convert "0.3.0_alpha" back to "0.3.0-alpha"
 # so pacman respects the underscore rule, but GitHub can still find your tag.
 source=("$pkgname-$pkgver.tar.gz::https://github.com/iashutoshtiwari/qwarp/archive/refs/tags/v${pkgver/_/-}.tar.gz")
-sha256sums=('e32def3ee489f2a2d39b3feb08cd3277dddaf0d09f96f7ae9e87a6aa4d2497a0')
+sha256sums=('SKIP') # Temporarily skipping hash check for local builds.
 
 build() {
-  # GitHub extracts tarballs into a folder named <repo>-<tag>
-  cd "$pkgname-${pkgver/_/-}"
+  # For local testing, build from the startdir so uncommitted changes are included
+  cd "$startdir"
   python -m build --wheel --no-isolation
 }
 
 package() {
-  cd "$pkgname-${pkgver/_/-}"
+  # Use local startdir to package uncommitted assets and wheels correctly
+  cd "$startdir"
 
   local _wheels=(dist/*.whl)
 
@@ -30,7 +31,15 @@ package() {
       exit 1
   fi
 
+  # Install the Python package
   python -m installer --destdir="$pkgdir" "${_wheels[0]}"
+
+  # Install the desktop entry
   install -Dm644 qwarp.desktop "$pkgdir/usr/share/applications/qwarp.desktop"
+
+  # THE FIX: Explicitly point to the source directory for the icon
+  install -Dm644 "src/qwarp/assets/app-icon.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/qwarp.svg"
+
+  # Install the license
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
 }

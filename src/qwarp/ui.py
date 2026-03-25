@@ -2,12 +2,13 @@ import logging
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QPushButton, QMenu, QToolButton, QStackedWidget,
                              QDialog, QTabWidget, QComboBox)
-from PyQt6.QtCore import Qt, QPoint, pyqtSignal
+from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QSize
 from PyQt6.QtGui import QCloseEvent, QIcon
 
 from qwarp.engine import WarpState
 from qwarp.state import WarpStateManager
-from qwarp.utils import is_x11
+from qwarp.utils import is_x11, get_tinted_icon
+from qwarp.toggle import AnimatedToggle
 
 logger = logging.getLogger(__name__)
 
@@ -19,24 +20,14 @@ class SettingsDialog(QDialog):
         self.setFixedSize(280, 200)
 
         layout = QVBoxLayout(self)
-
         self.tabs = QTabWidget()
 
         account_tab = QWidget()
         acc_layout = QVBoxLayout(account_tab)
         self.delete_btn = QPushButton("Delete Registration")
         self.delete_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #d9534f;
-                color: white;
-                font-weight: bold;
-                border-radius: 4px;
-                padding: 6px;
-                border: none;
-            }
-            QPushButton:hover {
-                background-color: #c9302c;
-            }
+            QPushButton { background-color: #d9534f; color: white; font-weight: bold; border-radius: 4px; padding: 6px; border: none; }
+            QPushButton:hover { background-color: #c9302c; }
         """)
         self.delete_btn.clicked.connect(self._on_delete_clicked)
         acc_layout.addStretch()
@@ -71,7 +62,7 @@ class WarpWindow(QWidget):
         self.manager = manager
 
         self.setWindowTitle("QWarp")
-        self.setFixedSize(320, 450)
+        self.setFixedSize(340, 480)
 
         self._setup_ui()
         self._setup_signals()
@@ -79,35 +70,24 @@ class WarpWindow(QWidget):
 
     def _setup_ui(self):
         main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(15, 15, 15, 20)
-        main_layout.setSpacing(20)
+        main_layout.setContentsMargins(20, 30, 20, 20)
 
-        top_layout = QHBoxLayout()
-        top_layout.addStretch()
+        # --- HEADER: Massive WARP Logo ---
+        self.header_label = QLabel("WARP")
+        header_font = self.header_label.font()
+        header_font.setPointSize(36)
+        header_font.setBold(True)
+        self.header_label.setFont(header_font)
+        self.header_label.setStyleSheet("color: #F46654; letter-spacing: 2px;")
+        self.header_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        main_layout.addWidget(self.header_label)
 
-        self.settings_btn = QToolButton(self)
-        icon = QIcon.fromTheme("emblem-system", QIcon.fromTheme("applications-system"))
-        if not icon.isNull():
-            self.settings_btn.setIcon(icon)
-        else:
-            self.settings_btn.setText("⚙")
+        main_layout.addStretch()
 
-        self.settings_btn.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-
-        self.settings_menu = QMenu(self)
-        self.pref_action = self.settings_menu.addAction("Preferences")
-        self.pref_action.triggered.connect(self._show_settings)
-        self.about_action = self.settings_menu.addAction("About QWarp")
-        self.about_action.setEnabled(False)
-        self.settings_menu.addSeparator()
-        self.exit_action = self.settings_menu.addAction("Exit")
-        self.exit_action.triggered.connect(self.quit_requested.emit)
-
-        self.settings_btn.setMenu(self.settings_menu)
-        top_layout.addWidget(self.settings_btn)
-
+        # --- CENTER: The State Stack ---
         self.stack = QStackedWidget(self)
 
+        # Page 0 (Unregistered)
         self.page0 = QWidget()
         p0_layout = QVBoxLayout(self.page0)
         not_reg_label = QLabel("Not Registered")
@@ -121,19 +101,11 @@ class WarpWindow(QWidget):
         info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         info_label.setWordWrap(True)
 
-        self.register_btn = QPushButton("Accept and Register")
+        self.register_btn = QPushButton("Accept & Register")
         self.register_btn.setFixedSize(160, 40)
         self.register_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #007bff;
-                color: white;
-                font-weight: bold;
-                border-radius: 4px;
-                border: none;
-            }
-            QPushButton:hover {
-                background-color: #0056b3;
-            }
+            QPushButton { background-color: #007bff; color: white; font-weight: bold; border-radius: 20px; border: none; }
+            QPushButton:hover { background-color: #0056b3; }
         """)
 
         p0_layout.addStretch()
@@ -144,27 +116,82 @@ class WarpWindow(QWidget):
         p0_layout.addStretch()
         self.stack.addWidget(self.page0)
 
+        # Page 1 (Main View with Custom Toggle)
         self.page1 = QWidget()
         p1_layout = QVBoxLayout(self.page1)
-        self.status_label = QLabel("Unknown Status")
-        self.status_label.setFont(font)
-        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.status_label.setWordWrap(True)
+        p1_layout.setSpacing(10)
 
-        self.toggle_button = QPushButton("...")
-        self.toggle_button.setFixedSize(160, 60)
-        btn_font = self.toggle_button.font()
-        btn_font.setPointSize(14)
-        self.toggle_button.setFont(btn_font)
+        self.toggle = AnimatedToggle()
+
+        self.repair_btn = QPushButton(" Start & Enable")
+        self.repair_btn.setIcon(QIcon.fromTheme("emblem-system"))
+        self.repair_btn.setFixedSize(160, 40)
+        self.repair_btn.setStyleSheet("""
+            QPushButton { background-color: #007bff; color: white; font-weight: bold; border-radius: 20px; border: none; }
+            QPushButton:hover { background-color: #0056b3; }
+        """)
+        self.repair_btn.hide()
+
+        self.status_title = QLabel("UNKNOWN")
+        title_font = self.status_title.font()
+        title_font.setPointSize(16)
+        title_font.setBold(True)
+        self.status_title.setFont(title_font)
+        self.status_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.status_desc = QLabel("Connecting to daemon...")
+        self.status_desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.status_desc.setStyleSheet("color: #888888; font-size: 13px;")
 
         p1_layout.addStretch()
-        p1_layout.addWidget(self.status_label)
-        p1_layout.addWidget(self.toggle_button, alignment=Qt.AlignmentFlag.AlignHCenter)
+        p1_layout.addWidget(self.toggle, alignment=Qt.AlignmentFlag.AlignHCenter)
+        p1_layout.addWidget(self.repair_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
+        p1_layout.addSpacing(10)
+        p1_layout.addWidget(self.status_title)
+        p1_layout.addWidget(self.status_desc)
         p1_layout.addStretch()
         self.stack.addWidget(self.page1)
 
-        main_layout.addLayout(top_layout)
         main_layout.addWidget(self.stack)
+        main_layout.addStretch()
+
+        # --- FOOTER: The Three Icons ---
+        footer_layout = QHBoxLayout()
+        footer_layout.setContentsMargins(10, 0, 10, 0)
+
+        def create_tool_btn(icon_name):
+            btn = QToolButton()
+            btn.setIcon(get_tinted_icon(f"{icon_name}.svg", "applications-system"))
+            btn.setIconSize(QSize(22, 22))
+            btn.setStyleSheet("""
+                QToolButton { border: none; background: transparent; }
+                QToolButton::menu-indicator { image: none; width: 0px; }
+                QToolButton:hover { opacity: 0.7; }
+            """)
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            return btn
+
+        self.cloud_btn = create_tool_btn("cloud")
+        self.wifi_btn = create_tool_btn("wifi")
+        self.settings_btn = create_tool_btn("gear")
+
+        self.settings_menu = QMenu(self)
+        self.pref_action = self.settings_menu.addAction("Preferences")
+        self.pref_action.triggered.connect(self._show_settings)
+        self.settings_menu.addSeparator()
+        self.exit_action = self.settings_menu.addAction("Exit")
+        self.exit_action.triggered.connect(self.quit_requested.emit)
+
+        self.settings_btn.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.settings_btn.setMenu(self.settings_menu)
+
+        footer_layout.addWidget(self.cloud_btn)
+        footer_layout.addStretch()
+        footer_layout.addWidget(self.wifi_btn)
+        footer_layout.addSpacing(10)
+        footer_layout.addWidget(self.settings_btn)
+
+        main_layout.addLayout(footer_layout)
 
     def _show_settings(self):
         dialog = SettingsDialog(self.manager, self)
@@ -172,8 +199,9 @@ class WarpWindow(QWidget):
 
     def _setup_signals(self):
         self.manager.state_changed.connect(self._update_ui_state)
-        self.toggle_button.clicked.connect(self._on_button_clicked)
+        self.toggle.clicked.connect(self._on_toggle_clicked)
         self.register_btn.clicked.connect(self.manager.request_register)
+        self.repair_btn.clicked.connect(self.manager.request_repair_service)
 
     def _update_ui_state(self, state: WarpState):
         if state == WarpState.UNREGISTERED:
@@ -184,37 +212,62 @@ class WarpWindow(QWidget):
         self.stack.setCurrentIndex(1)
         self.settings_btn.setEnabled(True)
 
-        if state == WarpState.CONNECTED:
-            self.status_label.setText("Your Internet is private")
-            self.toggle_button.setText("Disconnect")
-            self.toggle_button.setEnabled(True)
-        elif state == WarpState.DISCONNECTED:
-            self.status_label.setText("Your Internet is not private")
-            self.toggle_button.setText("Connect")
-            self.toggle_button.setEnabled(True)
-        elif state == WarpState.CONNECTING:
-            self.status_label.setText("Connecting...")
-            self.toggle_button.setText("Connecting...")
-            self.toggle_button.setEnabled(False)
-        elif state == WarpState.DAEMON_DOWN:
-            self.status_label.setText("Daemon Down")
-            self.toggle_button.setText("Start Service")
-            self.toggle_button.setEnabled(False)
-        else:
-            self.status_label.setText("Unknown Status")
-            self.toggle_button.setText("Wait...")
-            self.toggle_button.setEnabled(False)
+        self.toggle.blockSignals(True)
 
-    def _on_button_clicked(self):
-        state = self.manager.current_state
+        if state == WarpState.SERVICE_STOPPED:
+            self.repair_btn.show()
+        else:
+            self.repair_btn.hide()
+
         if state == WarpState.CONNECTED:
-            self.toggle_button.setText("Disconnecting...")
-            self.toggle_button.setEnabled(False)
-            self.manager.request_disconnect()
+            self.toggle.setChecked(True)
+            self.toggle.setEnabled(True)
+            self.status_title.setText("CONNECTED")
+            self.status_title.setStyleSheet("color: #F46654;")
+            self.status_desc.setText("Your Internet is private.")
+
         elif state == WarpState.DISCONNECTED:
-            self.toggle_button.setText("Connecting...")
-            self.toggle_button.setEnabled(False)
+            self.toggle.setChecked(False)
+            self.toggle.setEnabled(True)
+            self.status_title.setText("DISCONNECTED")
+            self.status_title.setStyleSheet("color: #888888;")
+            self.status_desc.setText("Your Internet is not private.")
+
+        elif state == WarpState.CONNECTING:
+            self.toggle.setEnabled(False)
+            self.status_title.setText("CONNECTING")
+            self.status_title.setStyleSheet("color: #888888;")
+            self.status_desc.setText("Securing connection...")
+
+        elif state == WarpState.DAEMON_ERROR:
+            self.toggle.setChecked(False)
+            self.toggle.setEnabled(False)
+            self.status_title.setText("ERROR")
+            self.status_title.setStyleSheet("color: #d9534f;")
+            self.status_desc.setText("WARP daemon is not running.")
+        elif state == WarpState.SERVICE_STOPPED:
+            self.toggle.setChecked(False)
+            self.toggle.setEnabled(False)
+            self.status_title.setText("SERVICE OFF")
+            self.status_title.setStyleSheet("color: #d9534f;")
+            self.status_desc.setText("Cloudflare WARP service is not running.")
+        else:
+            self.toggle.setEnabled(False)
+            self.status_title.setText("WAIT")
+            self.status_desc.setText("Checking status...")
+
+        self.toggle.blockSignals(False)
+
+    def _on_toggle_clicked(self):
+        self.toggle.setEnabled(False)
+        self.status_title.setText("CONNECTING" if self.toggle.isChecked() else "DISCONNECTING")
+        self.status_desc.setText("Please wait...")
+        self.status_title.setStyleSheet("color: #888888;")
+
+        if self.toggle.isChecked():
             self.manager.request_connect()
+        else:
+            self.manager.request_disconnect()
 
     def show_at_cursor(self, pos: QPoint):
         if is_x11():
@@ -222,7 +275,6 @@ class WarpWindow(QWidget):
             self.showNormal()
         else:
             self.showNormal()
-
         self.raise_()
         self.activateWindow()
 
