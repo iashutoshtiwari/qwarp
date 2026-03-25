@@ -1,6 +1,6 @@
 # Maintainer: Ashutosh
 pkgname=qwarp
-pkgver=0.1.0
+pkgver=0.2.0
 pkgrel=1
 pkgdesc="A lightweight, Wayland-native Qt6 wrapper for cloudflare-warp-bin"
 arch=('any')
@@ -18,9 +18,9 @@ build() {
 package() {
   # Force fakeroot to look in your actual project directory
   cd "$startdir"
-  
+
   local _wheels=(dist/*.whl)
-  
+
   if [ ! -f "${_wheels[0]}" ]; then
       echo "Error: No wheel found in dist/"
       exit 1
