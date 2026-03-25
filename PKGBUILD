@@ -1,23 +1,27 @@
-# Maintainer: Ashutosh
+# Maintainer: Ashutosh Tiwari <contact@ashutoshtiwari.dev>
 pkgname=qwarp
-pkgver=0.2.0
+pkgver=0.2.0_alpha
 pkgrel=1
 pkgdesc="A lightweight, Wayland-native Qt6 wrapper for cloudflare-warp-bin"
 arch=('any')
+url="https://github.com/iashutoshtiwari/qwarp"
 license=('MIT')
 depends=('python' 'python-pyqt6' 'cloudflare-warp-bin')
 makedepends=('python-build' 'python-installer' 'python-wheel' 'python-setuptools')
-source=()
+
+# We use bash substitution ${pkgver/_/-} to convert "0.2.0_alpha" back to "0.2.0-alpha"
+# so pacman respects the underscore rule, but GitHub can still find your tag.
+source=("$pkgname-$pkgver.tar.gz::https://github.com/iashutoshtiwari/qwarp/archive/refs/tags/v${pkgver/_/-}.tar.gz")
+sha256sums=('e32def3ee489f2a2d39b3feb08cd3277dddaf0d09f96f7ae9e87a6aa4d2497a0')
 
 build() {
-  # Force makepkg to run exactly where the PKGBUILD is located
-  cd "$startdir"
+  # GitHub extracts tarballs into a folder named <repo>-<tag>
+  cd "$pkgname-${pkgver/_/-}"
   python -m build --wheel --no-isolation
 }
 
 package() {
-  # Force fakeroot to look in your actual project directory
-  cd "$startdir"
+  cd "$pkgname-${pkgver/_/-}"
 
   local _wheels=(dist/*.whl)
 
