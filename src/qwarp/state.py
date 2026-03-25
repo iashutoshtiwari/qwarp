@@ -22,10 +22,11 @@ class ActionWorkerSignals(QObject):
     finished = pyqtSignal()
 
 class ActionWorker(QRunnable):
-    def __init__(self, engine: WarpEngine, action: str):
+    def __init__(self, engine: WarpEngine, action: str, **kwargs):
         super().__init__()
         self.engine = engine
         self.action = action
+        self.kwargs = kwargs
         self.signals = ActionWorkerSignals()
 
     @pyqtSlot()
@@ -34,6 +35,14 @@ class ActionWorker(QRunnable):
             self.engine.connect()
         elif self.action == 'disconnect':
             self.engine.disconnect()
+        elif self.action == 'register':
+            self.engine.register()
+        elif self.action == 'delete_registration':
+            self.engine.delete_registration()
+        elif self.action == 'set_mode':
+            mode = self.kwargs.get('mode')
+            if mode:
+                self.engine.set_mode(mode)
         self.signals.finished.emit()
 
 class WarpStateManager(QObject):
@@ -44,11 +53,11 @@ class WarpStateManager(QObject):
         self.engine = engine
         self.current_state = WarpState.UNKNOWN
         self.thread_pool = QThreadPool.globalInstance()
-        
+
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._poll_status)
         self.timer.start(2000)
-        
+
         self._poll_status()
 
     def _poll_status(self):
@@ -71,5 +80,23 @@ class WarpStateManager(QObject):
     @pyqtSlot()
     def request_disconnect(self):
         worker = ActionWorker(self.engine, 'disconnect')
+        worker.signals.finished.connect(self._poll_status)
+        self.thread_pool.start(worker)
+
+    @pyqtSlot()
+    def request_register(self):
+        worker = ActionWorker(self.engine, 'register')
+        worker.signals.finished.connect(self._poll_status)
+        self.thread_pool.start(worker)
+
+    @pyqtSlot()
+    def request_delete_registration(self):
+        worker = ActionWorker(self.engine, 'delete_registration')
+        worker.signals.finished.connect(self._poll_status)
+        self.thread_pool.start(worker)
+
+    @pyqtSlot(str)
+    def request_set_mode(self, mode: str):
+        worker = ActionWorker(self.engine, 'set_mode', mode=mode)
         worker.signals.finished.connect(self._poll_status)
         self.thread_pool.start(worker)

@@ -18,11 +18,8 @@ def main():
     app.setQuitOnLastWindowClosed(False)
 
     # --- THE FIX: Graceful Ctrl+C Handling ---
-    # Catch the OS interrupt signal and route it to Qt's safe shutdown method
     signal.signal(signal.SIGINT, lambda sig, frame: app.quit())
 
-    # The Wakeup Timer: Fire a dummy event every 500ms.
-    # This briefly pauses the C++ loop, allowing Python to catch the SIGINT.
     timer = QTimer()
     timer.timeout.connect(lambda: None)
     timer.start(500)
@@ -30,18 +27,11 @@ def main():
 
     engine = WarpEngine()
     manager = WarpStateManager(engine)
-
     window = WarpWindow(manager)
 
-    # Properly terminate application when the "Exit" action is clicked
-    # inside the settings menu.
     window.quit_requested.connect(app.quit)
 
     def toggle_window(pos: QPoint = None):
-        """
-        Toggles visibility of the window, moving it close to the
-        cursor interaction point under X11 environments.
-        """
         if window.isVisible():
             window.hide()
         else:
@@ -55,8 +45,23 @@ def main():
     tray = WarpTrayIcon(manager, toggle_window)
     tray.show()
     window.showNormal()
-    window.raise_()          # Brings it to the front of the window stack
-    window.activateWindow()  # Gives it keyboard/mouse focus
+    window.raise_()
+    window.activateWindow()
+
+    # --- THE FIX: Graceful Teardown ---
+    def cleanup():
+        logging.info("Initiating graceful teardown...")
+        if hasattr(manager, 'timer'):
+            manager.timer.stop()
+        tray.hide()
+        try:
+            manager.state_changed.disconnect()
+        except TypeError:
+            pass
+
+    app.aboutToQuit.connect(cleanup)
+    # ----------------------------------
+
     logging.info("QWarp started successfully.")
     sys.exit(app.exec())
 

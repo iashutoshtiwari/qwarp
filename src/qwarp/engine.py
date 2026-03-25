@@ -9,7 +9,7 @@ class WarpState(Enum):
     CONNECTED = auto()
     DISCONNECTED = auto()
     CONNECTING = auto()
-    REGISTRATION_MISSING = auto()
+    UNREGISTERED = auto()
     DAEMON_DOWN = auto()
     UNKNOWN = auto()
 
@@ -45,19 +45,19 @@ class WarpEngine:
     def status(self) -> WarpState:
         success, output = self._run_command("status")
         if not success:
-            if "not installed" in output or "Daemon timeout" in output:
+            if "not installed" in output.lower() or "daemon timeout" in output.lower():
                 return WarpState.DAEMON_DOWN
             return WarpState.UNKNOWN
 
         output_lower = output.lower()
-        if "connected" in output_lower and "disconnected" not in output_lower:
+        if "registration missing" in output_lower:
+            return WarpState.UNREGISTERED
+        elif "connected" in output_lower and "disconnected" not in output_lower:
             return WarpState.CONNECTED
         elif "disconnected" in output_lower:
             return WarpState.DISCONNECTED
         elif "connecting" in output_lower:
             return WarpState.CONNECTING
-        elif "registration missing" in output_lower:
-            return WarpState.REGISTRATION_MISSING
         else:
             return WarpState.UNKNOWN
 
@@ -67,4 +67,17 @@ class WarpEngine:
 
     def disconnect(self) -> bool:
         success, _ = self._run_command("disconnect")
+        return success
+
+    def register(self) -> bool:
+        # The --accept-tos flag is required for non-interactive registration
+        success, _ = self._run_command("--accept-tos", "registration", "new")
+        return success
+
+    def delete_registration(self) -> bool:
+        success, _ = self._run_command("registration", "delete")
+        return success
+
+    def set_mode(self, mode_str: str) -> bool:
+        success, _ = self._run_command("set-mode", mode_str)
         return success

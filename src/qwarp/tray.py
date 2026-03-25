@@ -33,7 +33,6 @@ class WarpTrayIcon(QSystemTrayIcon):
         self.menu.addSeparator()
 
         self.action_toggle = QAction("Show/Hide Window", self.menu)
-        # Fetch point at execution
         self.action_toggle.triggered.connect(lambda: self.toggle_callback(QCursor.pos()))
         self.menu.addAction(self.action_toggle)
 
@@ -49,7 +48,6 @@ class WarpTrayIcon(QSystemTrayIcon):
 
     def _on_activated(self, reason: QSystemTrayIcon.ActivationReason):
         if reason == QSystemTrayIcon.ActivationReason.Trigger:
-            # Capture the current mouse position exactly when triggered
             self.toggle_callback(QCursor.pos())
 
     def _update_ui_state(self, state: WarpState):
@@ -71,7 +69,7 @@ class WarpTrayIcon(QSystemTrayIcon):
             tooltip = "QWarp: Connecting..."
             self.action_connect.setEnabled(False)
             self.action_disconnect.setEnabled(False)
-        elif state == WarpState.REGISTRATION_MISSING:
+        elif state == WarpState.UNREGISTERED:
             icon = QIcon.fromTheme("dialog-warning")
             tooltip = "QWarp: Registration Missing"
             self.action_connect.setEnabled(False)
