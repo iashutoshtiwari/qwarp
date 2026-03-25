@@ -1,7 +1,8 @@
 import logging
 from typing import Callable
 from PyQt6.QtWidgets import QSystemTrayIcon, QMenu, QApplication
-from PyQt6.QtGui import QIcon, QAction
+from PyQt6.QtGui import QIcon, QAction, QCursor
+from PyQt6.QtCore import QPoint
 
 from qwarp.engine import WarpState
 from qwarp.state import WarpStateManager
@@ -9,7 +10,7 @@ from qwarp.state import WarpStateManager
 logger = logging.getLogger(__name__)
 
 class WarpTrayIcon(QSystemTrayIcon):
-    def __init__(self, manager: WarpStateManager, toggle_callback: Callable[[], None], parent=None):
+    def __init__(self, manager: WarpStateManager, toggle_callback: Callable[[QPoint], None], parent=None):
         super().__init__(parent)
         self.manager = manager
         self.toggle_callback = toggle_callback
@@ -32,7 +33,8 @@ class WarpTrayIcon(QSystemTrayIcon):
         self.menu.addSeparator()
 
         self.action_toggle = QAction("Show/Hide Window", self.menu)
-        self.action_toggle.triggered.connect(self.toggle_callback)
+        # Fetch point at execution
+        self.action_toggle.triggered.connect(lambda: self.toggle_callback(QCursor.pos()))
         self.menu.addAction(self.action_toggle)
 
         self.action_quit = QAction("Quit", self.menu)
@@ -47,7 +49,8 @@ class WarpTrayIcon(QSystemTrayIcon):
 
     def _on_activated(self, reason: QSystemTrayIcon.ActivationReason):
         if reason == QSystemTrayIcon.ActivationReason.Trigger:
-            self.toggle_callback()
+            # Capture the current mouse position exactly when triggered
+            self.toggle_callback(QCursor.pos())
 
     def _update_ui_state(self, state: WarpState):
         tooltip = "QWarp: Unknown"

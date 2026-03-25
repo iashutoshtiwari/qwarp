@@ -38,18 +38,18 @@ jobs:
         run: |
           # Create a staging folder
           mkdir -p qwarp-release
-          
+
           # Move the compiled binary and essential assets into it
           cp dist/qwarp qwarp-release/
           cp qwarp.desktop qwarp-release/
           cp LICENSE qwarp-release/
           cp README.md qwarp-release/
-          
-          # Compress it into a standard tarball
-          tar -czvf qwarp-linux-x86_64.tar.gz -C qwarp-release .
+
+          # Compress it into a standard tarball dynamically named with the git tag
+          tar -czvf "qwarp-${{ github.ref_name }}-linux-x86_64.tar.gz" -C qwarp-release .
 
       - name: Publish to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
-          files: qwarp-linux-x86_64.tar.gz
+          files: qwarp-${{ github.ref_name }}-linux-x86_64.tar.gz
           generate_release_notes: true
