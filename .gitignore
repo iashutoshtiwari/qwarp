@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+pkg/
+# Ignore Arch packaging artifacts from makepkg
+*.pkg.tar.zst
+*.tar.gz

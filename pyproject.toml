@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qwarp"
+version = "0.1.0a1"
+description = "A lightweight, Wayland-native Qt6 wrapper for cloudflare-warp-bin"
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+license-files = ["LICENSE"]
+dependencies = [
+    "PyQt6>=6.0.0",
+]
+
+[project.scripts]
+qwarp = "qwarp.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
