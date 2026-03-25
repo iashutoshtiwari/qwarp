@@ -9,7 +9,7 @@ on:
 jobs:
   build-tarball:
     name: Build Linux Binary
-    runs-on: ubuntu-20.04 # Using older Ubuntu ensures broad glibc compatibility
+    runs-on: ubuntu-latest
     permissions:
       contents: write # Required to create the GitHub Release
 
