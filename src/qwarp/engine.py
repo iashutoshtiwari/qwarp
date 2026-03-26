@@ -155,43 +155,46 @@ class WarpEngine:
         return ""
 
     def get_diagnostics(self) -> dict:
+        """
+        Fetches offline telemetry directly from the warp-cli outputs.
+        """
         data = {
+            "license": "Not Registered",
             "type": "Unknown",
-            "license": "Unknown",
-            "quota": "Unknown",
             "status": "Unknown",
-            "reason": ""
+            "quota": "N/A"
         }
-        
-        # Parse Account
-        success, output = self._run_command("account")
-        if success:
-            for line in output.split('\n'):
-                line = line.strip()
-                if not line: continue
-                if "Account type:" in line:
-                    data["type"] = line.split(":", 1)[1].strip()
-                elif "License:" in line:
-                    data["license"] = line.split(":", 1)[1].strip()
-                elif "Quota:" in line:
-                    data["quota"] = line.split(":", 1)[1].strip()
-        else:
-            if "Missing registration" in output or "Registration missing" in output:
-                data["type"] = "Unregistered"
-            else:
-                data["type"] = "Error fetching account"
 
-        # Parse Status
-        s_success, s_output = self._run_command("status")
-        if s_success:
-            for line in s_output.split('\n'):
-                line = line.strip()
-                if not line: continue
-                if line.startswith("Status update:"):
-                    data["status"] = line.split(":", 1)[1].strip()
-                elif line.startswith("Reason:"):
-                    data["reason"] = line.split(":", 1)[1].strip()
-        else:
-            data["status"] = "Daemon unreachable"
-            
+        # 1. Fetch Account/Registration Info (The new command)
+        try:
+            reg_result = subprocess.run(
+                [self.cli_path, "--accept-tos", "registration", "show"],
+                capture_output=True, text=True, timeout=self.timeout
+            )
+            if reg_result.returncode == 0:
+                for line in reg_result.stdout.splitlines():
+                    if "Account type:" in line:
+                        data["type"] = line.split(":", 1)[1].strip()
+                    elif "License:" in line:
+                        data["license"] = line.split(":", 1)[1].strip()
+                    elif "Quota:" in line:
+                        data["quota"] = line.split(":", 1)[1].strip()
+            else:
+                logger.debug(f"Registration check failed or missing: {reg_result.stderr}")
+        except Exception as e:
+            logger.error(f"Error executing registration show: {e}")
+
+        # 2. Fetch Daemon Status
+        try:
+            status_result = subprocess.run(
+                [self.cli_path, "--accept-tos", "status"],
+                capture_output=True, text=True, timeout=self.timeout
+            )
+            if status_result.returncode == 0:
+                # Clean up the output so it looks nice in the UI
+                clean_status = status_result.stdout.replace("Status update:", "").strip()
+                data["status"] = clean_status
+        except Exception as e:
+            logger.error(f"Error executing status: {e}")
+
         return data

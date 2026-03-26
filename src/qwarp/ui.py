@@ -19,7 +19,7 @@ class SettingsDialog(QDialog):
         super().__init__(parent)
         self.manager = manager
         self.setWindowTitle("Settings")
-        self.setFixedSize(360, 400)
+        self.setFixedSize(360, 440)
 
         layout = QVBoxLayout(self)
         self.tabs = QTabWidget()
@@ -37,48 +37,48 @@ class SettingsDialog(QDialog):
 
         account_tab = QWidget()
         acc_layout = QVBoxLayout(account_tab)
-        
+
         form_layout = QFormLayout()
-        
+
         self.lbl_acc_type = QLabel("Loading...")
         self.lbl_license = QLabel("Loading...")
         self.lbl_quota = QLabel("Loading...")
         self.lbl_daemon_status = QLabel("Loading...")
-        
+
         selectable_flag = Qt.TextInteractionFlag.TextSelectableByMouse
         self.lbl_acc_type.setTextInteractionFlags(selectable_flag)
         self.lbl_license.setTextInteractionFlags(selectable_flag)
         self.lbl_quota.setTextInteractionFlags(selectable_flag)
         self.lbl_daemon_status.setTextInteractionFlags(selectable_flag)
-        
+
         form_layout.addRow("Account Type:", self.lbl_acc_type)
         form_layout.addRow("License Key:", self.lbl_license)
         form_layout.addRow("Data Quota:", self.lbl_quota)
         form_layout.addRow("Daemon Status:", self.lbl_daemon_status)
-        
+
         acc_layout.addLayout(form_layout)
-        
+
         # Connect to diagnostics
         self.manager.diagnostics_updated.connect(self._on_diagnostics_updated)
-        
+
         btn_layout = QHBoxLayout()
         self.refresh_btn = QPushButton("Refresh Data")
         self.refresh_btn.clicked.connect(self.manager.request_diagnostics)
-        
+
         self.delete_btn = QPushButton("Delete Registration")
         self.delete_btn.setStyleSheet("""
             QPushButton { background-color: #d9534f; color: white; font-weight: bold; border-radius: 4px; padding: 6px; border: none; }
             QPushButton:hover { background-color: #c9302c; }
         """)
         self.delete_btn.clicked.connect(self._on_delete_clicked)
-        
+
         btn_layout.addWidget(self.refresh_btn)
         btn_layout.addWidget(self.delete_btn)
-        
+
         acc_layout.addStretch()
         acc_layout.addLayout(btn_layout)
         self.tabs.addTab(account_tab, "Account")
-        
+
         # Fetch on load
         self.manager.request_diagnostics()
 
@@ -113,7 +113,7 @@ class SettingsDialog(QDialog):
 
         about_tab = QWidget()
         about_layout = QVBoxLayout(about_tab)
-        
+
         # Icon
         icon_label = QLabel()
         icon_pixmap = get_asset_icon("app-icon.svg").pixmap(QSize(64, 64))
@@ -129,7 +129,7 @@ class SettingsDialog(QDialog):
         title_font.setPointSize(16)
         title_label.setFont(title_font)
         about_layout.addWidget(title_label)
-        
+
         desc_label = QLabel("A Wayland-native Qt6 wrapper for Cloudflare WARP.")
         desc_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         about_layout.addWidget(desc_label)
@@ -147,8 +147,16 @@ class SettingsDialog(QDialog):
         separator.setFrameShape(QFrame.Shape.HLine)
         separator.setFrameShadow(QFrame.Shadow.Sunken)
         about_layout.addWidget(separator)
-        
-        legal_label = QLabel("Disclaimer: QWarp is an unofficial community project and is not affiliated with, authorized, maintained, sponsored, or endorsed by Cloudflare, Inc.<br><br><a href='https://www.cloudflare.com/website-terms/'>Terms and Conditions</a> | <a href='https://www.cloudflare.com/privacypolicy/'>Privacy Policy</a>")
+
+        legal_text = (
+            "Disclaimer: QWarp is an unofficial community project and is not affiliated with, "
+            "authorized, maintained, sponsored, or endorsed by Cloudflare, Inc.<br><br>"
+            "Cloudflare, the Cloudflare logo, and Cloudflare Workers are trademarks and/or "
+            "registered trademarks of Cloudflare, Inc. in the United States and other jurisdictions.<br><br>"
+            "<a href='https://www.cloudflare.com/website-terms/'>Terms and Conditions</a> | "
+            "<a href='https://www.cloudflare.com/privacypolicy/'>Privacy Policy</a>"
+        )
+        legal_label = QLabel(legal_text)
         legal_font = legal_label.font()
         legal_font.setPointSize(9)
         legal_label.setFont(legal_font)
@@ -171,7 +179,7 @@ class SettingsDialog(QDialog):
         self.lbl_acc_type.setText(data.get("type", "Unknown"))
         self.lbl_license.setText(data.get("license", "Unknown"))
         self.lbl_quota.setText(data.get("quota", "Unknown"))
-        
+
         status_text = data.get("status", "Unknown")
         if data.get("reason"):
             status_text += f" ({data['reason']})"
