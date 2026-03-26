@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qwarp"
-version = "0.4.1a1"
+dynamic = ["version"]
 description = "A lightweight, Wayland-native Qt6 wrapper for cloudflare-warp-bin"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -16,6 +16,9 @@ dependencies = [
 
 [project.scripts]
 qwarp = "qwarp.main:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "qwarp.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["src"]

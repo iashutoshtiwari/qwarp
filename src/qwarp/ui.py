@@ -1,14 +1,16 @@
 import logging
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QPushButton, QMenu, QToolButton, QStackedWidget,
-                             QDialog, QTabWidget, QComboBox, QCheckBox)
+                             QDialog, QTabWidget, QComboBox, QCheckBox, QFrame)
 from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QSize, QSettings
-from PyQt6.QtGui import QCloseEvent, QIcon
+from PyQt6.QtGui import QCloseEvent, QIcon, QPixmap
 
 from qwarp.engine import WarpState
 from qwarp.state import WarpStateManager
+from qwarp import __version__
 from qwarp.utils import is_x11, get_tinted_icon
 from qwarp.toggle import AnimatedToggle
+from qwarp.tray import get_asset_icon
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +19,7 @@ class SettingsDialog(QDialog):
         super().__init__(parent)
         self.manager = manager
         self.setWindowTitle("Settings")
-        self.setFixedSize(280, 200)
+        self.setFixedSize(360, 400)
 
         layout = QVBoxLayout(self)
         self.tabs = QTabWidget()
@@ -74,6 +76,55 @@ class SettingsDialog(QDialog):
         conn_layout.addWidget(self.mode_combo)
         conn_layout.addStretch()
         self.tabs.addTab(conn_tab, "Connection")
+
+        about_tab = QWidget()
+        about_layout = QVBoxLayout(about_tab)
+        
+        # Icon
+        icon_label = QLabel()
+        icon_pixmap = get_asset_icon("app-icon.svg").pixmap(QSize(64, 64))
+        icon_label.setPixmap(icon_pixmap)
+        icon_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        about_layout.addWidget(icon_label)
+        about_layout.addSpacing(5)
+
+        # Version & Description
+        title_label = QLabel(f"<b>QWarp v{__version__}</b>")
+        title_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        title_font = title_label.font()
+        title_font.setPointSize(16)
+        title_label.setFont(title_font)
+        about_layout.addWidget(title_label)
+        
+        desc_label = QLabel("A Wayland-native Qt6 wrapper for Cloudflare WARP.")
+        desc_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        about_layout.addWidget(desc_label)
+        about_layout.addSpacing(10)
+
+        # Author Links
+        author_label = QLabel("Created by Ashutosh Tiwari<br><a href='https://github.com/iashutoshtiwari'>GitHub Profile</a> | <a href='https://github.com/iashutoshtiwari/qwarp'>Repository</a>")
+        author_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        author_label.setOpenExternalLinks(True)
+        about_layout.addWidget(author_label)
+        about_layout.addSpacing(10)
+
+        # Legal & Copyright Section
+        separator = QFrame()
+        separator.setFrameShape(QFrame.Shape.HLine)
+        separator.setFrameShadow(QFrame.Shadow.Sunken)
+        about_layout.addWidget(separator)
+        
+        legal_label = QLabel("Disclaimer: QWarp is an unofficial community project and is not affiliated with, authorized, maintained, sponsored, or endorsed by Cloudflare, Inc.<br><br><a href='https://www.cloudflare.com/website-terms/'>Terms and Conditions</a> | <a href='https://www.cloudflare.com/privacypolicy/'>Privacy Policy</a>")
+        legal_font = legal_label.font()
+        legal_font.setPointSize(9)
+        legal_label.setFont(legal_font)
+        legal_label.setWordWrap(True)
+        legal_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        legal_label.setOpenExternalLinks(True)
+        about_layout.addWidget(legal_label)
+
+        about_layout.addStretch()
+        self.tabs.addTab(about_tab, "About")
 
         layout.addWidget(self.tabs)
 

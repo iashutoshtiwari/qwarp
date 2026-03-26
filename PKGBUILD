@@ -14,6 +14,11 @@ makedepends=('python-build' 'python-installer' 'python-wheel' 'python-setuptools
 source=("$pkgname-$pkgver.tar.gz::https://github.com/iashutoshtiwari/qwarp/archive/refs/tags/v${pkgver/_/-}.tar.gz")
 sha256sums=('SKIP') # Temporarily skipping hash check for local builds.
 
+pkgver() {
+  cd "$startdir"
+  python -c "import re; m = re.search(r'__version__\s*=\s*[\'\""]([^\'\""]+)[\'\""]', open('src/qwarp/__init__.py').read()); print(m.group(1).replace('-', '_'))"
+}
+
 build() {
   # For local testing, build from the startdir so uncommitted changes are included
   cd "$startdir"
