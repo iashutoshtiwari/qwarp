@@ -70,41 +70,48 @@ class WarpStateManager(QObject):
     @pyqtSlot(WarpState)
     def _on_status_result(self, state: WarpState):
         if self.current_state != state:
+            logger.info(f"State transition: {self.current_state.name if hasattr(self.current_state, 'name') else self.current_state} -> {state.name if hasattr(state, 'name') else state}")
             self.current_state = state
             self.state_changed.emit(state)
 
     @pyqtSlot()
     def request_connect(self):
+        logger.info("Explicit request: connect")
         worker = ActionWorker(self.engine, 'connect')
         worker.signals.finished.connect(self._poll_status)
         self.thread_pool.start(worker)
 
     @pyqtSlot()
     def request_disconnect(self):
+        logger.info("Explicit request: disconnect")
         worker = ActionWorker(self.engine, 'disconnect')
         worker.signals.finished.connect(self._poll_status)
         self.thread_pool.start(worker)
 
     @pyqtSlot()
     def request_register(self):
+        logger.info("Explicit request: register")
         worker = ActionWorker(self.engine, 'register')
         worker.signals.finished.connect(self._poll_status)
         self.thread_pool.start(worker)
 
     @pyqtSlot()
     def request_delete_registration(self):
+        logger.info("Explicit request: delete_registration")
         worker = ActionWorker(self.engine, 'delete_registration')
         worker.signals.finished.connect(self._poll_status)
         self.thread_pool.start(worker)
 
     @pyqtSlot(str)
     def request_set_mode(self, mode: str):
+        logger.info(f"Explicit request: set_mode ({mode})")
         worker = ActionWorker(self.engine, 'set_mode', mode=mode)
         worker.signals.finished.connect(self._poll_status)
         self.thread_pool.start(worker)
 
     @pyqtSlot()
     def request_repair_service(self):
+        logger.info("Explicit request: repair_service")
         worker = ActionWorker(self.engine, 'repair_service')
         worker.signals.finished.connect(self._poll_status)
         self.thread_pool.start(worker)

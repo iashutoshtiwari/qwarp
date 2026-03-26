@@ -20,6 +20,10 @@ class WarpEngine:
         self.cli_path = "warp-cli"
 
     def _run_command(self, *args) -> Tuple[bool, str]:
+        is_status = (args and args[0] == "status")
+        if not is_status:
+            logger.info(f"Executing: warp-cli {' '.join(args)}")
+
         try:
             result = subprocess.run(
                 [self.cli_path, *args],
@@ -28,19 +32,27 @@ class WarpEngine:
                 timeout=self.timeout
             )
             if result.returncode == 0:
+                if not is_status and result.stdout.strip():
+                    logger.debug(f"warp-cli stdout: {result.stdout.strip()}")
                 return True, result.stdout.strip()
             else:
                 error_msg = result.stderr.strip() or result.stdout.strip()
-                logger.error(f"warp-cli error (code {result.returncode}): {error_msg}")
+                if not is_status:
+                    logger.error(f"warp-cli error (Code {result.returncode}): {error_msg}")
+                    if result.stderr.strip():
+                        logger.debug(f"warp-cli stderr: {result.stderr.strip()}")
                 return False, error_msg
         except FileNotFoundError:
-            logger.error(f"Executable '{self.cli_path}' not found.")
+            if not is_status:
+                logger.error(f"Executable '{self.cli_path}' not found.")
             return False, "warp-cli not installed"
         except subprocess.TimeoutExpired:
-            logger.error(f"Command 'warp-cli {' '.join(args)}' timed out.")
+            if not is_status:
+                logger.error(f"Command 'warp-cli {' '.join(args)}' timed out.")
             return False, "Daemon timeout"
         except Exception as e:
-            logger.error(f"Unexpected error: {e}")
+            if not is_status:
+                logger.error(f"Unexpected error: {e}")
             return False, str(e)
 
     def is_service_active(self) -> bool:
@@ -69,14 +81,24 @@ class WarpEngine:
 
     def repair_service(self) -> bool:
         """Enable and start warp-svc.service via pkexec (triggers auth dialog)."""
+        logger.info("Executing: pkexec systemctl enable --now warp-svc")
         try:
             result = subprocess.run(
                 ["pkexec", "systemctl", "enable", "--now", "warp-svc"],
                 capture_output=True, text=True, timeout=30.0
             )
-            return result.returncode == 0
+            if result.returncode == 0:
+                logger.info("Service repaired successfully.")
+                if result.stdout.strip():
+                    logger.debug(f"pkexec stdout: {result.stdout.strip()}")
+                return True
+            else:
+                logger.error(f"repair_service failed (Code {result.returncode})")
+                if result.stderr.strip():
+                    logger.debug(f"pkexec stderr: {result.stderr.strip()}")
+                return False
         except Exception as e:
-            logger.error(f"repair_service failed: {e}")
+            logger.error(f"repair_service failed with exception: {e}")
             return False
 
     def status(self) -> WarpState:
@@ -117,5 +139,5 @@ class WarpEngine:
         return success
 
     def set_mode(self, mode_str: str) -> bool:
-        success, _ = self._run_command("set-mode", mode_str)
+        success, _ = self._run_command("mode", mode_str)
         return success

@@ -39,8 +39,17 @@ class SettingsDialog(QDialog):
         conn_layout = QVBoxLayout(conn_tab)
         conn_layout.addWidget(QLabel("Routing Mode:"))
         self.mode_combo = QComboBox()
-        self.mode_combo.addItems(["warp", "doh", "warp+doh", "proxy"])
-        self.mode_combo.currentTextChanged.connect(self._on_mode_changed)
+        # The first argument is what the user sees. The second is the hidden warp-cli string.
+        self.mode_combo.addItem("1.1.1.1 with WARP", "warp")
+        self.mode_combo.addItem("1.1.1.1 (DNS over DoH)", "doh")
+        self.mode_combo.addItem("WARP + DoH", "warp+doh")
+        self.mode_combo.addItem("1.1.1.1 (DNS over DoT)", "dot")
+        self.mode_combo.addItem("WARP + DoT", "warp+dot")
+        self.mode_combo.addItem("Local Proxy", "proxy")
+        self.mode_combo.addItem("Tunnel Only", "tunnel_only")
+
+        # Change the signal to listen for index changes, not text changes
+        self.mode_combo.currentIndexChanged.connect(self._on_mode_changed)
         conn_layout.addWidget(self.mode_combo)
         conn_layout.addStretch()
         self.tabs.addTab(conn_tab, "Connection")
@@ -48,11 +57,15 @@ class SettingsDialog(QDialog):
         layout.addWidget(self.tabs)
 
     def _on_delete_clicked(self):
+        logger.info("User deleted registration")
         self.manager.request_delete_registration()
         self.accept()
 
-    def _on_mode_changed(self, text):
-        self.manager.request_set_mode(text)
+    def _on_mode_changed(self, index):
+        # Retrieve the hidden string (e.g., "doh") instead of the display text
+        cli_mode = self.mode_combo.itemData(index)
+        logger.info(f"User changed routing mode to: {cli_mode}")
+        self.manager.request_set_mode(cli_mode)
 
 class WarpWindow(QWidget):
     quit_requested = pyqtSignal()
@@ -73,7 +86,7 @@ class WarpWindow(QWidget):
         main_layout.setContentsMargins(20, 30, 20, 20)
 
         # --- HEADER: Massive WARP Logo ---
-        self.header_label = QLabel("WARP")
+        self.header_label = QLabel("QWARP")
         header_font = self.header_label.font()
         header_font.setPointSize(36)
         header_font.setBold(True)
@@ -101,7 +114,7 @@ class WarpWindow(QWidget):
         info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         info_label.setWordWrap(True)
 
-        self.register_btn = QPushButton("Accept & Register")
+        self.register_btn = QPushButton("Accept && register")
         self.register_btn.setFixedSize(160, 40)
         self.register_btn.setStyleSheet("""
             QPushButton { background-color: #007bff; color: white; font-weight: bold; border-radius: 20px; border: none; }
@@ -123,7 +136,7 @@ class WarpWindow(QWidget):
 
         self.toggle = AnimatedToggle()
 
-        self.repair_btn = QPushButton(" Start & Enable")
+        self.repair_btn = QPushButton("Enable service")
         self.repair_btn.setIcon(QIcon.fromTheme("emblem-system"))
         self.repair_btn.setFixedSize(160, 40)
         self.repair_btn.setStyleSheet("""
@@ -145,10 +158,10 @@ class WarpWindow(QWidget):
 
         p1_layout.addStretch()
         p1_layout.addWidget(self.toggle, alignment=Qt.AlignmentFlag.AlignHCenter)
-        p1_layout.addWidget(self.repair_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
         p1_layout.addSpacing(10)
         p1_layout.addWidget(self.status_title)
         p1_layout.addWidget(self.status_desc)
+        p1_layout.addWidget(self.repair_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
         p1_layout.addStretch()
         self.stack.addWidget(self.page1)
 
@@ -265,8 +278,10 @@ class WarpWindow(QWidget):
         self.status_title.setStyleSheet("color: #888888;")
 
         if self.toggle.isChecked():
+            logger.info("User clicked toggle to connect")
             self.manager.request_connect()
         else:
+            logger.info("User clicked toggle to disconnect")
             self.manager.request_disconnect()
 
     def show_at_cursor(self, pos: QPoint):
