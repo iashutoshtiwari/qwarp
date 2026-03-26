@@ -1,8 +1,8 @@
 import logging
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QPushButton, QMenu, QToolButton, QStackedWidget,
-                             QDialog, QTabWidget, QComboBox)
-from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QSize
+                             QDialog, QTabWidget, QComboBox, QCheckBox)
+from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QSize, QSettings
 from PyQt6.QtGui import QCloseEvent, QIcon
 
 from qwarp.engine import WarpState
@@ -21,6 +21,17 @@ class SettingsDialog(QDialog):
 
         layout = QVBoxLayout(self)
         self.tabs = QTabWidget()
+
+        settings = QSettings()
+
+        gen_tab = QWidget()
+        gen_layout = QVBoxLayout(gen_tab)
+        self.minimized_cb = QCheckBox("Start minimized to system tray")
+        self.minimized_cb.setChecked(settings.value("start_minimized", False, type=bool))
+        self.minimized_cb.toggled.connect(self._on_minimized_toggled)
+        gen_layout.addWidget(self.minimized_cb)
+        gen_layout.addStretch()
+        self.tabs.addTab(gen_tab, "General")
 
         account_tab = QWidget()
         acc_layout = QVBoxLayout(account_tab)
@@ -48,6 +59,16 @@ class SettingsDialog(QDialog):
         self.mode_combo.addItem("Local Proxy", "proxy")
         self.mode_combo.addItem("Tunnel Only", "tunnel_only")
 
+        # Sync with daemon source of truth
+        current_daemon_mode = self.manager.engine.get_current_mode()
+        if current_daemon_mode:
+            current_mode_normalized = current_daemon_mode.lower().replace(" ", "").replace("_", "").replace("+", "")
+            for i in range(self.mode_combo.count()):
+                item_data_normalized = self.mode_combo.itemData(i).lower().replace(" ", "").replace("_", "").replace("+", "")
+                if item_data_normalized == current_mode_normalized:
+                    self.mode_combo.setCurrentIndex(i)
+                    break
+
         # Change the signal to listen for index changes, not text changes
         self.mode_combo.currentIndexChanged.connect(self._on_mode_changed)
         conn_layout.addWidget(self.mode_combo)
@@ -55,6 +76,11 @@ class SettingsDialog(QDialog):
         self.tabs.addTab(conn_tab, "Connection")
 
         layout.addWidget(self.tabs)
+
+    def _on_minimized_toggled(self, checked):
+        logger.info(f"User toggled start minimized to: {checked}")
+        settings = QSettings()
+        settings.setValue("start_minimized", checked)
 
     def _on_delete_clicked(self):
         logger.info("User deleted registration")
@@ -213,8 +239,16 @@ class WarpWindow(QWidget):
     def _setup_signals(self):
         self.manager.state_changed.connect(self._update_ui_state)
         self.toggle.clicked.connect(self._on_toggle_clicked)
-        self.register_btn.clicked.connect(self.manager.request_register)
-        self.repair_btn.clicked.connect(self.manager.request_repair_service)
+        self.register_btn.clicked.connect(self._on_register_clicked)
+        self.repair_btn.clicked.connect(self._on_repair_clicked)
+
+    def _on_register_clicked(self):
+        logger.info("User clicked register")
+        self.manager.request_register()
+
+    def _on_repair_clicked(self):
+        logger.info("User clicked enable service")
+        self.manager.request_repair_service()
 
     def _update_ui_state(self, state: WarpState):
         if state == WarpState.UNREGISTERED:

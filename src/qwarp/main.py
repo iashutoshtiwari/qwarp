@@ -4,7 +4,7 @@ import subprocess
 import logging
 import signal
 from PyQt6.QtWidgets import QApplication
-from PyQt6.QtCore import QPoint, QTimer
+from PyQt6.QtCore import QPoint, QTimer, QSettings
 
 from qwarp.engine import WarpEngine
 from qwarp.state import WarpStateManager
@@ -50,6 +50,8 @@ def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
     app = QApplication(sys.argv)
+    app.setOrganizationName("qwarp")
+    app.setApplicationName("qwarp")
 
     # --- IPC SINGLE INSTANCE CHECK ---
     instance_manager = SingleInstance()
@@ -109,9 +111,14 @@ def main():
 
     tray = WarpTrayIcon(manager, toggle_window)
     tray.show()
-    window.showNormal()
-    window.raise_()
-    window.activateWindow()
+
+    settings = QSettings()
+    start_minimized = settings.value("start_minimized", False, type=bool)
+
+    if not start_minimized:
+        window.showNormal()
+        window.raise_()
+        window.activateWindow()
 
     # --- THE FIX: Graceful Teardown ---
     def cleanup():

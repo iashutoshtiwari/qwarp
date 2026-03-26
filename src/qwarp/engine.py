@@ -31,6 +31,9 @@ class WarpEngine:
                 text=True,
                 timeout=self.timeout
             )
+            if not is_status:
+                logger.info(f"Command 'warp-cli {' '.join(args)}' returned code {result.returncode}")
+
             if result.returncode == 0:
                 if not is_status and result.stdout.strip():
                     logger.debug(f"warp-cli stdout: {result.stdout.strip()}")
@@ -87,6 +90,7 @@ class WarpEngine:
                 ["pkexec", "systemctl", "enable", "--now", "warp-svc"],
                 capture_output=True, text=True, timeout=30.0
             )
+            logger.info(f"Command 'pkexec systemctl enable --now warp-svc' returned code {result.returncode}")
             if result.returncode == 0:
                 logger.info("Service repaired successfully.")
                 if result.stdout.strip():
@@ -141,3 +145,11 @@ class WarpEngine:
     def set_mode(self, mode_str: str) -> bool:
         success, _ = self._run_command("mode", mode_str)
         return success
+
+    def get_current_mode(self) -> str:
+        success, output = self._run_command("settings")
+        if success:
+            for line in output.split('\n'):
+                if line.strip().startswith("Mode:"):
+                    return line.split(':', 1)[1].strip()
+        return ""
