@@ -1,14 +1,14 @@
 import logging
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QPushButton, QMenu, QToolButton, QStackedWidget,
-                             QDialog, QTabWidget, QComboBox, QCheckBox, QFrame)
+                             QDialog, QTabWidget, QComboBox, QCheckBox, QFrame, QFormLayout)
 from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QSize, QSettings
 from PyQt6.QtGui import QCloseEvent, QIcon, QPixmap
 
 from qwarp.engine import WarpState
 from qwarp.state import WarpStateManager
 from qwarp import __version__
-from qwarp.utils import is_x11, get_tinted_icon
+from qwarp.utils import is_x11, get_tinted_icon, load_tinted_icon
 from qwarp.toggle import AnimatedToggle
 from qwarp.tray import get_asset_icon
 
@@ -37,16 +37,50 @@ class SettingsDialog(QDialog):
 
         account_tab = QWidget()
         acc_layout = QVBoxLayout(account_tab)
+        
+        form_layout = QFormLayout()
+        
+        self.lbl_acc_type = QLabel("Loading...")
+        self.lbl_license = QLabel("Loading...")
+        self.lbl_quota = QLabel("Loading...")
+        self.lbl_daemon_status = QLabel("Loading...")
+        
+        selectable_flag = Qt.TextInteractionFlag.TextSelectableByMouse
+        self.lbl_acc_type.setTextInteractionFlags(selectable_flag)
+        self.lbl_license.setTextInteractionFlags(selectable_flag)
+        self.lbl_quota.setTextInteractionFlags(selectable_flag)
+        self.lbl_daemon_status.setTextInteractionFlags(selectable_flag)
+        
+        form_layout.addRow("Account Type:", self.lbl_acc_type)
+        form_layout.addRow("License Key:", self.lbl_license)
+        form_layout.addRow("Data Quota:", self.lbl_quota)
+        form_layout.addRow("Daemon Status:", self.lbl_daemon_status)
+        
+        acc_layout.addLayout(form_layout)
+        
+        # Connect to diagnostics
+        self.manager.diagnostics_updated.connect(self._on_diagnostics_updated)
+        
+        btn_layout = QHBoxLayout()
+        self.refresh_btn = QPushButton("Refresh Data")
+        self.refresh_btn.clicked.connect(self.manager.request_diagnostics)
+        
         self.delete_btn = QPushButton("Delete Registration")
         self.delete_btn.setStyleSheet("""
             QPushButton { background-color: #d9534f; color: white; font-weight: bold; border-radius: 4px; padding: 6px; border: none; }
             QPushButton:hover { background-color: #c9302c; }
         """)
         self.delete_btn.clicked.connect(self._on_delete_clicked)
+        
+        btn_layout.addWidget(self.refresh_btn)
+        btn_layout.addWidget(self.delete_btn)
+        
         acc_layout.addStretch()
-        acc_layout.addWidget(self.delete_btn)
-        acc_layout.addStretch()
+        acc_layout.addLayout(btn_layout)
         self.tabs.addTab(account_tab, "Account")
+        
+        # Fetch on load
+        self.manager.request_diagnostics()
 
         conn_tab = QWidget()
         conn_layout = QVBoxLayout(conn_tab)
@@ -132,6 +166,16 @@ class SettingsDialog(QDialog):
         logger.info(f"User toggled start minimized to: {checked}")
         settings = QSettings()
         settings.setValue("start_minimized", checked)
+
+    def _on_diagnostics_updated(self, data: dict):
+        self.lbl_acc_type.setText(data.get("type", "Unknown"))
+        self.lbl_license.setText(data.get("license", "Unknown"))
+        self.lbl_quota.setText(data.get("quota", "Unknown"))
+        
+        status_text = data.get("status", "Unknown")
+        if data.get("reason"):
+            status_text += f" ({data['reason']})"
+        self.lbl_daemon_status.setText(status_text)
 
     def _on_delete_clicked(self):
         logger.info("User deleted registration")
@@ -251,7 +295,7 @@ class WarpWindow(QWidget):
 
         def create_tool_btn(icon_name):
             btn = QToolButton()
-            btn.setIcon(get_tinted_icon(f"{icon_name}.svg", "applications-system"))
+            btn.setIcon(load_tinted_icon(f"{icon_name}.svg"))
             btn.setIconSize(QSize(22, 22))
             btn.setStyleSheet("""
                 QToolButton { border: none; background: transparent; }

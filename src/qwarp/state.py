@@ -18,6 +18,20 @@ class StatusWorker(QRunnable):
         state = self.engine.status()
         self.signals.result_ready.emit(state)
 
+class DiagnosticsWorkerSignals(QObject):
+    result_ready = pyqtSignal(dict)
+
+class DiagnosticsWorker(QRunnable):
+    def __init__(self, engine: WarpEngine):
+        super().__init__()
+        self.engine = engine
+        self.signals = DiagnosticsWorkerSignals()
+
+    @pyqtSlot()
+    def run(self):
+        data = self.engine.get_diagnostics()
+        self.signals.result_ready.emit(data)
+
 class ActionWorkerSignals(QObject):
     finished = pyqtSignal()
 
@@ -49,6 +63,7 @@ class ActionWorker(QRunnable):
 
 class WarpStateManager(QObject):
     state_changed = pyqtSignal(WarpState)
+    diagnostics_updated = pyqtSignal(dict)
 
     def __init__(self, engine: WarpEngine, parent=None):
         super().__init__(parent)
@@ -114,4 +129,11 @@ class WarpStateManager(QObject):
         logger.info("Explicit request: repair_service")
         worker = ActionWorker(self.engine, 'repair_service')
         worker.signals.finished.connect(self._poll_status)
+        self.thread_pool.start(worker)
+
+    @pyqtSlot()
+    def request_diagnostics(self):
+        logger.info("Explicit request: diagnostics")
+        worker = DiagnosticsWorker(self.engine)
+        worker.signals.result_ready.connect(self.diagnostics_updated.emit)
         self.thread_pool.start(worker)

@@ -153,3 +153,45 @@ class WarpEngine:
                 if line.strip().startswith("Mode:"):
                     return line.split(':', 1)[1].strip()
         return ""
+
+    def get_diagnostics(self) -> dict:
+        data = {
+            "type": "Unknown",
+            "license": "Unknown",
+            "quota": "Unknown",
+            "status": "Unknown",
+            "reason": ""
+        }
+        
+        # Parse Account
+        success, output = self._run_command("account")
+        if success:
+            for line in output.split('\n'):
+                line = line.strip()
+                if not line: continue
+                if "Account type:" in line:
+                    data["type"] = line.split(":", 1)[1].strip()
+                elif "License:" in line:
+                    data["license"] = line.split(":", 1)[1].strip()
+                elif "Quota:" in line:
+                    data["quota"] = line.split(":", 1)[1].strip()
+        else:
+            if "Missing registration" in output or "Registration missing" in output:
+                data["type"] = "Unregistered"
+            else:
+                data["type"] = "Error fetching account"
+
+        # Parse Status
+        s_success, s_output = self._run_command("status")
+        if s_success:
+            for line in s_output.split('\n'):
+                line = line.strip()
+                if not line: continue
+                if line.startswith("Status update:"):
+                    data["status"] = line.split(":", 1)[1].strip()
+                elif line.startswith("Reason:"):
+                    data["reason"] = line.split(":", 1)[1].strip()
+        else:
+            data["status"] = "Daemon unreachable"
+            
+        return data

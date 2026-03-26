@@ -1,7 +1,7 @@
 import os
-from PyQt6.QtGui import QIcon, QPixmap, QPainter, QColor
+from PyQt6.QtGui import QIcon, QPixmap, QPainter, QColor, QPalette
 from PyQt6.QtWidgets import QApplication
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QByteArray
 
 def is_x11() -> bool:
     """Checks if the compositor is running X11."""
@@ -46,5 +46,33 @@ def get_tinted_icon(filename: str, fallback_theme_name: str = None) -> QIcon:
     painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
     painter.fillRect(tinted.rect(), QColor(color_hex))
     painter.end()
-
     return QIcon(tinted)
+
+def load_tinted_icon(icon_name: str) -> QIcon:
+    """Loads an SVG file, performs string replacement based on theme lightness, and returns a QIcon."""
+    app = QApplication.instance()
+    is_light_mode = False
+    if app:
+        # If lightness > 128, it's Light Mode
+        is_light_mode = app.palette().color(QPalette.ColorRole.Window).lightness() > 128
+
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    asset_path = os.path.join(base_dir, "assets", icon_name)
+
+    if not os.path.exists(asset_path):
+        return QIcon()
+
+    with open(asset_path, "r", encoding="utf-8") as f:
+        svg_content = f.read()
+
+    if is_light_mode:
+        svg_content = svg_content.replace("#FFFFFF", "#333333")
+        svg_content = svg_content.replace("#ffffff", "#333333")
+        svg_content = svg_content.replace("currentColor", "#333333")
+    else:
+        svg_content = svg_content.replace("#333333", "#FFFFFF")
+        svg_content = svg_content.replace("currentColor", "#FFFFFF")
+
+    pixmap = QPixmap()
+    pixmap.loadFromData(QByteArray(svg_content.encode("utf-8")))
+    return QIcon(pixmap)

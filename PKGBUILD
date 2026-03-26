@@ -1,6 +1,6 @@
 # Maintainer: Ashutosh Tiwari <contact@ashutoshtiwari.dev>
 pkgname=qwarp
-pkgver=0.4.1_alpha
+pkgver=0.6.0
 pkgrel=1
 pkgdesc="A lightweight, Wayland-native Qt6 wrapper for cloudflare-warp-bin"
 arch=('any')
@@ -16,7 +16,7 @@ sha256sums=('SKIP') # Temporarily skipping hash check for local builds.
 
 pkgver() {
   cd "$startdir"
-  python -c "import re; m = re.search(r'__version__\s*=\s*[\'\""]([^\'\""]+)[\'\""]', open('src/qwarp/__init__.py').read()); print(m.group(1).replace('-', '_'))"
+  python -c 'import re; m = re.search(r"__version__\s*=\s*[\x27\x22]([^\x27\x22]+)[\x27\x22]", open("src/qwarp/__init__.py").read()); print(m.group(1).replace("-", "_"))'
 }
 
 build() {
