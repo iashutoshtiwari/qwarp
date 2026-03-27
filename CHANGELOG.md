@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.7.7] – 2026-03-27
+
+- Bump version to 0.7.7 ([83980bc](https://github.com/iashutoshtiwari/qwarp/commit/83980bcb4eeb2a1daec31fe039d3959634e52bb9))
+- Include .qm, update locale TS files, add test ([78b8cf2](https://github.com/iashutoshtiwari/qwarp/commit/78b8cf2a1b8bb55c2704169498a9b13662aaf9f2))
+- Update .SRCINFO ([bfcf67b](https://github.com/iashutoshtiwari/qwarp/commit/bfcf67b850a14805bd975e4ac6a9552b75211119))
+- chore: auto-update CHANGELOG for v0.7.6 [skip ci] ([e90439b](https://github.com/iashutoshtiwari/qwarp/commit/e90439b212de681eb76b7047cd8bfa67b94494d1))
+
+
 ## [v0.7.6] – 2026-03-27
 
 - Bump version to 0.7.6 and switch CI to master ([46ce029](https://github.com/iashutoshtiwari/qwarp/commit/46ce029cb6129d2554f30983651dba857b3fca1b))
