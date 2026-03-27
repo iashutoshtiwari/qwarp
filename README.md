@@ -1,28 +1,27 @@
-
 # QWarp
 
-QWarp is a lightweight, Wayland-native Qt6 GUI wrapper for the cloudflare-warp-bin service. It is designed for minimal resource usage, deep system integration, and high performance on modern Linux desktops.
+A lightweight, Wayland-native Qt6 GUI wrapper for the `cloudflare-warp-bin` service on Linux.
 
-Disclaimer: This is an unofficial community project. It is not affiliated with, authorized, maintained, sponsored, or endorsed by Cloudflare or any of its affiliates.
+> **Disclaimer:** This is an unofficial community project and is not affiliated with, authorized, maintained, sponsored, or endorsed by Cloudflare.
 
+## Screenshots
 
-
+| Main UI | System Tray Area |
+|:---:|:---:|
+| <!-- Add link to main UI image below --> <br> <img src="/screenshots/UI.png" width="300"/> | <!-- Add link to tray image below --> <br> <img src="screenshots/Tray.png" width="300"/> |
 
 ## Features
 
-- Frameless Qt6 interface optimized for Wayland compositors.
-- Integration with system-native Freedesktop icon themes.
-- Asynchronous state polling to ensure a responsive UI.
-- Automatic backgrounding to the system tray when losing focus.
-- Lightweight binary footprint.
-
-
+- **System Integrations**: Lightweight UI, Wayland compatibility, and theme-aware tray icon tinting.
+- **Daemon Control**: Connect/Disconnect from WARP visually and switch routing modes (DoH, DoT, Proxy).
+- **Diagnostics**: View offline account telemetry (License, Registration) locally.
+- **Service Recovery**: Auto-detects stopped WARP services and provides a one-click `pkexec` recovery button.
+- **Non-intrusive**: Resides entirely in the system tray, toggles on click, and cleans up conflicting official GUIs automatically.
 
 ## Installation
 
-### Arch Linux
-The recommended way to install QWarp on Arch Linux is via the provided PKGBUILD. (Note: An AUR package is planned and will be available soon.) This method ensures all Python dependencies, desktop entries, and system icons are managed by pacman.
-
+### Arch Linux (Recommended)
+You can install using the provided `PKGBUILD` to satisfy dependencies naturally via `pacman`:
 ```bash
 git clone https://github.com/iashutoshtiwari/qwarp.git
 cd qwarp
@@ -30,37 +29,20 @@ makepkg -si
 ```
 
 ### Generic Linux Binary
-For users on other distributions or for quick testing, a pre-compiled standalone binary is available in the Releases section.
-
-1. Download the qwarp-linux-x86_64.tar.gz archive.
-2. Extract the archive: 
-```bash 
+Download the pre-compiled `qwarp-linux-x86_64.tar.gz` from the Releases section:
+```bash
 tar -xzvf qwarp-linux-x86_64.tar.gz
-```
-3. Execute the binary: 
-```bash 
 ./qwarp
 ```
 
-### Development Build
-To run the project from source in a development environment:
-```sh
+### Development
+```bash
 pip install .
-PYTHONPATH=src python -m qwarp.main
+qwarp
 ```
-## Usage
-
-Launch QWarp from your application menu or via the terminal using the qwarp command.
-- System Tray: The application resides in the system tray. Left-click the icon to toggle the main control window. Right-click to access the quick-action menu (Connect, Disconnect, or Quit).
-- Auto-Hide: The main window will automatically hide when it loses focus, behaving like a native system utility.
-
 
 ## Requirements
-
-- Cloudflare WARP: The official cloudflare-warp-bin package must be installed and the warp-svc daemon must be active.
-
+To actually proxy traffic, the official `cloudflare-warp-bin` package must be installed and the `warp-svc` daemon enabled.
 
 ## Authors
-
 - [@iashutoshtiwari](https://www.github.com/iashutoshtiwari)
-
