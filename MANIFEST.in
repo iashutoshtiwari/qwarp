@@ -1,1 +1,1 @@
-recursive-include src/qwarp/assets *.svg
+recursive-include src/qwarp/assets *.svg *.qm
