@@ -3,17 +3,31 @@ import os
 import subprocess
 import logging
 import signal
+import traceback
+
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import QPoint, QTimer, QSettings
 
-from qwarp.engine import WarpEngine
-from qwarp.state import WarpStateManager
-from qwarp.ui import WarpWindow
-from qwarp.tray import WarpTrayIcon
-from qwarp.instance import SingleInstance
+from qwarp.core.engine import WarpEngine
+from qwarp.core.state import WarpStateManager
+from qwarp.ui.window import WarpWindow
+from qwarp.ui.tray import WarpTrayIcon
+from qwarp.core.instance import SingleInstance
+from qwarp.ui.tray import get_asset_icon
 
+logger = logging.getLogger(__name__)
 
-def neutralize_official_gui():
+def unhandled_exception_hook(exc_type, exc_value, exc_traceback):
+    """
+    Global exception handler to capture unhandled UI errors.
+    Ensures that silent crashes are logged for diagnosis.
+    """
+    error_msg = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+    logger.critical("Unhandled UI Exception:\n%s", error_msg)
+    # Allows Qt to gracefully crash if absolutely needed
+    sys.__excepthook__(exc_type, exc_value, exc_traceback)
+
+def neutralize_official_gui() -> None:
     """
     Silently disables and stops the official Cloudflare warp-taskbar GUI
     so it does not conflict with QWarp or trigger Zero Trust popups.
@@ -22,9 +36,9 @@ def neutralize_official_gui():
     try:
         subprocess.run(["systemctl", "--user", "stop", "warp-taskbar"], stderr=subprocess.DEVNULL)
         subprocess.run(["systemctl", "--user", "disable", "warp-taskbar"], stderr=subprocess.DEVNULL)
-        logging.info("Disabled warp-taskbar systemd user service.")
+        logger.info("Disabled warp-taskbar systemd user service.")
     except Exception as e:
-        logging.debug(f"Failed to disable warp-taskbar via systemctl: {e}")
+        logger.debug("Failed to disable warp-taskbar via systemctl: %s", e)
 
     # 2. Fallback: Kill the active process if it's running outside systemd
     try:
@@ -42,54 +56,71 @@ def neutralize_official_gui():
             with open(mask_file, "w") as f:
                 f.write("[Desktop Entry]\n")
                 f.write("Hidden=true\n")
-            logging.info("Successfully masked legacy warp-taskbar autostart.")
+            logger.info("Successfully masked legacy warp-taskbar autostart.")
         except Exception:
             pass
 
-def main():
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+def setup_logging() -> None:
+    """Initialize system-wide logging configuration."""
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+    )
+
+def setup_ipc_instance() -> SingleInstance:
+    """
+    Ensure only one instance of the application runs.
+    """
+    instance_manager = SingleInstance()
+    if instance_manager.is_running():
+        logger.info("Secondary instance detected. Exiting.")
+        sys.exit(0)
+
+    # Start listening on the Unix socket for the primary instance.
+    instance_manager.start_server()
+    return instance_manager
+
+def main() -> None:
+    """
+    Application entry point. Bootstraps Qt, IPC, background workers, and signals.
+    """
+    setup_logging()
+    
+    # Configure global exception trapping
+    sys.excepthook = unhandled_exception_hook
 
     app = QApplication(sys.argv)
     app.setOrganizationName("qwarp")
     app.setApplicationName("qwarp")
 
-    # --- IPC SINGLE INSTANCE CHECK ---
-    instance_manager = SingleInstance()
-    if instance_manager.is_running():
-        # Signal sent to primary instance. We exit quietly.
-        logging.info("Secondary instance detected. Exiting.")
-        sys.exit(0)
+    # Enforce single IPC instance
+    instance_manager = setup_ipc_instance()
 
-    # We are the primary instance. Start listening on the Unix socket.
-    instance_manager.start_server()
-    # ---------------------------------
-
-    # --- EXCISE CONFLICTING DAEMON LISTENERS ---
+    # Turn off default cloudflare processes
     neutralize_official_gui()
-    # -------------------------------------------
 
-    from qwarp.tray import get_asset_icon
-    app.setDesktopFileName("qwarp") # Tells Wayland to look for qwarp.desktop
+    app.setDesktopFileName("qwarp") # Wayland integration
     app.setWindowIcon(get_asset_icon("app-icon.svg"))
 
-    # CRITICAL: Prevent the application from exiting implicitly when a window is hidden
+    # Crucial mapping: prevent background daemon from closing when the UI is explicitly hidden
     app.setQuitOnLastWindowClosed(False)
-
-    # --- THE FIX: Graceful Ctrl+C Handling ---
+    
+    # Graceful exit hook on ^C
     signal.signal(signal.SIGINT, lambda sig, frame: app.quit())
 
+    # The dummy timer yields processing context briefly so Python system signals (like ^C) can fire in the PyQt loop
     timer = QTimer()
     timer.timeout.connect(lambda: None)
     timer.start(500)
-    # -----------------------------------------
 
     engine = WarpEngine()
     manager = WarpStateManager(engine)
     window = WarpWindow(manager)
-
+    
     window.quit_requested.connect(app.quit)
 
-    def toggle_window(pos: QPoint = None):
+    def toggle_window(pos: QPoint = None) -> None:
+        """Toggles window visibility, responding to system tray interactions."""
         if window.isVisible():
             window.hide()
         else:
@@ -100,13 +131,13 @@ def main():
                 window.raise_()
                 window.activateWindow()
 
-    def force_show_window():
-        """Ensures the window comes to the front instead of toggling hidden."""
+    def force_show_window() -> None:
+        """Draws the window to the absolute front when launched secondarily."""
         window.showNormal()
         window.raise_()
         window.activateWindow()
 
-    # Wire the IPC wakeup signal to pull the window to the front
+    # Route wakeups via IPC strictly to force view elevation
     instance_manager.wakeup_requested.connect(force_show_window)
 
     tray = WarpTrayIcon(manager, toggle_window)
@@ -116,27 +147,23 @@ def main():
     start_minimized = settings.value("start_minimized", False, type=bool)
 
     if not start_minimized:
-        window.showNormal()
-        window.raise_()
-        window.activateWindow()
+        force_show_window()
 
-    # --- THE FIX: Graceful Teardown ---
-    def cleanup():
-        logging.info("Initiating graceful teardown...")
+    def gracefully_shutdown() -> None:
+        """Ensure threads and IPC listeners tear down properly."""
+        logger.info("Initiating graceful teardown...")
         if hasattr(manager, 'timer'):
             manager.timer.stop()
         tray.hide()
         try:
-            manager.state_changed.disconnect()
+             manager.state_changed.disconnect()
         except TypeError:
-            pass
+             pass
 
-    app.aboutToQuit.connect(cleanup)
-    # ----------------------------------
+    app.aboutToQuit.connect(gracefully_shutdown)
 
-    logging.info("QWarp started successfully.")
+    logger.info("QWarp started successfully.")
     sys.exit(app.exec())
-
 
 if __name__ == "__main__":
     main()

@@ -5,8 +5,8 @@ from PyQt6.QtWidgets import QSystemTrayIcon, QMenu, QApplication
 from PyQt6.QtGui import QIcon, QAction, QCursor
 from PyQt6.QtCore import QPoint
 
-from qwarp.engine import WarpState
-from qwarp.state import WarpStateManager
+from qwarp.core.engine import WarpState
+from qwarp.core.state import WarpStateManager
 
 logger = logging.getLogger(__name__)
 

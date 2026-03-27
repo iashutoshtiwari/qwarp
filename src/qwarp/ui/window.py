@@ -1,43 +1,64 @@
 import logging
+from typing import Optional
+
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QPushButton, QMenu, QToolButton, QStackedWidget,
                              QDialog, QTabWidget, QComboBox, QCheckBox, QFrame, QFormLayout)
 from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QSize, QSettings
 from PyQt6.QtGui import QCloseEvent, QIcon, QPixmap
 
-from qwarp.engine import WarpState
-from qwarp.state import WarpStateManager
+from qwarp.core.engine import WarpState
+from qwarp.core.state import WarpStateManager
 from qwarp import __version__
-from qwarp.utils import is_x11, get_tinted_icon, load_tinted_icon
-from qwarp.toggle import AnimatedToggle
-from qwarp.tray import get_asset_icon
+from qwarp.utils.system import is_x11, get_tinted_icon, load_tinted_icon
+from qwarp.ui.toggle import AnimatedToggle
+from qwarp.ui.tray import get_asset_icon
+from qwarp.ui import styles
 
 logger = logging.getLogger(__name__)
 
 class SettingsDialog(QDialog):
-    def __init__(self, manager: WarpStateManager, parent=None):
+    """
+    Settings overlay that surfaces application preferences, account information,
+    and granular daemon connection settings (mode selection).
+    """
+    def __init__(self, manager: WarpStateManager, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.manager = manager
         self.setWindowTitle("Settings")
         self.setFixedSize(360, 440)
 
-        layout = QVBoxLayout(self)
+        self.layout = QVBoxLayout(self)
         self.tabs = QTabWidget()
 
-        settings = QSettings()
+        self._build_general_tab()
+        self._build_account_tab()
+        self._build_connection_tab()
+        self._build_about_tab()
 
+        self.layout.addWidget(self.tabs)
+
+    def _build_general_tab(self) -> None:
+        """Constructs the application preferences tab."""
         gen_tab = QWidget()
         gen_layout = QVBoxLayout(gen_tab)
+        
+        settings = QSettings()
+        
         self.minimized_cb = QCheckBox("Start minimized to system tray")
         self.minimized_cb.setChecked(settings.value("start_minimized", False, type=bool))
         self.minimized_cb.toggled.connect(self._on_minimized_toggled)
+        
         gen_layout.addWidget(self.minimized_cb)
         gen_layout.addStretch()
         self.tabs.addTab(gen_tab, "General")
 
+    def _build_account_tab(self) -> None:
+        """Constructs the offline telemetry and diagnostics tab."""
         account_tab = QWidget()
         acc_layout = QVBoxLayout(account_tab)
 
+        # Diagnostics Form View
         form_layout = QFormLayout()
 
         self.lbl_acc_type = QLabel("Loading...")
@@ -45,6 +66,7 @@ class SettingsDialog(QDialog):
         self.lbl_quota = QLabel("Loading...")
         self.lbl_daemon_status = QLabel("Loading...")
 
+        # Allows users to double-click and copy text (useful for debugging licenses)
         selectable_flag = Qt.TextInteractionFlag.TextSelectableByMouse
         self.lbl_acc_type.setTextInteractionFlags(selectable_flag)
         self.lbl_license.setTextInteractionFlags(selectable_flag)
@@ -57,19 +79,15 @@ class SettingsDialog(QDialog):
         form_layout.addRow("Daemon Status:", self.lbl_daemon_status)
 
         acc_layout.addLayout(form_layout)
-
-        # Connect to diagnostics
         self.manager.diagnostics_updated.connect(self._on_diagnostics_updated)
 
+        # Action Buttons
         btn_layout = QHBoxLayout()
         self.refresh_btn = QPushButton("Refresh Data")
         self.refresh_btn.clicked.connect(self.manager.request_diagnostics)
 
         self.delete_btn = QPushButton("Delete Registration")
-        self.delete_btn.setStyleSheet("""
-            QPushButton { background-color: #d9534f; color: white; font-weight: bold; border-radius: 4px; padding: 6px; border: none; }
-            QPushButton:hover { background-color: #c9302c; }
-        """)
+        self.delete_btn.setStyleSheet(styles.BUTTON_DANGER)
         self.delete_btn.clicked.connect(self._on_delete_clicked)
 
         btn_layout.addWidget(self.refresh_btn)
@@ -79,14 +97,16 @@ class SettingsDialog(QDialog):
         acc_layout.addLayout(btn_layout)
         self.tabs.addTab(account_tab, "Account")
 
-        # Fetch on load
+        # Kick off data fetch
         self.manager.request_diagnostics()
 
+    def _build_connection_tab(self) -> None:
+        """Constructs the routing mode selection UI."""
         conn_tab = QWidget()
         conn_layout = QVBoxLayout(conn_tab)
         conn_layout.addWidget(QLabel("Routing Mode:"))
+        
         self.mode_combo = QComboBox()
-        # The first argument is what the user sees. The second is the hidden warp-cli string.
         self.mode_combo.addItem("1.1.1.1 with WARP", "warp")
         self.mode_combo.addItem("1.1.1.1 (DNS over DoH)", "doh")
         self.mode_combo.addItem("WARP + DoH", "warp+doh")
@@ -95,7 +115,7 @@ class SettingsDialog(QDialog):
         self.mode_combo.addItem("Local Proxy", "proxy")
         self.mode_combo.addItem("Tunnel Only", "tunnel_only")
 
-        # Sync with daemon source of truth
+        # Synchronize combo box with backend source of truth
         current_daemon_mode = self.manager.engine.get_current_mode()
         if current_daemon_mode:
             current_mode_normalized = current_daemon_mode.lower().replace(" ", "").replace("_", "").replace("+", "")
@@ -105,16 +125,17 @@ class SettingsDialog(QDialog):
                     self.mode_combo.setCurrentIndex(i)
                     break
 
-        # Change the signal to listen for index changes, not text changes
         self.mode_combo.currentIndexChanged.connect(self._on_mode_changed)
         conn_layout.addWidget(self.mode_combo)
         conn_layout.addStretch()
         self.tabs.addTab(conn_tab, "Connection")
 
+    def _build_about_tab(self) -> None:
+        """Constructs application metadata and disclaimers tab."""
         about_tab = QWidget()
         about_layout = QVBoxLayout(about_tab)
 
-        # Icon
+        # Application Icon Header
         icon_label = QLabel()
         icon_pixmap = get_asset_icon("app-icon.svg").pixmap(QSize(64, 64))
         icon_label.setPixmap(icon_pixmap)
@@ -122,7 +143,7 @@ class SettingsDialog(QDialog):
         about_layout.addWidget(icon_label)
         about_layout.addSpacing(5)
 
-        # Version & Description
+        # Branding & Versioning
         title_label = QLabel(f"<b>QWarp v{__version__}</b>")
         title_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         title_font = title_label.font()
@@ -135,19 +156,20 @@ class SettingsDialog(QDialog):
         about_layout.addWidget(desc_label)
         about_layout.addSpacing(10)
 
-        # Author Links
+        # Open-source Footprint
         author_label = QLabel("Created by Ashutosh Tiwari<br><a href='https://github.com/iashutoshtiwari'>GitHub Profile</a> | <a href='https://github.com/iashutoshtiwari/qwarp'>Repository</a>")
         author_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         author_label.setOpenExternalLinks(True)
         about_layout.addWidget(author_label)
         about_layout.addSpacing(10)
 
-        # Legal & Copyright Section
+        # Required Separation
         separator = QFrame()
         separator.setFrameShape(QFrame.Shape.HLine)
         separator.setFrameShadow(QFrame.Shadow.Sunken)
         about_layout.addWidget(separator)
 
+        # Legal Disclaimers
         legal_text = (
             "Disclaimer: QWarp is an unofficial community project and is not affiliated with, "
             "authorized, maintained, sponsored, or endorsed by Cloudflare, Inc.<br><br>"
@@ -168,14 +190,12 @@ class SettingsDialog(QDialog):
         about_layout.addStretch()
         self.tabs.addTab(about_tab, "About")
 
-        layout.addWidget(self.tabs)
-
-    def _on_minimized_toggled(self, checked):
-        logger.info(f"User toggled start minimized to: {checked}")
+    def _on_minimized_toggled(self, checked: bool) -> None:
+        logger.info("User toggled start minimized to: %s", checked)
         settings = QSettings()
         settings.setValue("start_minimized", checked)
 
-    def _on_diagnostics_updated(self, data: dict):
+    def _on_diagnostics_updated(self, data: dict) -> None:
         self.lbl_acc_type.setText(data.get("type", "Unknown"))
         self.lbl_license.setText(data.get("license", "Unknown"))
         self.lbl_quota.setText(data.get("quota", "Unknown"))
@@ -185,21 +205,24 @@ class SettingsDialog(QDialog):
             status_text += f" ({data['reason']})"
         self.lbl_daemon_status.setText(status_text)
 
-    def _on_delete_clicked(self):
+    def _on_delete_clicked(self) -> None:
         logger.info("User deleted registration")
         self.manager.request_delete_registration()
         self.accept()
 
-    def _on_mode_changed(self, index):
-        # Retrieve the hidden string (e.g., "doh") instead of the display text
+    def _on_mode_changed(self, index: int) -> None:
         cli_mode = self.mode_combo.itemData(index)
-        logger.info(f"User changed routing mode to: {cli_mode}")
+        logger.info("User changed routing mode to: %s", cli_mode)
         self.manager.request_set_mode(cli_mode)
 
 class WarpWindow(QWidget):
+    """
+    Main Application Window. Serves as a dynamic interface to the WARP daemon,
+    providing visual status indications and a central connection toggle.
+    """
     quit_requested = pyqtSignal()
 
-    def __init__(self, manager: WarpStateManager, parent=None):
+    def __init__(self, manager: WarpStateManager, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.manager = manager
 
@@ -210,28 +233,39 @@ class WarpWindow(QWidget):
         self._setup_signals()
         self._update_ui_state(self.manager.current_state)
 
-    def _setup_ui(self):
-        main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(20, 30, 20, 20)
+    def _setup_ui(self) -> None:
+        """Fully boots the visual DOM equivalent of the application."""
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(20, 30, 20, 20)
 
-        # --- HEADER: Massive WARP Logo ---
+        self._build_header()
+        self.main_layout.addStretch()
+        self._build_stack_views()
+        self.main_layout.addStretch()
+        self._build_footer()
+
+    def _build_header(self) -> None:
+        """Draws the massive QWARP logo."""
         self.header_label = QLabel("QWARP")
         header_font = self.header_label.font()
         header_font.setPointSize(36)
         header_font.setBold(True)
         self.header_label.setFont(header_font)
-        self.header_label.setStyleSheet("color: #F46654; letter-spacing: 2px;")
+        self.header_label.setStyleSheet(styles.HEADER_STYLE)
         self.header_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        main_layout.addWidget(self.header_label)
+        self.main_layout.addWidget(self.header_label)
 
-        main_layout.addStretch()
-
-        # --- CENTER: The State Stack ---
+    def _build_stack_views(self) -> None:
+        """
+        Creates the central interaction element as a stacked widget, swapping
+        between the Initial Registration flow and the Primary Connection Toggle.
+        """
         self.stack = QStackedWidget(self)
 
-        # Page 0 (Unregistered)
+        # Flow 0: Unregistered User View
         self.page0 = QWidget()
         p0_layout = QVBoxLayout(self.page0)
+        
         not_reg_label = QLabel("Not Registered")
         font = not_reg_label.font()
         font.setPointSize(15)
@@ -245,10 +279,7 @@ class WarpWindow(QWidget):
 
         self.register_btn = QPushButton("Accept && register")
         self.register_btn.setFixedSize(160, 40)
-        self.register_btn.setStyleSheet("""
-            QPushButton { background-color: #007bff; color: white; font-weight: bold; border-radius: 20px; border: none; }
-            QPushButton:hover { background-color: #0056b3; }
-        """)
+        self.register_btn.setStyleSheet(styles.BUTTON_PRIMARY)
 
         p0_layout.addStretch()
         p0_layout.addWidget(not_reg_label)
@@ -256,22 +287,21 @@ class WarpWindow(QWidget):
         p0_layout.addSpacing(15)
         p0_layout.addWidget(self.register_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
         p0_layout.addStretch()
+        
         self.stack.addWidget(self.page0)
 
-        # Page 1 (Main View with Custom Toggle)
+        # Flow 1: Primary Connectivity State Driven View
         self.page1 = QWidget()
         p1_layout = QVBoxLayout(self.page1)
         p1_layout.setSpacing(10)
 
         self.toggle = AnimatedToggle()
 
+        # Rescue Button triggers polkit daemon restore
         self.repair_btn = QPushButton("Enable service")
         self.repair_btn.setIcon(QIcon.fromTheme("emblem-system"))
         self.repair_btn.setFixedSize(160, 40)
-        self.repair_btn.setStyleSheet("""
-            QPushButton { background-color: #007bff; color: white; font-weight: bold; border-radius: 20px; border: none; }
-            QPushButton:hover { background-color: #0056b3; }
-        """)
+        self.repair_btn.setStyleSheet(styles.BUTTON_PRIMARY)
         self.repair_btn.hide()
 
         self.status_title = QLabel("UNKNOWN")
@@ -283,7 +313,7 @@ class WarpWindow(QWidget):
 
         self.status_desc = QLabel("Connecting to daemon...")
         self.status_desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.status_desc.setStyleSheet("color: #888888; font-size: 13px;")
+        self.status_desc.setStyleSheet(styles.DESC_DEFAULT_STYLE)
 
         p1_layout.addStretch()
         p1_layout.addWidget(self.toggle, alignment=Qt.AlignmentFlag.AlignHCenter)
@@ -292,24 +322,20 @@ class WarpWindow(QWidget):
         p1_layout.addWidget(self.status_desc)
         p1_layout.addWidget(self.repair_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
         p1_layout.addStretch()
+        
         self.stack.addWidget(self.page1)
+        self.main_layout.addWidget(self.stack)
 
-        main_layout.addWidget(self.stack)
-        main_layout.addStretch()
-
-        # --- FOOTER: The Three Icons ---
+    def _build_footer(self) -> None:
+        """Constructs the bottom toolbar items (Settings, Status Icons)."""
         footer_layout = QHBoxLayout()
         footer_layout.setContentsMargins(10, 0, 10, 0)
 
-        def create_tool_btn(icon_name):
+        def create_tool_btn(icon_name: str) -> QToolButton:
             btn = QToolButton()
             btn.setIcon(load_tinted_icon(f"{icon_name}.svg"))
             btn.setIconSize(QSize(22, 22))
-            btn.setStyleSheet("""
-                QToolButton { border: none; background: transparent; }
-                QToolButton::menu-indicator { image: none; width: 0px; }
-                QToolButton:hover { opacity: 0.7; }
-            """)
+            btn.setStyleSheet(styles.TOOL_BUTTON_ICON)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             return btn
 
@@ -333,27 +359,33 @@ class WarpWindow(QWidget):
         footer_layout.addSpacing(10)
         footer_layout.addWidget(self.settings_btn)
 
-        main_layout.addLayout(footer_layout)
+        self.main_layout.addLayout(footer_layout)
 
-    def _show_settings(self):
+    def _show_settings(self) -> None:
+        """Launches the settings modal dialog."""
         dialog = SettingsDialog(self.manager, self)
         dialog.exec()
 
-    def _setup_signals(self):
+    def _setup_signals(self) -> None:
+        """Subscribes and bridges local UI actions to state manager operations."""
         self.manager.state_changed.connect(self._update_ui_state)
         self.toggle.clicked.connect(self._on_toggle_clicked)
         self.register_btn.clicked.connect(self._on_register_clicked)
         self.repair_btn.clicked.connect(self._on_repair_clicked)
 
-    def _on_register_clicked(self):
-        logger.info("User clicked register")
+    def _on_register_clicked(self) -> None:
+        logger.info("User requested daemon registration")
         self.manager.request_register()
 
-    def _on_repair_clicked(self):
-        logger.info("User clicked enable service")
+    def _on_repair_clicked(self) -> None:
+        logger.info("User requested daemon service recovery")
         self.manager.request_repair_service()
 
-    def _update_ui_state(self, state: WarpState):
+    def _update_ui_state(self, state: WarpState) -> None:
+        """
+        Dynamically repaints the view state correlating strictly to the daemon reality.
+        Locks the visual toggle signals to prevent circular infinite loops.
+        """
         if state == WarpState.UNREGISTERED:
             self.stack.setCurrentIndex(0)
             self.settings_btn.setEnabled(False)
@@ -362,6 +394,7 @@ class WarpWindow(QWidget):
         self.stack.setCurrentIndex(1)
         self.settings_btn.setEnabled(True)
 
+        # Mutate Visuals safely without triggering action broadcasts
         self.toggle.blockSignals(True)
 
         if state == WarpState.SERVICE_STOPPED:
@@ -373,34 +406,36 @@ class WarpWindow(QWidget):
             self.toggle.setChecked(True)
             self.toggle.setEnabled(True)
             self.status_title.setText("CONNECTED")
-            self.status_title.setStyleSheet("color: #F46654;")
+            self.status_title.setStyleSheet(styles.TITLE_CONNECTED_COLOR)
             self.status_desc.setText("Your Internet is private.")
 
         elif state == WarpState.DISCONNECTED:
             self.toggle.setChecked(False)
             self.toggle.setEnabled(True)
             self.status_title.setText("DISCONNECTED")
-            self.status_title.setStyleSheet("color: #888888;")
+            self.status_title.setStyleSheet(styles.TITLE_DISCONNECTED_COLOR)
             self.status_desc.setText("Your Internet is not private.")
 
         elif state == WarpState.CONNECTING:
             self.toggle.setEnabled(False)
             self.status_title.setText("CONNECTING")
-            self.status_title.setStyleSheet("color: #888888;")
+            self.status_title.setStyleSheet(styles.TITLE_DISCONNECTED_COLOR)
             self.status_desc.setText("Securing connection...")
 
         elif state == WarpState.DAEMON_ERROR:
             self.toggle.setChecked(False)
             self.toggle.setEnabled(False)
             self.status_title.setText("ERROR")
-            self.status_title.setStyleSheet("color: #d9534f;")
+            self.status_title.setStyleSheet(styles.TITLE_ERROR_COLOR)
             self.status_desc.setText("WARP daemon is not running.")
+            
         elif state == WarpState.SERVICE_STOPPED:
             self.toggle.setChecked(False)
             self.toggle.setEnabled(False)
             self.status_title.setText("SERVICE OFF")
-            self.status_title.setStyleSheet("color: #d9534f;")
+            self.status_title.setStyleSheet(styles.TITLE_ERROR_COLOR)
             self.status_desc.setText("Cloudflare WARP service is not running.")
+            
         else:
             self.toggle.setEnabled(False)
             self.status_title.setText("WAIT")
@@ -408,28 +443,35 @@ class WarpWindow(QWidget):
 
         self.toggle.blockSignals(False)
 
-    def _on_toggle_clicked(self):
+    def _on_toggle_clicked(self) -> None:
+        """Handles the main toggle switch state initiation and locks interactions."""
         self.toggle.setEnabled(False)
         self.status_title.setText("CONNECTING" if self.toggle.isChecked() else "DISCONNECTING")
         self.status_desc.setText("Please wait...")
-        self.status_title.setStyleSheet("color: #888888;")
+        self.status_title.setStyleSheet(styles.TITLE_DISCONNECTED_COLOR)
 
         if self.toggle.isChecked():
-            logger.info("User clicked toggle to connect")
+            logger.info("User flipped toggle ON")
             self.manager.request_connect()
         else:
-            logger.info("User clicked toggle to disconnect")
+            logger.info("User flipped toggle OFF")
             self.manager.request_disconnect()
 
-    def show_at_cursor(self, pos: QPoint):
+    def show_at_cursor(self, pos: QPoint) -> None:
+        """
+        Calculates and maps window positioning strictly around system cursor layout.
+        Wayland environments fallback normally, X11 gets absolute positioning mapping.
+        """
         if is_x11():
             self.move(pos.x() - self.width() // 2, pos.y() - self.height() - 20)
             self.showNormal()
         else:
             self.showNormal()
+            
         self.raise_()
         self.activateWindow()
 
-    def closeEvent(self, event: QCloseEvent):
+    def closeEvent(self, event: QCloseEvent) -> None:
+        """Overrides the window kill-switch, forcing it into a minimized background state."""
         event.ignore()
         self.hide()
