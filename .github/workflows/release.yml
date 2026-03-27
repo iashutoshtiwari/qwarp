@@ -36,8 +36,18 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends qt6-l10n-tools
-          # Ubuntu ships the binary as 'lrelease-qt6'; our build script expects 'lrelease6'
-          sudo ln -sf "$(command -v lrelease-qt6)" /usr/local/bin/lrelease6
+
+          # The binary name varies by Ubuntu version — probe all known candidates
+          LRELEASE=$(command -v lrelease-qt6 || command -v lrelease6 || command -v lrelease || true)
+
+          if [ -z "$LRELEASE" ]; then
+            echo "❌ Could not locate an lrelease binary. Package contents:"
+            dpkg -L qt6-l10n-tools | grep -i release || true
+            exit 1
+          fi
+
+          echo "✅ Found lrelease at: $LRELEASE"
+          sudo ln -sf "$LRELEASE" /usr/local/bin/lrelease6
 
       - name: Install Python Build Dependencies
         run: |
