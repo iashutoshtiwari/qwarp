@@ -10,3 +10,6 @@ pkg/
 *.pkg.tar.zst
 *.tar.gz
 /src/qwarp-*
+
+# Ignore compiled Qt translation binaries
+*.qm

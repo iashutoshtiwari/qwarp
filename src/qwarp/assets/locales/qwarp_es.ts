@@ -311,5 +311,4 @@
         <source>Please wait...</source>
         <translation>Por favor, espera...</translation>
     </message>
-</context>
-</TS>
+</context></TS>

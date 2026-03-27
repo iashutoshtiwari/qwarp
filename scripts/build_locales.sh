@@ -26,6 +26,6 @@ done
 
 # Step 2: Compile `.ts` files into binary `.qm` files for the application to read
 echo "[2/2] Releasing binary Qt Message (.qm) files..."
-lrelease "$LOCALES_DIR"/*.ts
+lrelease6 "$LOCALES_DIR"/*.ts
 
 echo "Done! Locales successfully built to $LOCALES_DIR."
