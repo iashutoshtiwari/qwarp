@@ -37,30 +37,10 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends qt6-l10n-tools
 
-          # On Ubuntu Noble, qt6-l10n-tools installs lrelease to /usr/lib/qt6/bin/
-          # which is NOT on PATH — so we check that well-known location first,
-          # then fall back to PATH-based probing for other distro variants.
-          LRELEASE=$(
-            command -v lrelease-qt6 2>/dev/null ||
-            command -v lrelease6   2>/dev/null ||
-            command -v lrelease    2>/dev/null ||
-            echo "/usr/lib/qt6/bin/lrelease"
-          )
-
-          if [ ! -x "$LRELEASE" ]; then
-            echo "❌ Could not locate an executable lrelease binary. Package contents:"
-            dpkg -L qt6-l10n-tools | grep -i release || true
-            exit 1
-          fi
-
-          echo "✅ Found lrelease at: $LRELEASE"
-          sudo ln -sf "$LRELEASE" /usr/local/bin/lrelease6
-
       - name: Install Python Build Dependencies
         run: |
           python -m pip install --upgrade pip
-          # pyqt6-tools provides the `pylupdate6` command used by build_locales.sh
-          pip install pyinstaller pyqt6-tools
+          pip install pyinstaller
           # Install the package itself to resolve PyQt6 and all runtime dependencies
           pip install .
 
