@@ -12,7 +12,8 @@ logger = logging.getLogger(__name__)
 
 def get_asset_icon(filename: str, fallback_theme_name: str = "network-wired") -> QIcon:
     """Loads an un-tinted SVG directly from the assets folder."""
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    # Point to the qwarp package root by going one directory up
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     asset_path = os.path.join(base_dir, "assets", filename)
     if os.path.exists(asset_path):
         return QIcon(asset_path)

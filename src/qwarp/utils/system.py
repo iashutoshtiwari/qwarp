@@ -21,7 +21,8 @@ def get_tinted_icon(filename: str, fallback_theme_name: str = None) -> QIcon:
     Loads an SVG from the assets folder and dynamically recolors it
     based on the current system theme (Light/Dark).
     """
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    # Point to the qwarp package root by going one directory up
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     asset_path = os.path.join(base_dir, "assets", filename)
 
     if not os.path.exists(asset_path):
@@ -56,7 +57,8 @@ def load_tinted_icon(icon_name: str) -> QIcon:
         # If lightness > 128, it's Light Mode
         is_light_mode = app.palette().color(QPalette.ColorRole.Window).lightness() > 128
 
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    # Point to the qwarp package root by going one directory up
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     asset_path = os.path.join(base_dir, "assets", icon_name)
 
     if not os.path.exists(asset_path):
