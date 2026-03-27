@@ -25,8 +25,8 @@ class SettingsDialog(QDialog):
     def __init__(self, manager: WarpStateManager, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.manager = manager
-        self.setWindowTitle("Settings")
-        self.setFixedSize(360, 440)
+        self.setWindowTitle(self.tr("Settings"))
+        self.setFixedSize(360, 480)
 
         self.layout = QVBoxLayout(self)
         self.tabs = QTabWidget()
@@ -45,13 +45,48 @@ class SettingsDialog(QDialog):
         
         settings = QSettings()
         
-        self.minimized_cb = QCheckBox("Start minimized to system tray")
+        # Minimized to Tray setting
+        self.minimized_cb = QCheckBox(self.tr("Start minimized to system tray"))
         self.minimized_cb.setChecked(settings.value("start_minimized", False, type=bool))
         self.minimized_cb.toggled.connect(self._on_minimized_toggled)
         
         gen_layout.addWidget(self.minimized_cb)
+        gen_layout.addSpacing(10)
+
+        # Language Dropdown setting (v0.7.0 i18n Feature)
+        gen_layout.addWidget(QLabel(self.tr("Language:")))
+        self.lang_combo = QComboBox()
+        
+        translations_map = [
+            (self.tr("System Default"), ""),
+            ("English", "en"),
+            ("Español", "es"),
+            ("Português", "pt"),
+            ("Deutsch", "de"),
+            ("Italiano", "it"),
+            ("中文", "zh"),
+            ("日本語", "ja"),
+            ("हिन्दी", "hi")
+        ]
+        
+        current_lang = settings.value("language", "", type=str)
+        
+        for idx, (display_target, code_target) in enumerate(translations_map):
+            self.lang_combo.addItem(display_target, code_target)
+            if code_target == current_lang:
+                self.lang_combo.setCurrentIndex(idx)
+                
+        self.lang_combo.currentIndexChanged.connect(self._on_language_changed)
+        gen_layout.addWidget(self.lang_combo)
+
+        # Notice for user
+        lang_notice = QLabel(self.tr("(Requires application restart to take effect)"))
+        lang_notice.setStyleSheet(styles.DESC_DEFAULT_STYLE)
+        lang_notice.setWordWrap(True)
+        gen_layout.addWidget(lang_notice)
+        
         gen_layout.addStretch()
-        self.tabs.addTab(gen_tab, "General")
+        self.tabs.addTab(gen_tab, self.tr("General"))
 
     def _build_account_tab(self) -> None:
         """Constructs the offline telemetry and diagnostics tab."""
@@ -61,32 +96,30 @@ class SettingsDialog(QDialog):
         # Diagnostics Form View
         form_layout = QFormLayout()
 
-        self.lbl_acc_type = QLabel("Loading...")
-        self.lbl_license = QLabel("Loading...")
-        self.lbl_quota = QLabel("Loading...")
-        self.lbl_daemon_status = QLabel("Loading...")
+        self.lbl_acc_type = QLabel(self.tr("Loading..."))
+        self.lbl_license = QLabel(self.tr("Loading..."))
+        self.lbl_quota = QLabel(self.tr("Loading..."))
+        self.lbl_daemon_status = QLabel(self.tr("Loading..."))
 
-        # Allows users to double-click and copy text (useful for debugging licenses)
         selectable_flag = Qt.TextInteractionFlag.TextSelectableByMouse
         self.lbl_acc_type.setTextInteractionFlags(selectable_flag)
         self.lbl_license.setTextInteractionFlags(selectable_flag)
         self.lbl_quota.setTextInteractionFlags(selectable_flag)
         self.lbl_daemon_status.setTextInteractionFlags(selectable_flag)
 
-        form_layout.addRow("Account Type:", self.lbl_acc_type)
-        form_layout.addRow("License Key:", self.lbl_license)
-        form_layout.addRow("Data Quota:", self.lbl_quota)
-        form_layout.addRow("Daemon Status:", self.lbl_daemon_status)
+        form_layout.addRow(self.tr("Account Type:"), self.lbl_acc_type)
+        form_layout.addRow(self.tr("License Key:"), self.lbl_license)
+        form_layout.addRow(self.tr("Data Quota:"), self.lbl_quota)
+        form_layout.addRow(self.tr("Daemon Status:"), self.lbl_daemon_status)
 
         acc_layout.addLayout(form_layout)
         self.manager.diagnostics_updated.connect(self._on_diagnostics_updated)
 
-        # Action Buttons
         btn_layout = QHBoxLayout()
-        self.refresh_btn = QPushButton("Refresh Data")
+        self.refresh_btn = QPushButton(self.tr("Refresh Data"))
         self.refresh_btn.clicked.connect(self.manager.request_diagnostics)
 
-        self.delete_btn = QPushButton("Delete Registration")
+        self.delete_btn = QPushButton(self.tr("Delete Registration"))
         self.delete_btn.setStyleSheet(styles.BUTTON_DANGER)
         self.delete_btn.clicked.connect(self._on_delete_clicked)
 
@@ -95,27 +128,25 @@ class SettingsDialog(QDialog):
 
         acc_layout.addStretch()
         acc_layout.addLayout(btn_layout)
-        self.tabs.addTab(account_tab, "Account")
+        self.tabs.addTab(account_tab, self.tr("Account"))
 
-        # Kick off data fetch
         self.manager.request_diagnostics()
 
     def _build_connection_tab(self) -> None:
         """Constructs the routing mode selection UI."""
         conn_tab = QWidget()
         conn_layout = QVBoxLayout(conn_tab)
-        conn_layout.addWidget(QLabel("Routing Mode:"))
+        conn_layout.addWidget(QLabel(self.tr("Routing Mode:")))
         
         self.mode_combo = QComboBox()
-        self.mode_combo.addItem("1.1.1.1 with WARP", "warp")
-        self.mode_combo.addItem("1.1.1.1 (DNS over DoH)", "doh")
-        self.mode_combo.addItem("WARP + DoH", "warp+doh")
-        self.mode_combo.addItem("1.1.1.1 (DNS over DoT)", "dot")
-        self.mode_combo.addItem("WARP + DoT", "warp+dot")
-        self.mode_combo.addItem("Local Proxy", "proxy")
-        self.mode_combo.addItem("Tunnel Only", "tunnel_only")
+        self.mode_combo.addItem(self.tr("1.1.1.1 with WARP"), "warp")
+        self.mode_combo.addItem(self.tr("1.1.1.1 (DNS over DoH)"), "doh")
+        self.mode_combo.addItem(self.tr("WARP + DoH"), "warp+doh")
+        self.mode_combo.addItem(self.tr("1.1.1.1 (DNS over DoT)"), "dot")
+        self.mode_combo.addItem(self.tr("WARP + DoT"), "warp+dot")
+        self.mode_combo.addItem(self.tr("Local Proxy"), "proxy")
+        self.mode_combo.addItem(self.tr("Tunnel Only"), "tunnel_only")
 
-        # Synchronize combo box with backend source of truth
         current_daemon_mode = self.manager.engine.get_current_mode()
         if current_daemon_mode:
             current_mode_normalized = current_daemon_mode.lower().replace(" ", "").replace("_", "").replace("+", "")
@@ -128,14 +159,13 @@ class SettingsDialog(QDialog):
         self.mode_combo.currentIndexChanged.connect(self._on_mode_changed)
         conn_layout.addWidget(self.mode_combo)
         conn_layout.addStretch()
-        self.tabs.addTab(conn_tab, "Connection")
+        self.tabs.addTab(conn_tab, self.tr("Connection"))
 
     def _build_about_tab(self) -> None:
         """Constructs application metadata and disclaimers tab."""
         about_tab = QWidget()
         about_layout = QVBoxLayout(about_tab)
 
-        # Application Icon Header
         icon_label = QLabel()
         icon_pixmap = get_asset_icon("app-icon.svg").pixmap(QSize(64, 64))
         icon_label.setPixmap(icon_pixmap)
@@ -143,7 +173,6 @@ class SettingsDialog(QDialog):
         about_layout.addWidget(icon_label)
         about_layout.addSpacing(5)
 
-        # Branding & Versioning
         title_label = QLabel(f"<b>QWarp v{__version__}</b>")
         title_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         title_font = title_label.font()
@@ -151,26 +180,23 @@ class SettingsDialog(QDialog):
         title_label.setFont(title_font)
         about_layout.addWidget(title_label)
 
-        desc_label = QLabel("A Wayland-native Qt6 wrapper for Cloudflare WARP.")
+        desc_label = QLabel(self.tr("A Wayland-native Qt6 wrapper for Cloudflare WARP."))
         desc_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         about_layout.addWidget(desc_label)
         about_layout.addSpacing(10)
 
-        # Open-source Footprint
         author_label = QLabel("Created by Ashutosh Tiwari<br><a href='https://github.com/iashutoshtiwari'>GitHub Profile</a> | <a href='https://github.com/iashutoshtiwari/qwarp'>Repository</a>")
         author_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         author_label.setOpenExternalLinks(True)
         about_layout.addWidget(author_label)
         about_layout.addSpacing(10)
 
-        # Required Separation
         separator = QFrame()
         separator.setFrameShape(QFrame.Shape.HLine)
         separator.setFrameShadow(QFrame.Shadow.Sunken)
         about_layout.addWidget(separator)
 
-        # Legal Disclaimers
-        legal_text = (
+        legal_text = self.tr(
             "Disclaimer: QWarp is an unofficial community project and is not affiliated with, "
             "authorized, maintained, sponsored, or endorsed by Cloudflare, Inc.<br><br>"
             "Cloudflare, the Cloudflare logo, and Cloudflare Workers are trademarks and/or "
@@ -188,19 +214,27 @@ class SettingsDialog(QDialog):
         about_layout.addWidget(legal_label)
 
         about_layout.addStretch()
-        self.tabs.addTab(about_tab, "About")
+        self.tabs.addTab(about_tab, self.tr("About"))
 
     def _on_minimized_toggled(self, checked: bool) -> None:
         logger.info("User toggled start minimized to: %s", checked)
         settings = QSettings()
         settings.setValue("start_minimized", checked)
 
-    def _on_diagnostics_updated(self, data: dict) -> None:
-        self.lbl_acc_type.setText(data.get("type", "Unknown"))
-        self.lbl_license.setText(data.get("license", "Unknown"))
-        self.lbl_quota.setText(data.get("quota", "Unknown"))
+    def _on_language_changed(self, index: int) -> None:
+        """Handles binding local setting when language dropdown switches."""
+        lang_code = self.lang_combo.itemData(index)
+        logger.info("User switched language setting to: %s", lang_code)
+        settings = QSettings()
+        settings.setValue("language", lang_code)
 
-        status_text = data.get("status", "Unknown")
+    def _on_diagnostics_updated(self, data: dict) -> None:
+        # Backend returns specific strings, wrap generic unreachability
+        self.lbl_acc_type.setText(self.tr(data.get("type", "Unknown")))
+        self.lbl_license.setText(self.tr(data.get("license", "Unknown")))
+        self.lbl_quota.setText(self.tr(data.get("quota", "Unknown")))
+
+        status_text = self.tr(data.get("status", "Unknown"))
         if data.get("reason"):
             status_text += f" ({data['reason']})"
         self.lbl_daemon_status.setText(status_text)
@@ -266,18 +300,18 @@ class WarpWindow(QWidget):
         self.page0 = QWidget()
         p0_layout = QVBoxLayout(self.page0)
         
-        not_reg_label = QLabel("Not Registered")
+        not_reg_label = QLabel(self.tr("Not Registered"))
         font = not_reg_label.font()
         font.setPointSize(15)
         font.setBold(True)
         not_reg_label.setFont(font)
         not_reg_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        info_label = QLabel("You must accept the Cloudflare Terms of Service to continue.")
+        info_label = QLabel(self.tr("You must accept the Cloudflare Terms of Service to continue."))
         info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         info_label.setWordWrap(True)
 
-        self.register_btn = QPushButton("Accept && register")
+        self.register_btn = QPushButton(self.tr("Accept && register"))
         self.register_btn.setFixedSize(160, 40)
         self.register_btn.setStyleSheet(styles.BUTTON_PRIMARY)
 
@@ -297,21 +331,20 @@ class WarpWindow(QWidget):
 
         self.toggle = AnimatedToggle()
 
-        # Rescue Button triggers polkit daemon restore
-        self.repair_btn = QPushButton("Enable service")
+        self.repair_btn = QPushButton(self.tr("Enable service"))
         self.repair_btn.setIcon(QIcon.fromTheme("emblem-system"))
         self.repair_btn.setFixedSize(160, 40)
         self.repair_btn.setStyleSheet(styles.BUTTON_PRIMARY)
         self.repair_btn.hide()
 
-        self.status_title = QLabel("UNKNOWN")
+        self.status_title = QLabel(self.tr("UNKNOWN"))
         title_font = self.status_title.font()
         title_font.setPointSize(16)
         title_font.setBold(True)
         self.status_title.setFont(title_font)
         self.status_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.status_desc = QLabel("Connecting to daemon...")
+        self.status_desc = QLabel(self.tr("Connecting to daemon..."))
         self.status_desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.status_desc.setStyleSheet(styles.DESC_DEFAULT_STYLE)
 
@@ -344,10 +377,10 @@ class WarpWindow(QWidget):
         self.settings_btn = create_tool_btn("gear")
 
         self.settings_menu = QMenu(self)
-        self.pref_action = self.settings_menu.addAction("Preferences")
+        self.pref_action = self.settings_menu.addAction(self.tr("Preferences"))
         self.pref_action.triggered.connect(self._show_settings)
         self.settings_menu.addSeparator()
-        self.exit_action = self.settings_menu.addAction("Exit")
+        self.exit_action = self.settings_menu.addAction(self.tr("Exit"))
         self.exit_action.triggered.connect(self.quit_requested.emit)
 
         self.settings_btn.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
@@ -394,7 +427,6 @@ class WarpWindow(QWidget):
         self.stack.setCurrentIndex(1)
         self.settings_btn.setEnabled(True)
 
-        # Mutate Visuals safely without triggering action broadcasts
         self.toggle.blockSignals(True)
 
         if state == WarpState.SERVICE_STOPPED:
@@ -405,49 +437,51 @@ class WarpWindow(QWidget):
         if state == WarpState.CONNECTED:
             self.toggle.setChecked(True)
             self.toggle.setEnabled(True)
-            self.status_title.setText("CONNECTED")
+            self.status_title.setText(self.tr("CONNECTED"))
             self.status_title.setStyleSheet(styles.TITLE_CONNECTED_COLOR)
-            self.status_desc.setText("Your Internet is private.")
+            self.status_desc.setText(self.tr("Your Internet is private."))
 
         elif state == WarpState.DISCONNECTED:
             self.toggle.setChecked(False)
             self.toggle.setEnabled(True)
-            self.status_title.setText("DISCONNECTED")
+            self.status_title.setText(self.tr("DISCONNECTED"))
             self.status_title.setStyleSheet(styles.TITLE_DISCONNECTED_COLOR)
-            self.status_desc.setText("Your Internet is not private.")
+            self.status_desc.setText(self.tr("Your Internet is not private."))
 
         elif state == WarpState.CONNECTING:
             self.toggle.setEnabled(False)
-            self.status_title.setText("CONNECTING")
+            self.status_title.setText(self.tr("CONNECTING"))
             self.status_title.setStyleSheet(styles.TITLE_DISCONNECTED_COLOR)
-            self.status_desc.setText("Securing connection...")
+            self.status_desc.setText(self.tr("Securing connection..."))
 
         elif state == WarpState.DAEMON_ERROR:
             self.toggle.setChecked(False)
             self.toggle.setEnabled(False)
-            self.status_title.setText("ERROR")
+            self.status_title.setText(self.tr("ERROR"))
             self.status_title.setStyleSheet(styles.TITLE_ERROR_COLOR)
-            self.status_desc.setText("WARP daemon is not running.")
+            self.status_desc.setText(self.tr("WARP daemon is not running."))
             
         elif state == WarpState.SERVICE_STOPPED:
             self.toggle.setChecked(False)
             self.toggle.setEnabled(False)
-            self.status_title.setText("SERVICE OFF")
+            self.status_title.setText(self.tr("SERVICE OFF"))
             self.status_title.setStyleSheet(styles.TITLE_ERROR_COLOR)
-            self.status_desc.setText("Cloudflare WARP service is not running.")
+            self.status_desc.setText(self.tr("Cloudflare WARP service is not running."))
             
         else:
             self.toggle.setEnabled(False)
-            self.status_title.setText("WAIT")
-            self.status_desc.setText("Checking status...")
+            self.status_title.setText(self.tr("WAIT"))
+            self.status_desc.setText(self.tr("Checking status..."))
 
         self.toggle.blockSignals(False)
 
     def _on_toggle_clicked(self) -> None:
         """Handles the main toggle switch state initiation and locks interactions."""
         self.toggle.setEnabled(False)
-        self.status_title.setText("CONNECTING" if self.toggle.isChecked() else "DISCONNECTING")
-        self.status_desc.setText("Please wait...")
+        
+        status_target = self.tr("CONNECTING") if self.toggle.isChecked() else self.tr("DISCONNECTING")
+        self.status_title.setText(status_target)
+        self.status_desc.setText(self.tr("Please wait..."))
         self.status_title.setStyleSheet(styles.TITLE_DISCONNECTED_COLOR)
 
         if self.toggle.isChecked():

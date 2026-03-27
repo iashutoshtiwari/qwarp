@@ -6,7 +6,7 @@ import signal
 import traceback
 
 from PyQt6.QtWidgets import QApplication
-from PyQt6.QtCore import QPoint, QTimer, QSettings
+from PyQt6.QtCore import QPoint, QTimer, QSettings, QTranslator, QLocale
 
 from qwarp.core.engine import WarpEngine
 from qwarp.core.state import WarpStateManager
@@ -92,6 +92,28 @@ def main() -> None:
     app = QApplication(sys.argv)
     app.setOrganizationName("qwarp")
     app.setApplicationName("qwarp")
+
+    # Localized runtime translation instantiation
+    locales_settings = QSettings()
+    lang_pref = locales_settings.value("language", "", type=str)
+
+    # Smart fallback logic defaulting strictly to system footprint map
+    if not lang_pref:
+        system_locale = QLocale.system().name()
+        lang_pref = system_locale.split("_")[0] if system_locale else "en"
+
+    translator = QTranslator()
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    qm_path = os.path.join(base_dir, "assets", "locales", f"qwarp_{lang_pref}.qm")
+
+    if os.path.exists(qm_path):
+        if translator.load(qm_path):
+            app.installTranslator(translator)
+            logger.info("Successfully bound locale translator for: %s", lang_pref)
+        else:
+            logger.warning("Failed to parse runtime translation bindings for: %s", lang_pref)
+    else:
+        logger.info("No runtime localization matrix found for %s. Reverting to base English.", lang_pref)
 
     # Enforce single IPC instance
     instance_manager = setup_ipc_instance()

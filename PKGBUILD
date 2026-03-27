@@ -1,33 +1,32 @@
 # Maintainer: Ashutosh Tiwari <contact@ashutoshtiwari.dev>
 pkgname=qwarp
-pkgver=0.6.0
+pkgver=0.7.0
 pkgrel=1
 pkgdesc="A lightweight, Wayland-native Qt6 wrapper for cloudflare-warp-bin"
 arch=('any')
 url="https://github.com/iashutoshtiwari/qwarp"
 license=('MIT')
 depends=('python' 'python-pyqt6' 'cloudflare-warp-bin')
-makedepends=('python-build' 'python-installer' 'python-wheel' 'python-setuptools')
+makedepends=('python-build' 'python-installer' 'python-wheel' 'python-setuptools' 'qt6-tools')
 
-# We use bash substitution ${pkgver/_/-} to convert "0.3.0_alpha" back to "0.3.0-alpha"
-# so pacman respects the underscore rule, but GitHub can still find your tag.
+# Bash substitution converts "0.6.0_alpha" to "0.6.0-alpha" for GitHub tags
 source=("$pkgname-$pkgver.tar.gz::https://github.com/iashutoshtiwari/qwarp/archive/refs/tags/v${pkgver/_/-}.tar.gz")
-sha256sums=('SKIP') # Temporarily skipping hash check for local builds.
-
-pkgver() {
-  cd "$startdir"
-  python -c 'import re; m = re.search(r"__version__\s*=\s*[\x27\x22]([^\x27\x22]+)[\x27\x22]", open("src/qwarp/__init__.py").read()); print(m.group(1).replace("-", "_"))'
-}
+sha256sums=('SKIP') # Remember to run `updpkgsums` before pushing to AUR!
 
 build() {
-  # For local testing, build from the startdir so uncommitted changes are included
-  cd "$startdir"
+  # Enter the directory extracted from the GitHub tarball
+  cd "$pkgname-${pkgver/_/-}"
+
+  # Gather PyQt translation files before generating the wheel so they are grabbed by setup.py
+  bash scripts/build_locales.sh
+
+  # Build the wheel
   python -m build --wheel --no-isolation
 }
 
 package() {
-  # Use local startdir to package uncommitted assets and wheels correctly
-  cd "$startdir"
+  # Enter the directory extracted from the GitHub tarball
+  cd "$pkgname-${pkgver/_/-}"
 
   local _wheels=(dist/*.whl)
 
@@ -42,7 +41,7 @@ package() {
   # Install the desktop entry
   install -Dm644 qwarp.desktop "$pkgdir/usr/share/applications/qwarp.desktop"
 
-  # THE FIX: Explicitly point to the source directory for the icon
+  # Install the SVG icon
   install -Dm644 "src/qwarp/assets/app-icon.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/qwarp.svg"
 
   # Install the license

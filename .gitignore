@@ -9,3 +9,4 @@ pkg/
 # Ignore Arch packaging artifacts from makepkg
 *.pkg.tar.zst
 *.tar.gz
+/src/qwarp-*
