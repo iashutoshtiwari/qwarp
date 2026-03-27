@@ -37,11 +37,18 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends qt6-l10n-tools
 
-          # The binary name varies by Ubuntu version — probe all known candidates
-          LRELEASE=$(command -v lrelease-qt6 || command -v lrelease6 || command -v lrelease || true)
+          # On Ubuntu Noble, qt6-l10n-tools installs lrelease to /usr/lib/qt6/bin/
+          # which is NOT on PATH — so we check that well-known location first,
+          # then fall back to PATH-based probing for other distro variants.
+          LRELEASE=$(
+            command -v lrelease-qt6 2>/dev/null ||
+            command -v lrelease6   2>/dev/null ||
+            command -v lrelease    2>/dev/null ||
+            echo "/usr/lib/qt6/bin/lrelease"
+          )
 
-          if [ -z "$LRELEASE" ]; then
-            echo "❌ Could not locate an lrelease binary. Package contents:"
+          if [ ! -x "$LRELEASE" ]; then
+            echo "❌ Could not locate an executable lrelease binary. Package contents:"
             dpkg -L qt6-l10n-tools | grep -i release || true
             exit 1
           fi
