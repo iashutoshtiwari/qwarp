@@ -21,7 +21,13 @@ A lightweight, Wayland-native Qt6 GUI wrapper for the `cloudflare-warp-bin` serv
 ## Installation
 
 ### Arch Linux (Recommended)
-You can install using the provided `PKGBUILD` to satisfy dependencies naturally via `pacman`:
+
+You can install using the AUR using any AUR helper like `yay`:
+```bash
+yay -S qwarp
+```
+
+Or you can install using the provided `PKGBUILD`:
 ```bash
 git clone https://github.com/iashutoshtiwari/qwarp.git
 cd qwarp
