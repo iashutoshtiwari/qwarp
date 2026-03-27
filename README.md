@@ -44,5 +44,11 @@ qwarp
 ## Requirements
 To actually proxy traffic, the official `cloudflare-warp-bin` package must be installed and the `warp-svc` daemon enabled.
 
+## Known Issues
+This application is currently in very early development. As such, it may possess very little functionality and have incomplete features. Expect breaking changes and bugs as the core stabilizes.
+
+## Contribution
+Any kind of contribution is highly welcome! Whether it's reporting bugs, suggesting new features, or submitting pull requests, I appreciate community input to help build out the application.
+
 ## Authors
 - [@iashutoshtiwari](https://www.github.com/iashutoshtiwari)
