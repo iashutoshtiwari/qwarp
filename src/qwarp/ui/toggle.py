@@ -30,6 +30,12 @@ class AnimatedToggle(QCheckBox):
 
         self.stateChanged.connect(self._start_animation)
 
+    def setChecked(self, checked: bool):
+        """Overrides programmatic state changes to instantly snap visual geometry without relying on signals."""
+        super().setChecked(checked)
+        end_pos = float(self.width()) - (self._thumb_radius * 2.0) - self._margin if checked else float(self._margin)
+        self.thumb_position = end_pos
+
     @pyqtProperty(float)
     def thumb_position(self):
         return self._thumb_position

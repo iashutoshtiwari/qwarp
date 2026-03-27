@@ -23,7 +23,7 @@ def get_asset_dir() -> str:
         return os.path.join(sys._MEIPASS, "qwarp", "assets")
     return os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets")
 
-def load_tinted_icon(filename: str, fallback_theme_name: str = "network-wired") -> QIcon:
+def get_tinted_icon(filename: str, fallback_theme_name: str = "network-wired") -> QIcon:
     """
     Loads an SVG from the assets folder and dynamically recolors it
     based on the current system theme (Light/Dark).
