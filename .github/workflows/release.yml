@@ -173,7 +173,7 @@ jobs:
 
           echo "✅ CHANGELOG.md updated."
 
-      - name: Commit and Push Updated CHANGELOG to main
+      - name: Commit and Push Updated CHANGELOG to master
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -183,8 +183,8 @@ jobs:
             echo "ℹ️  CHANGELOG.md unchanged — nothing to commit."
           else
             git commit -m "chore: auto-update CHANGELOG for ${{ github.ref_name }} [skip ci]"
-            git push origin HEAD:main
-            echo "✅ CHANGELOG.md committed and pushed to main."
+            git push origin HEAD:master
+            echo "✅ CHANGELOG.md committed and pushed to master."
           fi
 
       - name: Publish to GitHub Releases
