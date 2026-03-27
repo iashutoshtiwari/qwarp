@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.7.6] – 2026-03-27
+
+- Bump version to 0.7.6 and switch CI to master ([46ce029](https://github.com/iashutoshtiwari/qwarp/commit/46ce029cb6129d2554f30983651dba857b3fca1b))
+
+
 <!-- New release entries are automatically inserted here by CI on each tag push -->
 
 ## [0.7.1] – 2026-03-27
