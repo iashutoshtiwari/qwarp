@@ -1,4 +1,5 @@
 import os
+import sys
 from PyQt6.QtGui import QIcon, QPixmap, QPainter, QColor, QPalette
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import Qt, QByteArray
@@ -16,14 +17,19 @@ def is_dark_mode() -> bool:
     # Lightness ranges from 0 (Black) to 255 (White). < 128 means it's a dark theme.
     return app.palette().window().color().lightness() < 128
 
-def get_tinted_icon(filename: str, fallback_theme_name: str = None) -> QIcon:
+def get_asset_dir() -> str:
+    """Safely retrieves the assets directory whether running locally or inside a PyInstaller container."""
+    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, "qwarp", "assets")
+    return os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets")
+
+def load_tinted_icon(filename: str, fallback_theme_name: str = "network-wired") -> QIcon:
     """
     Loads an SVG from the assets folder and dynamically recolors it
     based on the current system theme (Light/Dark).
     """
-    # Point to the qwarp package root by going one directory up
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    asset_path = os.path.join(base_dir, "assets", filename)
+    # Point to the qwarp package root safely
+    asset_path = os.path.join(get_asset_dir(), filename)
 
     if not os.path.exists(asset_path):
         if fallback_theme_name:
@@ -57,9 +63,8 @@ def load_tinted_icon(icon_name: str) -> QIcon:
         # If lightness > 128, it's Light Mode
         is_light_mode = app.palette().color(QPalette.ColorRole.Window).lightness() > 128
 
-    # Point to the qwarp package root by going one directory up
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    asset_path = os.path.join(base_dir, "assets", icon_name)
+    # Point to the qwarp package root safely
+    asset_path = os.path.join(get_asset_dir(), icon_name)
 
     if not os.path.exists(asset_path):
         return QIcon()

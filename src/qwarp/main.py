@@ -14,6 +14,7 @@ from qwarp.ui.window import WarpWindow
 from qwarp.ui.tray import WarpTrayIcon
 from qwarp.core.instance import SingleInstance
 from qwarp.ui.tray import get_asset_icon
+from qwarp.utils.system import get_asset_dir
 
 logger = logging.getLogger(__name__)
 
@@ -103,8 +104,7 @@ def main() -> None:
         lang_pref = system_locale.split("_")[0] if system_locale else "en"
 
     translator = QTranslator()
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    qm_path = os.path.join(base_dir, "assets", "locales", f"qwarp_{lang_pref}.qm")
+    qm_path = os.path.join(get_asset_dir(), "locales", f"qwarp_{lang_pref}.qm")
 
     if os.path.exists(qm_path):
         if translator.load(qm_path):

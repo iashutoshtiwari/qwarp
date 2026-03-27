@@ -7,14 +7,13 @@ from PyQt6.QtCore import QPoint
 
 from qwarp.core.engine import WarpState
 from qwarp.core.state import WarpStateManager
+from qwarp.utils.system import get_asset_dir
 
 logger = logging.getLogger(__name__)
 
 def get_asset_icon(filename: str, fallback_theme_name: str = "network-wired") -> QIcon:
     """Loads an un-tinted SVG directly from the assets folder."""
-    # Point to the qwarp package root by going one directory up
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    asset_path = os.path.join(base_dir, "assets", filename)
+    asset_path = os.path.join(get_asset_dir(), filename)
     if os.path.exists(asset_path):
         return QIcon(asset_path)
     return QIcon.fromTheme(fallback_theme_name)
