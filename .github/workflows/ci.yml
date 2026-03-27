@@ -1,0 +1,75 @@
+name: CI
+
+# Lock down all permissions at the workflow level.
+permissions: {}
+
+# Run quality gates on every push to main and every pull request targeting main.
+# This ensures regressions are caught before they ever reach a tagged release.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Job 1: Lint the codebase with ruff (fast, zero-config Rust linter).
+  # ──────────────────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Ruff
+        run: pip install ruff
+
+      - name: Run Ruff Linter
+        run: ruff check src/ --output-format=github
+
+      - name: Run Ruff Formatter Check
+        run: ruff format src/ --check --diff
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Job 2: Run smoke tests to catch import-time errors and core logic regressions.
+  # ──────────────────────────────────────────────────────────────────────────────
+  test:
+    name: Smoke Tests (pytest)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Package and Test Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Install the package itself + test extras
+          pip install ".[dev]"
+
+      - name: Run Tests
+        # QT_QPA_PLATFORM=offscreen lets PyQt6 run in a headless CI environment
+        # without requiring a display server (X11/Wayland).
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: pytest tests/ -v --tb=short

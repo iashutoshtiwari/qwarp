@@ -1,55 +1,201 @@
 name: Build and Release
 
-# This workflow only triggers when you push a tag that starts with 'v' (e.g., v0.1.0-alpha)
+# Lock down all permissions at the workflow level.
+# Individual jobs grant only what they specifically need.
+permissions: {}
+
+# Trigger only on version tags (e.g. v0.7.1, v1.0.0-beta)
 on:
   push:
     tags:
       - 'v*'
 
 jobs:
-  build-tarball:
-    name: Build Linux Binary
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Job 1: Compile locales, build the PyInstaller binary, and package the tarball.
+  #        Uploads the tarball as a workflow artifact for the release job to pick up.
+  # ──────────────────────────────────────────────────────────────────────────────
+  build-binary:
+    name: Build Standalone Binary
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Required to create the GitHub Release
+      contents: read  # Minimum needed: just checkout
 
     steps:
       - name: Checkout Source Code
-        uses: actions/checkout@v4
+        # Pinned to SHA for supply-chain safety (v4.2.2)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
-      - name: Set up Python
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: 'pip'  # Cache pip downloads — avoids re-fetching PyQt6 on every run
 
-      - name: Install Build Dependencies
+      - name: Install System Qt6 Linguist Tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends qt6-l10n-tools
+          # Ubuntu ships the binary as 'lrelease-qt6'; our build script expects 'lrelease6'
+          sudo ln -sf "$(command -v lrelease-qt6)" /usr/local/bin/lrelease6
+
+      - name: Install Python Build Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyinstaller
-          # Install our actual package to resolve PyQt6 and other dependencies
+          # pyqt6-tools provides the `pylupdate6` command used by build_locales.sh
+          pip install pyinstaller pyqt6-tools
+          # Install the package itself to resolve PyQt6 and all runtime dependencies
           pip install .
 
-      - name: Build Standalone Binary
-        run: |
-          # Compile the main.py into a single executable named 'qwarp'
-          pyinstaller --onefile --noconsole --name qwarp src/qwarp/main.py
+      - name: Compile i18n Locale Files
+        run: bash scripts/build_locales.sh
 
-      - name: Package the Release Tarball
+      - name: Build Standalone Binary (PyInstaller)
         run: |
-          # Create a staging folder
+          pyinstaller \
+            --onefile \
+            --noconsole \
+            --name qwarp \
+            --paths src \
+            --add-data "src/qwarp/assets:qwarp/assets" \
+            src/qwarp/main.py
+
+      - name: Package Release Tarball
+        run: |
           mkdir -p qwarp-release
-
-          # Move the compiled binary and essential assets into it
-          cp dist/qwarp qwarp-release/
+          cp dist/qwarp    qwarp-release/
           cp qwarp.desktop qwarp-release/
-          cp LICENSE qwarp-release/
-          cp README.md qwarp-release/
+          cp LICENSE        qwarp-release/
+          cp README.md      qwarp-release/
+          tar -czvf "qwarp-${{ github.ref_name }}-linux-x86_64.tar.gz" \
+              -C qwarp-release .
 
-          # Compress it into a standard tarball dynamically named with the git tag
-          tar -czvf "qwarp-${{ github.ref_name }}-linux-x86_64.tar.gz" -C qwarp-release .
+      - name: Upload Tarball as Workflow Artifact
+        # Uploading before releasing allows debugging the binary without creating a release,
+        # and decouples the build job from the publish job cleanly.
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-tarball
+          path: qwarp-${{ github.ref_name }}-linux-x86_64.tar.gz
+          retention-days: 7
+
+      - name: Output SHA256 to Job Summary (for PKGBUILD)
+        # The PKGBUILD sha256sums field must match the final release tarball.
+        # After this run completes, copy the value below into PKGBUILD and run updpkgsums.
+        run: |
+          TARBALL="qwarp-${{ github.ref_name }}-linux-x86_64.tar.gz"
+          SHA=$(sha256sum "$TARBALL" | cut -d' ' -f1)
+          echo "## 📦 PKGBUILD sha256sums" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Update \`sha256sums\` in **PKGBUILD** after this release:" >> "$GITHUB_STEP_SUMMARY"
+          echo '```bash' >> "$GITHUB_STEP_SUMMARY"
+          echo "sha256sums=('${SHA}')" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Job 2: Auto-generate CHANGELOG, commit it to main, then publish the release.
+  #        Runs only after build-binary succeeds. Zero manual changelog writing required.
+  # ──────────────────────────────────────────────────────────────────────────────
+  publish-release:
+    name: Publish GitHub Release
+    needs: build-binary
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Required to create releases AND push the updated CHANGELOG
+
+    steps:
+      - name: Checkout Source Code
+        # Fetch full history so we can diff between tags with git log
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          fetch-depth: 0  # Full history required to resolve previous tags
+
+      - name: Download Release Tarball
+        uses: actions/download-artifact@v4
+        with:
+          name: release-tarball
+
+      - name: Validate Artifact
+        run: |
+          TARBALL="qwarp-${{ github.ref_name }}-linux-x86_64.tar.gz"
+          if [ ! -s "$TARBALL" ]; then
+            echo "❌ Release tarball is missing or empty — aborting."
+            exit 1
+          fi
+          echo "✅ Artifact validated: $TARBALL ($(du -sh "$TARBALL" | cut -f1))"
+
+      - name: Auto-Generate CHANGELOG Entry from Git Log
+        id: changelog
+        run: |
+          TAG="${{ github.ref_name }}"
+          DATE=$(date +%Y-%m-%d)
+
+          # Resolve the previous tag so we can diff commits since then
+          PREV_TAG=$(git tag --sort=-version:refname | grep -v "^${TAG}$" | head -1)
+
+          # Build a markdown bullet list of commits since the previous tag
+          if [ -n "$PREV_TAG" ]; then
+            echo "ℹ️  Generating changelog: ${PREV_TAG}..${TAG}"
+            COMMITS=$(git log "${PREV_TAG}..${TAG}" \
+              --no-merges \
+              --pretty=format:"- %s ([%h](https://github.com/${{ github.repository }}/commit/%H))")
+          else
+            echo "ℹ️  No previous tag found — listing all commits."
+            COMMITS=$(git log \
+              --no-merges \
+              --pretty=format:"- %s ([%h](https://github.com/${{ github.repository }}/commit/%H))")
+          fi
+
+          # Write the new section to a temp file for use as the release body
+          {
+            echo "## [${TAG}] – ${DATE}"
+            echo ""
+            if [ -n "$COMMITS" ]; then
+              echo "$COMMITS"
+            else
+              echo "- No notable changes."
+            fi
+          } > /tmp/new_section.md
+
+          cat /tmp/new_section.md
+
+          # Prepend the new section into the top of CHANGELOG.md (after the header block)
+          # Strategy: insert after the first '---' separator line
+          awk '
+            /^---$/ && !inserted {
+              print
+              print ""
+              while ((getline line < "/tmp/new_section.md") > 0) print line
+              print ""
+              inserted = 1
+              next
+            }
+            { print }
+          ' CHANGELOG.md > /tmp/changelog_updated.md
+          mv /tmp/changelog_updated.md CHANGELOG.md
+
+          echo "✅ CHANGELOG.md updated."
+
+      - name: Commit and Push Updated CHANGELOG to main
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          # Only commit if there's actually something new
+          if git diff --cached --quiet; then
+            echo "ℹ️  CHANGELOG.md unchanged — nothing to commit."
+          else
+            git commit -m "chore: auto-update CHANGELOG for ${{ github.ref_name }} [skip ci]"
+            git push origin HEAD:main
+            echo "✅ CHANGELOG.md committed and pushed to main."
+          fi
 
       - name: Publish to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
           files: qwarp-${{ github.ref_name }}-linux-x86_64.tar.gz
+          # The auto-generated section from the step above becomes the release body.
+          # GitHub appends its own PR-based notes after this via generate_release_notes.
+          body_path: CHANGELOG.md
           generate_release_notes: true
+

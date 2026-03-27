@@ -14,6 +14,12 @@ dependencies = [
     "PyQt6>=6.0.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.4",
+]
+
 [project.scripts]
 qwarp = "qwarp.main:main"
 
@@ -22,3 +28,20 @@ version = {attr = "qwarp.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"
+
+[tool.ruff]
+line-length = 120
+target-version = "py38"
+
+[tool.ruff.lint]
+# E/W: pycodestyle, F: pyflakes, I: isort
+select = ["E", "W", "F", "I"]
+ignore = [
+    "E501",   # line-too-long — handled by line-length above
+    "E402",   # module-level import not at top — common in Qt apps
+    "F401",   # unused imports — may be public re-exports
+]
