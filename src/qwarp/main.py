@@ -94,6 +94,11 @@ def main() -> None:
     app.setOrganizationName("qwarp")
     app.setApplicationName("qwarp")
 
+    # Load and apply theme preference
+    settings = QSettings()
+    theme_pref = settings.value("theme_mode", "auto", type=str)
+    qdarktheme.setup_theme(theme_pref)
+
     # Localized runtime translation instantiation
     locales_settings = QSettings()
     lang_pref = locales_settings.value("language", "", type=str)
@@ -189,3 +194,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+()

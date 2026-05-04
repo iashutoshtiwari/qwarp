@@ -1,5 +1,6 @@
 import os
 import sys
+import qdarktheme
 from PyQt6.QtGui import QIcon, QPixmap, QPainter, QColor, QPalette
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import Qt, QByteArray
@@ -9,13 +10,9 @@ def is_x11() -> bool:
     return os.environ.get('XDG_SESSION_TYPE', '').lower() == 'x11'
 
 def is_dark_mode() -> bool:
-    """Checks the actual window background color lightness instead of relying on OS portals."""
-    from PyQt6.QtWidgets import QApplication
-    app = QApplication.instance()
-    if not app:
-        return False
-    # Lightness ranges from 0 (Black) to 255 (White). < 128 means it's a dark theme.
-    return app.palette().window().color().lightness() < 128
+    """Checks the current application theme lightness using pyqtdarktheme."""
+    palette = qdarktheme.load_palette()
+    return palette.window().color().lightness() < 128
 
 def get_asset_dir() -> str:
     """Safely retrieves the assets directory whether running locally or inside a PyInstaller container."""
@@ -57,11 +54,7 @@ def get_tinted_icon(filename: str, fallback_theme_name: str = "network-wired") -
 
 def load_tinted_icon(icon_name: str) -> QIcon:
     """Loads an SVG file, performs string replacement based on theme lightness, and returns a QIcon."""
-    app = QApplication.instance()
-    is_light_mode = False
-    if app:
-        # If lightness > 128, it's Light Mode
-        is_light_mode = app.palette().color(QPalette.ColorRole.Window).lightness() > 128
+    is_dark = is_dark_mode()
 
     # Point to the qwarp package root safely
     asset_path = os.path.join(get_asset_dir(), icon_name)
@@ -72,7 +65,7 @@ def load_tinted_icon(icon_name: str) -> QIcon:
     with open(asset_path, "r", encoding="utf-8") as f:
         svg_content = f.read()
 
-    if is_light_mode:
+    if not is_dark:
         svg_content = svg_content.replace("#FFFFFF", "#333333")
         svg_content = svg_content.replace("#ffffff", "#333333")
         svg_content = svg_content.replace("currentColor", "#333333")
