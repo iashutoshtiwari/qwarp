@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, Any, Optional
 
-from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot, QTimer, QThreadPool, QRunnable
+from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot, QTimer, QThreadPool, QRunnable, QThread
 
 from qwarp.core.engine import WarpEngine, WarpState
 
@@ -11,21 +11,29 @@ class StatusWorkerSignals(QObject):
     """Signals for the StatusWorker."""
     result_ready = pyqtSignal(WarpState)
 
-class StatusWorker(QRunnable):
+class StatusWorker(QThread):
     """
-    Background worker that offloads the blocking warp-cli status poll
-    from the main PyQt event loop.
+    Long-running background thread that offloads the blocking warp-cli status poll
+    from the main PyQt event loop. Prevents memory fragmentation by avoiding
+    constant object creation/destruction.
     """
-    def __init__(self, engine: WarpEngine):
+    def __init__(self, engine: WarpEngine, interval_ms: int = 2000):
         super().__init__()
         self.engine = engine
+        self.interval_ms = interval_ms
         self.signals = StatusWorkerSignals()
 
-    @pyqtSlot()
     def run(self) -> None:
-        """Executes the status check and emits the result state."""
-        state = self.engine.status()
-        self.signals.result_ready.emit(state)
+        """Continuously executes the status check and emits the result state."""
+        while not self.isInterruptionRequested():
+            state = self.engine.status()
+            self.signals.result_ready.emit(state)
+            # Sleep in small increments to remain highly responsive to interruptions
+            steps = self.interval_ms // 100
+            for _ in range(steps):
+                if self.isInterruptionRequested():
+                    break
+                self.msleep(100)
 
 class DiagnosticsWorkerSignals(QObject):
     """Signals for the DiagnosticsWorker."""
@@ -100,19 +108,20 @@ class WarpStateManager(QObject):
         self.current_state = WarpState.UNKNOWN
         self.thread_pool = QThreadPool.globalInstance()
 
-        # Start periodic background polling for WARP status.
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self._poll_status)
-        self.timer.start(2000)
+        # Start continuous background polling thread for WARP status.
+        self.status_thread = StatusWorker(self.engine, interval_ms=2000)
+        self.status_thread.signals.result_ready.connect(self._on_status_result)
+        self.status_thread.start()
 
-        # Kickoff immediate check.
-        self._poll_status()
+    def stop_polling(self) -> None:
+        """Gracefully shuts down the background polling thread."""
+        if self.status_thread.isRunning():
+            self.status_thread.requestInterruption()
+            self.status_thread.wait()
 
     def _poll_status(self) -> None:
-        """Spawns an asynchronous status check."""
-        worker = StatusWorker(self.engine)
-        worker.signals.result_ready.connect(self._on_status_result)
-        self.thread_pool.start(worker)
+        """Legacy helper now just logs. Actual polling is continuous."""
+        pass
 
     @pyqtSlot(WarpState)
     def _on_status_result(self, state: WarpState) -> None:

@@ -174,8 +174,8 @@ def main() -> None:
     def gracefully_shutdown() -> None:
         """Ensure threads and IPC listeners tear down properly."""
         logger.info("Initiating graceful teardown...")
-        if hasattr(manager, 'timer'):
-            manager.timer.stop()
+        if hasattr(manager, 'stop_polling'):
+            manager.stop_polling()
         tray.hide()
         try:
              manager.state_changed.disconnect()
