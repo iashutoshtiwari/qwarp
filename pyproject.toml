@@ -12,7 +12,6 @@ license = "MIT"
 license-files = ["LICENSE"]
 dependencies = [
     "PyQt6>=6.0.0",
-    "pyqtdarktheme>=2.1.0",
 ]
 
 [project.optional-dependencies]
