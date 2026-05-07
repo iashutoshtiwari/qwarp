@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.7.8] – 2026-05-07
+
+- chore: bump version to 0.7.8 ([ba8aed8](https://github.com/iashutoshtiwari/qwarp/commit/ba8aed84606c97ac1da85b6aa67bf26b6c0ab7ad))
+- Refactor: Centralize QSS styling and implement dynamic SVG tinting ([8bc7018](https://github.com/iashutoshtiwari/qwarp/commit/8bc7018de5248122714229c44186ad9b3cdce733))
+- GNOME dark mode support ([a1505c3](https://github.com/iashutoshtiwari/qwarp/commit/a1505c30f8412e13c6233a6c56149e411da7a0a8))
+- Add instantaneous theme toggle and GNOME theme support ([33ab993](https://github.com/iashutoshtiwari/qwarp/commit/33ab993f7d8da3500e5eb808821536ecdc5d8d0d))
+- Refactor status polling to use a dedicated QThread ([3b8b37d](https://github.com/iashutoshtiwari/qwarp/commit/3b8b37db173403cd08a50519275ad48e11145fb3))
+- Enhance Arch Linux installation instructions ([7b8ab10](https://github.com/iashutoshtiwari/qwarp/commit/7b8ab10d19c73a27fcc9d07b76c58565065bee37))
+- chore: auto-update CHANGELOG for v0.7.7 [skip ci] ([f8e38f7](https://github.com/iashutoshtiwari/qwarp/commit/f8e38f79a7e9f688eadfaaf0042f1584298b7307))
+
+
 ## [v0.7.7] – 2026-03-27
 
 - Bump version to 0.7.7 ([83980bc](https://github.com/iashutoshtiwari/qwarp/commit/83980bcb4eeb2a1daec31fe039d3959634e52bb9))
