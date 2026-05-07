@@ -76,7 +76,7 @@ jobs:
             libxi6 \
             libxtst6 \
             libxrandr2 \
-            libasound2
+            libasound2t64
 
       - name: Install Package and Test Dependencies
         run: |

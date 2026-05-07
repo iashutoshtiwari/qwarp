@@ -48,7 +48,7 @@ jobs:
             libxi6 \
             libxtst6 \
             libxrandr2 \
-            libasound2
+            libasound2t64
 
       - name: Install Python Build Dependencies
         run: |
