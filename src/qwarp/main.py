@@ -1,5 +1,10 @@
 import sys
 import os
+
+# Set xdgdesktopportal as fallback for GNOME theme support before QApplication starts.
+# KDE Plasma overrides this natively, so setdefault ensures zero regressions on KDE.
+os.environ.setdefault("QT_QPA_PLATFORMTHEME", "xdgdesktopportal")
+
 import subprocess
 import logging
 import signal
@@ -15,6 +20,7 @@ from qwarp.ui.tray import WarpTrayIcon
 from qwarp.core.instance import SingleInstance
 from qwarp.ui.tray import get_asset_icon
 from qwarp.utils.system import get_asset_dir
+from qwarp.ui.styles import GLOBAL_QSS
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +99,7 @@ def main() -> None:
     app = QApplication(sys.argv)
     app.setOrganizationName("qwarp")
     app.setApplicationName("qwarp")
+    app.setStyleSheet(GLOBAL_QSS)
 
     # Localized runtime translation instantiation
     locales_settings = QSettings()
@@ -174,8 +181,8 @@ def main() -> None:
     def gracefully_shutdown() -> None:
         """Ensure threads and IPC listeners tear down properly."""
         logger.info("Initiating graceful teardown...")
-        if hasattr(manager, 'timer'):
-            manager.timer.stop()
+        if hasattr(manager, 'stop_polling'):
+            manager.stop_polling()
         tray.hide()
         try:
              manager.state_changed.disconnect()

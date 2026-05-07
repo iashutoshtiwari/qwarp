@@ -4,8 +4,8 @@ from typing import Optional
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QPushButton, QMenu, QToolButton, QStackedWidget,
                              QDialog, QTabWidget, QComboBox, QCheckBox, QFrame, QFormLayout)
-from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QSize, QSettings
-from PyQt6.QtGui import QCloseEvent, QIcon, QPixmap
+from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QSize, QSettings, QEvent
+from PyQt6.QtGui import QCloseEvent, QIcon, QPixmap, QPalette
 
 from qwarp.core.engine import WarpState
 from qwarp.core.state import WarpStateManager
@@ -13,7 +13,6 @@ from qwarp import __version__
 from qwarp.utils.system import is_x11, get_tinted_icon, load_tinted_icon
 from qwarp.ui.toggle import AnimatedToggle
 from qwarp.ui.tray import get_asset_icon
-from qwarp.ui import styles
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +80,7 @@ class SettingsDialog(QDialog):
 
         # Notice for user
         lang_notice = QLabel(self.tr("(Requires application restart to take effect)"))
-        lang_notice.setStyleSheet(styles.DESC_DEFAULT_STYLE)
+        lang_notice.setProperty("styleClass", "desc_default")
         lang_notice.setWordWrap(True)
         gen_layout.addWidget(lang_notice)
         
@@ -120,7 +119,7 @@ class SettingsDialog(QDialog):
         self.refresh_btn.clicked.connect(self.manager.request_diagnostics)
 
         self.delete_btn = QPushButton(self.tr("Delete Registration"))
-        self.delete_btn.setStyleSheet(styles.BUTTON_DANGER)
+        self.delete_btn.setProperty("styleClass", "danger")
         self.delete_btn.clicked.connect(self._on_delete_clicked)
 
         btn_layout.addWidget(self.refresh_btn)
@@ -267,6 +266,19 @@ class WarpWindow(QWidget):
         self._setup_signals()
         self._update_ui_state(self.manager.current_state)
 
+    def changeEvent(self, event: QEvent) -> None:
+        """Intercepts system theme changes and forces an icon redraw."""
+        super().changeEvent(event)
+        if event.type() in (QEvent.Type.PaletteChange, QEvent.Type.ApplicationPaletteChange):
+            self._update_icons(self.palette())
+
+    def _update_icons(self, palette: QPalette = None) -> None:
+        """Reloads all dynamic icons to match the current theme contrast."""
+        self.cloud_btn.setIcon(load_tinted_icon("cloud.svg", palette))
+        self.wifi_btn.setIcon(load_tinted_icon("wifi.svg", palette))
+        self.settings_btn.setIcon(load_tinted_icon("gear.svg", palette))
+        self.setWindowIcon(load_tinted_icon("app-icon.svg", palette))
+
     def _setup_ui(self) -> None:
         """Fully boots the visual DOM equivalent of the application."""
         self.main_layout = QVBoxLayout(self)
@@ -285,7 +297,7 @@ class WarpWindow(QWidget):
         header_font.setPointSize(36)
         header_font.setBold(True)
         self.header_label.setFont(header_font)
-        self.header_label.setStyleSheet(styles.HEADER_STYLE)
+        self.header_label.setProperty("styleClass", "header")
         self.header_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.main_layout.addWidget(self.header_label)
 
@@ -313,7 +325,7 @@ class WarpWindow(QWidget):
 
         self.register_btn = QPushButton(self.tr("Accept && register"))
         self.register_btn.setFixedSize(160, 40)
-        self.register_btn.setStyleSheet(styles.BUTTON_PRIMARY)
+        self.register_btn.setProperty("styleClass", "primary")
 
         p0_layout.addStretch()
         p0_layout.addWidget(not_reg_label)
@@ -334,7 +346,7 @@ class WarpWindow(QWidget):
         self.repair_btn = QPushButton(self.tr("Enable service"))
         self.repair_btn.setIcon(QIcon.fromTheme("emblem-system"))
         self.repair_btn.setFixedSize(160, 40)
-        self.repair_btn.setStyleSheet(styles.BUTTON_PRIMARY)
+        self.repair_btn.setProperty("styleClass", "primary")
         self.repair_btn.hide()
 
         self.status_title = QLabel(self.tr("UNKNOWN"))
@@ -346,7 +358,7 @@ class WarpWindow(QWidget):
 
         self.status_desc = QLabel(self.tr("Connecting to daemon..."))
         self.status_desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.status_desc.setStyleSheet(styles.DESC_DEFAULT_STYLE)
+        self.status_desc.setProperty("styleClass", "desc_default")
 
         p1_layout.addStretch()
         p1_layout.addWidget(self.toggle, alignment=Qt.AlignmentFlag.AlignHCenter)
@@ -368,7 +380,7 @@ class WarpWindow(QWidget):
             btn = QToolButton()
             btn.setIcon(load_tinted_icon(f"{icon_name}.svg"))
             btn.setIconSize(QSize(22, 22))
-            btn.setStyleSheet(styles.TOOL_BUTTON_ICON)
+            btn.setProperty("styleClass", "icon")
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
             return btn
 
@@ -414,6 +426,12 @@ class WarpWindow(QWidget):
         logger.info("User requested daemon service recovery")
         self.manager.request_repair_service()
 
+    def _update_status_style(self, style_class: str) -> None:
+        """Updates the status title's style class and forces a style refresh."""
+        self.status_title.setProperty("styleClass", style_class)
+        self.status_title.style().unpolish(self.status_title)
+        self.status_title.style().polish(self.status_title)
+
     def _update_ui_state(self, state: WarpState) -> None:
         """
         Dynamically repaints the view state correlating strictly to the daemon reality.
@@ -438,34 +456,34 @@ class WarpWindow(QWidget):
             self.toggle.setChecked(True)
             self.toggle.setEnabled(True)
             self.status_title.setText(self.tr("CONNECTED"))
-            self.status_title.setStyleSheet(styles.TITLE_CONNECTED_COLOR)
+            self._update_status_style("title_connected")
             self.status_desc.setText(self.tr("Your Internet is private."))
 
         elif state == WarpState.DISCONNECTED:
             self.toggle.setChecked(False)
             self.toggle.setEnabled(True)
             self.status_title.setText(self.tr("DISCONNECTED"))
-            self.status_title.setStyleSheet(styles.TITLE_DISCONNECTED_COLOR)
+            self._update_status_style("title_disconnected")
             self.status_desc.setText(self.tr("Your Internet is not private."))
 
         elif state == WarpState.CONNECTING:
             self.toggle.setEnabled(False)
             self.status_title.setText(self.tr("CONNECTING"))
-            self.status_title.setStyleSheet(styles.TITLE_DISCONNECTED_COLOR)
+            self._update_status_style("title_disconnected")
             self.status_desc.setText(self.tr("Securing connection..."))
 
         elif state == WarpState.DAEMON_ERROR:
             self.toggle.setChecked(False)
             self.toggle.setEnabled(False)
             self.status_title.setText(self.tr("ERROR"))
-            self.status_title.setStyleSheet(styles.TITLE_ERROR_COLOR)
+            self._update_status_style("title_error")
             self.status_desc.setText(self.tr("WARP daemon is not running."))
             
         elif state == WarpState.SERVICE_STOPPED:
             self.toggle.setChecked(False)
             self.toggle.setEnabled(False)
             self.status_title.setText(self.tr("SERVICE OFF"))
-            self.status_title.setStyleSheet(styles.TITLE_ERROR_COLOR)
+            self._update_status_style("title_error")
             self.status_desc.setText(self.tr("Cloudflare WARP service is not running."))
             
         else:
@@ -482,7 +500,7 @@ class WarpWindow(QWidget):
         status_target = self.tr("CONNECTING") if self.toggle.isChecked() else self.tr("DISCONNECTING")
         self.status_title.setText(status_target)
         self.status_desc.setText(self.tr("Please wait..."))
-        self.status_title.setStyleSheet(styles.TITLE_DISCONNECTED_COLOR)
+        self._update_status_style("title_disconnected")
 
         if self.toggle.isChecked():
             logger.info("User flipped toggle ON")

@@ -8,14 +8,23 @@ def is_x11() -> bool:
     """Checks if the compositor is running X11."""
     return os.environ.get('XDG_SESSION_TYPE', '').lower() == 'x11'
 
-def is_dark_mode() -> bool:
-    """Checks the actual window background color lightness instead of relying on OS portals."""
-    from PyQt6.QtWidgets import QApplication
-    app = QApplication.instance()
-    if not app:
-        return False
-    # Lightness ranges from 0 (Black) to 255 (White). < 128 means it's a dark theme.
-    return app.palette().window().color().lightness() < 128
+def is_dark_mode(palette: QPalette = None) -> bool:
+    """
+    Robustly checks the current application theme lightness.
+    Uses the luminance of the Window color which is extremely reliable 
+    across all desktop environments (KDE, GNOME, etc.).
+    """
+    if palette is None:
+        app = QApplication.instance()
+        if not app:
+            return False
+        palette = app.palette()
+    
+    # Check the background color of the window
+    bg_color = palette.color(QPalette.ColorRole.Window)
+    # Relative luminance formula
+    luminance = (0.2126 * bg_color.red() + 0.7152 * bg_color.green() + 0.0722 * bg_color.blue())
+    return luminance < 128  # If background is dark, theme is dark
 
 def get_asset_dir() -> str:
     """Safely retrieves the assets directory whether running locally or inside a PyInstaller container."""
@@ -23,63 +32,40 @@ def get_asset_dir() -> str:
         return os.path.join(sys._MEIPASS, "qwarp", "assets")
     return os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets")
 
-def get_tinted_icon(filename: str, fallback_theme_name: str = "network-wired") -> QIcon:
+def get_tinted_icon(filename: str, fallback_theme_name: str = "network-wired", palette: QPalette = None) -> QIcon:
     """
-    Loads an SVG from the assets folder and dynamically recolors it
-    based on the current system theme (Light/Dark).
+    Loads an SVG from the assets folder and applies dynamic tinting based on the system theme.
     """
-    # Point to the qwarp package root safely
-    asset_path = os.path.join(get_asset_dir(), filename)
+    return load_tinted_icon(filename, palette)
 
-    if not os.path.exists(asset_path):
-        if fallback_theme_name:
-            return QIcon.fromTheme(fallback_theme_name)
-        return QIcon()
+def load_tinted_icon(icon_name: str, palette: QPalette = None) -> QIcon:
+    """
+    Loads an SVG file and dynamically tints it by replacing color values in the XML.
+    This maintains multi-color icons while ensuring contrast for white/black elements.
+    """
+    if not icon_name.endswith(".svg"):
+        icon_name += ".svg"
 
-    # Determine contrast color based on theme
-    color_hex = "#FFFFFF" if is_dark_mode() else "#333333"
-
-    # Render SVG to pixmap
-    pixmap = QPixmap(asset_path)
-
-    # Create an empty transparent pixmap of the same size
-    tinted = QPixmap(pixmap.size())
-    tinted.fill(Qt.GlobalColor.transparent)
-
-    # Paint the solid color, using the original SVG as an alpha mask
-    painter = QPainter(tinted)
-    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-    painter.drawPixmap(0, 0, pixmap)
-    painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceIn)
-    painter.fillRect(tinted.rect(), QColor(color_hex))
-    painter.end()
-    return QIcon(tinted)
-
-def load_tinted_icon(icon_name: str) -> QIcon:
-    """Loads an SVG file, performs string replacement based on theme lightness, and returns a QIcon."""
-    app = QApplication.instance()
-    is_light_mode = False
-    if app:
-        # If lightness > 128, it's Light Mode
-        is_light_mode = app.palette().color(QPalette.ColorRole.Window).lightness() > 128
-
-    # Point to the qwarp package root safely
     asset_path = os.path.join(get_asset_dir(), icon_name)
-
     if not os.path.exists(asset_path):
         return QIcon()
 
-    with open(asset_path, "r", encoding="utf-8") as f:
-        svg_content = f.read()
+    try:
+        with open(asset_path, "r", encoding="utf-8") as f:
+            svg_data = f.read()
 
-    if is_light_mode:
-        svg_content = svg_content.replace("#FFFFFF", "#333333")
-        svg_content = svg_content.replace("#ffffff", "#333333")
-        svg_content = svg_content.replace("currentColor", "#333333")
-    else:
-        svg_content = svg_content.replace("#333333", "#FFFFFF")
-        svg_content = svg_content.replace("currentColor", "#FFFFFF")
+        is_dark = is_dark_mode(palette)
+        # In Dark Mode, we want white/light icons. In Light Mode, we want dark gray.
+        tint_color = "#FFFFFF" if is_dark else "#444444"
 
-    pixmap = QPixmap()
-    pixmap.loadFromData(QByteArray(svg_content.encode("utf-8")))
-    return QIcon(pixmap)
+        # Robust string replacement for common SVG color indicators
+        svg_data = svg_data.replace('currentColor', tint_color)
+        svg_data = svg_data.replace('#FFFFFF', tint_color)
+        svg_data = svg_data.replace('#ffffff', tint_color)
+
+        pixmap = QPixmap()
+        pixmap.loadFromData(QByteArray(svg_data.encode("utf-8")))
+        return QIcon(pixmap)
+    except Exception as e:
+        print(f"Error loading tinted icon {icon_name}: {e}")
+        return QIcon(asset_path)
