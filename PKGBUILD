@@ -6,7 +6,7 @@ pkgdesc="A lightweight, Wayland-native Qt6 wrapper for cloudflare-warp-bin"
 arch=('any')
 url="https://github.com/iashutoshtiwari/qwarp"
 license=('MIT')
-depends=('python' 'python-pyqt6' 'python-pyqtdarktheme' 'cloudflare-warp-bin')
+depends=('python' 'python-pyqt6' 'cloudflare-warp-bin')
 makedepends=('python-build' 'python-installer' 'python-wheel' 'python-setuptools' 'qt6-tools')
 
 # Bash substitution converts "0.6.0_alpha" to "0.6.0-alpha" for GitHub tags

@@ -8,21 +8,23 @@ def is_x11() -> bool:
     """Checks if the compositor is running X11."""
     return os.environ.get('XDG_SESSION_TYPE', '').lower() == 'x11'
 
-def is_dark_mode() -> bool:
+def is_dark_mode(palette: QPalette = None) -> bool:
     """
     Robustly checks the current application theme lightness.
-    Uses the luminance of the WindowText color which is extremely reliable 
+    Uses the luminance of the Window color which is extremely reliable 
     across all desktop environments (KDE, GNOME, etc.).
     """
-    app = QApplication.instance()
-    if not app:
-        return False
+    if palette is None:
+        app = QApplication.instance()
+        if not app:
+            return False
+        palette = app.palette()
     
-    # In Dark Mode, text is Light. In Light Mode, text is Dark.
-    text_color = app.palette().color(QPalette.ColorRole.WindowText)
+    # Check the background color of the window
+    bg_color = palette.color(QPalette.ColorRole.Window)
     # Relative luminance formula
-    luminance = (0.2126 * text_color.red() + 0.7152 * text_color.green() + 0.0722 * text_color.blue())
-    return luminance > 128  # If text is bright, theme is dark
+    luminance = (0.2126 * bg_color.red() + 0.7152 * bg_color.green() + 0.0722 * bg_color.blue())
+    return luminance < 128  # If background is dark, theme is dark
 
 def get_asset_dir() -> str:
     """Safely retrieves the assets directory whether running locally or inside a PyInstaller container."""
@@ -30,30 +32,40 @@ def get_asset_dir() -> str:
         return os.path.join(sys._MEIPASS, "qwarp", "assets")
     return os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets")
 
-def get_tinted_icon(filename: str, fallback_theme_name: str = "network-wired") -> QIcon:
+def get_tinted_icon(filename: str, fallback_theme_name: str = "network-wired", palette: QPalette = None) -> QIcon:
     """
-    Loads an SVG from the assets folder. Picks the light-mode variant 
-    automatically if the system theme is light.
+    Loads an SVG from the assets folder and applies dynamic tinting based on the system theme.
     """
-    return load_tinted_icon(filename)
+    return load_tinted_icon(filename, palette)
 
-def load_tinted_icon(icon_name: str) -> QIcon:
+def load_tinted_icon(icon_name: str, palette: QPalette = None) -> QIcon:
     """
-    Loads an SVG file. If the system is in Light Mode, it looks for a 
-    duplicate file ending in '_light.svg' for perfect contrast.
+    Loads an SVG file and dynamically tints it by replacing color values in the XML.
+    This maintains multi-color icons while ensuring contrast for white/black elements.
     """
     if not icon_name.endswith(".svg"):
         icon_name += ".svg"
 
-    asset_dir = get_asset_dir()
-    is_dark = is_dark_mode()
+    asset_path = os.path.join(get_asset_dir(), icon_name)
+    if not os.path.exists(asset_path):
+        return QIcon()
 
-    if not is_dark:
-        # We are in Light Mode, try to find the dark-gray duplicate
-        light_variant = icon_name.replace(".svg", "_light.svg")
-        light_path = os.path.join(asset_dir, light_variant)
-        if os.path.exists(light_path):
-            return QIcon(light_path)
+    try:
+        with open(asset_path, "r", encoding="utf-8") as f:
+            svg_data = f.read()
 
-    # Fallback to the original (usually white) icon
-    return QIcon(os.path.join(asset_dir, icon_name))
+        is_dark = is_dark_mode(palette)
+        # In Dark Mode, we want white/light icons. In Light Mode, we want dark gray.
+        tint_color = "#FFFFFF" if is_dark else "#444444"
+
+        # Robust string replacement for common SVG color indicators
+        svg_data = svg_data.replace('currentColor', tint_color)
+        svg_data = svg_data.replace('#FFFFFF', tint_color)
+        svg_data = svg_data.replace('#ffffff', tint_color)
+
+        pixmap = QPixmap()
+        pixmap.loadFromData(QByteArray(svg_data.encode("utf-8")))
+        return QIcon(pixmap)
+    except Exception as e:
+        print(f"Error loading tinted icon {icon_name}: {e}")
+        return QIcon(asset_path)

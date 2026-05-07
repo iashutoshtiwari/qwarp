@@ -20,6 +20,7 @@ from qwarp.ui.tray import WarpTrayIcon
 from qwarp.core.instance import SingleInstance
 from qwarp.ui.tray import get_asset_icon
 from qwarp.utils.system import get_asset_dir
+from qwarp.ui.styles import GLOBAL_QSS
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +99,7 @@ def main() -> None:
     app = QApplication(sys.argv)
     app.setOrganizationName("qwarp")
     app.setApplicationName("qwarp")
+    app.setStyleSheet(GLOBAL_QSS)
 
     # Localized runtime translation instantiation
     locales_settings = QSettings()
