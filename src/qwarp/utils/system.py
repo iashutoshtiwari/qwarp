@@ -1,22 +1,21 @@
 import os
 import sys
 
-from PyQt6.QtCore import QByteArray, Qt
-from PyQt6.QtGui import QColor, QIcon, QPainter, QPalette, QPixmap
-from PyQt6.QtWidgets import QApplication
-
 
 def is_x11() -> bool:
     """Checks if the compositor is running X11."""
     return os.environ.get("XDG_SESSION_TYPE", "").lower() == "x11"
 
 
-def is_dark_mode(palette: QPalette = None) -> bool:
+def is_dark_mode(palette=None) -> bool:
     """
     Robustly checks the current application theme lightness.
     Uses the luminance of the Window color which is extremely reliable
     across all desktop environments (KDE, GNOME, etc.).
     """
+    from PyQt6.QtGui import QPalette
+    from PyQt6.QtWidgets import QApplication
+
     if palette is None:
         app = QApplication.instance()
         if not app:
@@ -37,18 +36,21 @@ def get_asset_dir() -> str:
     return os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets")
 
 
-def get_tinted_icon(filename: str, fallback_theme_name: str = "network-wired", palette: QPalette = None) -> QIcon:
+def get_tinted_icon(filename: str, fallback_theme_name: str = "network-wired", palette=None):
     """
     Loads an SVG from the assets folder and applies dynamic tinting based on the system theme.
     """
     return load_tinted_icon(filename, palette)
 
 
-def load_tinted_icon(icon_name: str, palette: QPalette = None) -> QIcon:
+def load_tinted_icon(icon_name: str, palette=None):
     """
     Loads an SVG file and dynamically tints it by replacing color values in the XML.
     This maintains multi-color icons while ensuring contrast for white/black elements.
     """
+    from PyQt6.QtCore import QByteArray
+    from PyQt6.QtGui import QIcon, QPixmap
+
     if not icon_name.endswith(".svg"):
         icon_name += ".svg"
 
