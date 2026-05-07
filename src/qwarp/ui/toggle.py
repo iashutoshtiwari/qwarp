@@ -1,6 +1,7 @@
+from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QRectF, Qt, pyqtProperty
+from PyQt6.QtGui import QBrush, QColor, QPainter, QPainterPath
 from PyQt6.QtWidgets import QCheckBox
-from PyQt6.QtCore import Qt, QRectF, QPropertyAnimation, pyqtProperty, QEasingCurve
-from PyQt6.QtGui import QPainter, QColor, QBrush, QPainterPath
+
 
 class AnimatedToggle(QCheckBox):
     def hitButton(self, pos):
@@ -13,8 +14,8 @@ class AnimatedToggle(QCheckBox):
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
         # Colors
-        self._bg_color_checked = QColor("#F46654") # Cloudflare Orange
-        self._bg_color_unchecked = QColor("#D3D3D3") # Inactive Gray
+        self._bg_color_checked = QColor("#F46654")  # Cloudflare Orange
+        self._bg_color_unchecked = QColor("#D3D3D3")  # Inactive Gray
         self._thumb_color = QColor("#FFFFFF")
 
         # Geometry for drawing
@@ -26,7 +27,7 @@ class AnimatedToggle(QCheckBox):
         # The Animation Engine
         self.animation = QPropertyAnimation(self, b"thumb_position", self)
         self.animation.setEasingCurve(QEasingCurve.Type.InOutCubic)
-        self.animation.setDuration(200) # 200ms slide duration
+        self.animation.setDuration(200)  # 200ms slide duration
 
         self.stateChanged.connect(self._start_animation)
 
@@ -43,7 +44,7 @@ class AnimatedToggle(QCheckBox):
     @thumb_position.setter
     def thumb_position(self, pos):
         self._thumb_position = pos
-        self.update() # Force repaint on every animation frame
+        self.update()  # Force repaint on every animation frame
 
     def _start_animation(self, state):
         self.animation.stop()
@@ -69,10 +70,7 @@ class AnimatedToggle(QCheckBox):
 
         # Draw the Thumb (The Circle) using QRectF
         thumb_rect = QRectF(
-            self._thumb_position,
-            self._margin,
-            float(self._thumb_radius * 2),
-            float(self._thumb_radius * 2)
+            self._thumb_position, self._margin, float(self._thumb_radius * 2), float(self._thumb_radius * 2)
         )
         painter.setBrush(QBrush(self._thumb_color))
         painter.setPen(Qt.PenStyle.NoPen)

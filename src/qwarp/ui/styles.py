@@ -26,33 +26,33 @@ QPushButton[styleClass="danger"]:hover {
     background-color: #c9302c;
 }
 
-QToolButton[styleClass="icon"] { 
-    border: none; 
-    background: transparent; 
+QToolButton[styleClass="icon"] {
+    border: none;
+    background: transparent;
 }
-QToolButton[styleClass="icon"]::menu-indicator { 
-    image: none; 
-    width: 0px; 
+QToolButton[styleClass="icon"]::menu-indicator {
+    image: none;
+    width: 0px;
 }
-QToolButton[styleClass="icon"]:hover { 
-    opacity: 0.7; 
+QToolButton[styleClass="icon"]:hover {
+    opacity: 0.7;
 }
 
-QLabel[styleClass="header"] { 
-    color: #F46654; 
-    letter-spacing: 2px; 
+QLabel[styleClass="header"] {
+    color: #F46654;
+    letter-spacing: 2px;
 }
-QLabel[styleClass="title_connected"] { 
-    color: #F46654; 
+QLabel[styleClass="title_connected"] {
+    color: #F46654;
 }
-QLabel[styleClass="title_disconnected"] { 
-    color: #888888; 
+QLabel[styleClass="title_disconnected"] {
+    color: #888888;
 }
-QLabel[styleClass="title_error"] { 
-    color: #d9534f; 
+QLabel[styleClass="title_error"] {
+    color: #d9534f;
 }
-QLabel[styleClass="desc_default"] { 
-    color: #888888; 
-    font-size: 13px; 
+QLabel[styleClass="desc_default"] {
+    color: #888888;
+    font-size: 13px;
 }
 """

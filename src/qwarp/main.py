@@ -1,28 +1,28 @@
-import sys
 import os
+import sys
 
 # Set xdgdesktopportal as fallback for GNOME theme support before QApplication starts.
 # KDE Plasma overrides this natively, so setdefault ensures zero regressions on KDE.
 os.environ.setdefault("QT_QPA_PLATFORMTHEME", "xdgdesktopportal")
 
-import subprocess
 import logging
 import signal
+import subprocess
 import traceback
 
+from PyQt6.QtCore import QLocale, QPoint, QSettings, QTimer, QTranslator
 from PyQt6.QtWidgets import QApplication
-from PyQt6.QtCore import QPoint, QTimer, QSettings, QTranslator, QLocale
 
 from qwarp.core.engine import WarpEngine
-from qwarp.core.state import WarpStateManager
-from qwarp.ui.window import WarpWindow
-from qwarp.ui.tray import WarpTrayIcon
 from qwarp.core.instance import SingleInstance
-from qwarp.ui.tray import get_asset_icon
-from qwarp.utils.system import get_asset_dir
+from qwarp.core.state import WarpStateManager
 from qwarp.ui.styles import GLOBAL_QSS
+from qwarp.ui.tray import WarpTrayIcon, get_asset_icon
+from qwarp.ui.window import WarpWindow
+from qwarp.utils.system import get_asset_dir
 
 logger = logging.getLogger(__name__)
+
 
 def unhandled_exception_hook(exc_type, exc_value, exc_traceback):
     """
@@ -33,6 +33,7 @@ def unhandled_exception_hook(exc_type, exc_value, exc_traceback):
     logger.critical("Unhandled UI Exception:\n%s", error_msg)
     # Allows Qt to gracefully crash if absolutely needed
     sys.__excepthook__(exc_type, exc_value, exc_traceback)
+
 
 def neutralize_official_gui() -> None:
     """
@@ -67,12 +68,11 @@ def neutralize_official_gui() -> None:
         except Exception:
             pass
 
+
 def setup_logging() -> None:
     """Initialize system-wide logging configuration."""
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
+
 
 def setup_ipc_instance() -> SingleInstance:
     """
@@ -87,12 +87,13 @@ def setup_ipc_instance() -> SingleInstance:
     instance_manager.start_server()
     return instance_manager
 
+
 def main() -> None:
     """
     Application entry point. Bootstraps Qt, IPC, background workers, and signals.
     """
     setup_logging()
-    
+
     # Configure global exception trapping
     sys.excepthook = unhandled_exception_hook
 
@@ -128,12 +129,12 @@ def main() -> None:
     # Turn off default cloudflare processes
     neutralize_official_gui()
 
-    app.setDesktopFileName("qwarp") # Wayland integration
+    app.setDesktopFileName("qwarp")  # Wayland integration
     app.setWindowIcon(get_asset_icon("app-icon.svg"))
 
     # Crucial mapping: prevent background daemon from closing when the UI is explicitly hidden
     app.setQuitOnLastWindowClosed(False)
-    
+
     # Graceful exit hook on ^C
     signal.signal(signal.SIGINT, lambda sig, frame: app.quit())
 
@@ -145,7 +146,7 @@ def main() -> None:
     engine = WarpEngine()
     manager = WarpStateManager(engine)
     window = WarpWindow(manager)
-    
+
     window.quit_requested.connect(app.quit)
 
     def toggle_window(pos: QPoint = None) -> None:
@@ -181,18 +182,19 @@ def main() -> None:
     def gracefully_shutdown() -> None:
         """Ensure threads and IPC listeners tear down properly."""
         logger.info("Initiating graceful teardown...")
-        if hasattr(manager, 'stop_polling'):
+        if hasattr(manager, "stop_polling"):
             manager.stop_polling()
         tray.hide()
         try:
-             manager.state_changed.disconnect()
+            manager.state_changed.disconnect()
         except TypeError:
-             pass
+            pass
 
     app.aboutToQuit.connect(gracefully_shutdown)
 
     logger.info("QWarp started successfully.")
     sys.exit(app.exec())
+
 
 if __name__ == "__main__":
     main()

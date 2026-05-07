@@ -10,17 +10,17 @@ QT_QPA_PLATFORM=offscreen (set in ci.yml) so no display server is needed.
 
 import re
 import subprocess
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 import qwarp
 from qwarp.core.engine import WarpEngine, WarpState
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Package metadata
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class TestPackageMetadata:
     def test_version_is_defined(self):
@@ -31,14 +31,13 @@ class TestPackageMetadata:
     def test_version_is_semver(self):
         """__version__ must follow MAJOR.MINOR.PATCH (optionally with pre-release suffix)."""
         pattern = r"^\d+\.\d+\.\d+([._-].+)?$"
-        assert re.match(pattern, qwarp.__version__), (
-            f"Version '{qwarp.__version__}' is not valid semver"
-        )
+        assert re.match(pattern, qwarp.__version__), f"Version '{qwarp.__version__}' is not valid semver"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # WarpState enum
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class TestWarpState:
     def test_all_states_defined(self):
@@ -64,6 +63,7 @@ class TestWarpState:
 # ─────────────────────────────────────────────────────────────────────────────
 # WarpEngine – unit tests with mocked subprocess
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class TestWarpEngine:
     def _make_engine(self) -> WarpEngine:
@@ -168,6 +168,7 @@ class TestWarpEngine:
     def test_get_asset_dir_returns_string(self):
         """get_asset_dir() should always return a path string regardless of env."""
         from qwarp.utils.system import get_asset_dir
+
         result = get_asset_dir()
         assert isinstance(result, str)
         assert len(result) > 0

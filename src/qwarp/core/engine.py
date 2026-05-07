@@ -1,12 +1,14 @@
-import subprocess
 import logging
+import subprocess
 from enum import Enum, auto
-from typing import Tuple, Dict
+from typing import Dict, Tuple
 
 logger = logging.getLogger(__name__)
 
+
 class WarpState(Enum):
     """Represents the possible states of the Cloudflare WARP daemon."""
+
     CONNECTED = auto()
     DISCONNECTED = auto()
     CONNECTING = auto()
@@ -14,6 +16,7 @@ class WarpState(Enum):
     SERVICE_STOPPED = auto()
     DAEMON_ERROR = auto()
     UNKNOWN = auto()
+
 
 class WarpEngine:
     """
@@ -29,7 +32,7 @@ class WarpEngine:
     def __init__(self, timeout: float = 2.0):
         """
         Initialize the WarpEngine.
-        
+
         Args:
             timeout (float): The default timeout for subprocess executions in seconds.
         """
@@ -38,27 +41,22 @@ class WarpEngine:
     def _run_command(self, *args: str) -> Tuple[bool, str]:
         """
         Internal method to execute warp-cli commands.
-        
+
         Args:
             *args (str): Command line arguments to pass to warp-cli.
-            
+
         Returns:
             Tuple[bool, str]: A tuple containing the success boolean and standard output/error string.
         """
-        is_status = (args and args[0] == "status")
+        is_status = args and args[0] == "status"
         if not is_status:
-            logger.info("Executing: %s %s", self.CLI_PATH, ' '.join(args))
+            logger.info("Executing: %s %s", self.CLI_PATH, " ".join(args))
 
         try:
-            result = subprocess.run(
-                [self.CLI_PATH, *args],
-                capture_output=True,
-                text=True,
-                timeout=self.timeout
-            )
-            
+            result = subprocess.run([self.CLI_PATH, *args], capture_output=True, text=True, timeout=self.timeout)
+
             if not is_status:
-                logger.info("Command '%s %s' returned code %d", self.CLI_PATH, ' '.join(args), result.returncode)
+                logger.info("Command '%s %s' returned code %d", self.CLI_PATH, " ".join(args), result.returncode)
 
             if result.returncode == 0:
                 stdout_val = result.stdout.strip()
@@ -73,14 +71,14 @@ class WarpEngine:
                     if stderr_val:
                         logger.debug("warp-cli stderr: %s", stderr_val)
                 return False, error_msg
-                
+
         except FileNotFoundError:
             if not is_status:
                 logger.error("Executable '%s' not found.", self.CLI_PATH)
             return False, "warp-cli not installed"
         except subprocess.TimeoutExpired:
             if not is_status:
-                logger.error("Command '%s %s' timed out.", self.CLI_PATH, ' '.join(args))
+                logger.error("Command '%s %s' timed out.", self.CLI_PATH, " ".join(args))
             return False, "Daemon timeout"
         except Exception as e:
             if not is_status:
@@ -90,14 +88,13 @@ class WarpEngine:
     def is_service_active(self) -> bool:
         """
         Check if the warp-svc.service is currently active using systemctl.
-        
+
         Returns:
             bool: True if active, False otherwise.
         """
         try:
             result = subprocess.run(
-                [self.SYSTEMCTL_PATH, "is-active", self.SVC_NAME],
-                capture_output=True, text=True, timeout=self.timeout
+                [self.SYSTEMCTL_PATH, "is-active", self.SVC_NAME], capture_output=True, text=True, timeout=self.timeout
             )
             return result.stdout.strip() == "active"
         except Exception as e:
@@ -107,14 +104,13 @@ class WarpEngine:
     def is_service_enabled(self) -> bool:
         """
         Check if the warp-svc.service is enabled to start on boot.
-        
+
         Returns:
             bool: True if enabled, False otherwise.
         """
         try:
             result = subprocess.run(
-                [self.SYSTEMCTL_PATH, "is-enabled", self.SVC_NAME],
-                capture_output=True, text=True, timeout=self.timeout
+                [self.SYSTEMCTL_PATH, "is-enabled", self.SVC_NAME], capture_output=True, text=True, timeout=self.timeout
             )
             return result.stdout.strip() == "enabled"
         except Exception as e:
@@ -125,21 +121,18 @@ class WarpEngine:
         """
         Attempt to enable and start warp-svc.service via pkexec to elevate privileges.
         This prompts the user with an authentication dialog.
-        
+
         Returns:
             bool: True if the service was successfully enabled and started.
         """
         cmd_args = [self.PKEXEC_PATH, self.SYSTEMCTL_PATH, "enable", "--now", self.SVC_NAME]
         logger.info("Executing: %s", " ".join(cmd_args))
-        
+
         try:
-            result = subprocess.run(
-                cmd_args,
-                capture_output=True, text=True, timeout=30.0
-            )
-            
+            result = subprocess.run(cmd_args, capture_output=True, text=True, timeout=30.0)
+
             logger.info("Command '%s' returned code %d", " ".join(cmd_args), result.returncode)
-            
+
             if result.returncode == 0:
                 logger.info("Service repaired successfully.")
                 stdout_val = result.stdout.strip()
@@ -160,12 +153,12 @@ class WarpEngine:
         """
         Get the current running state of the WARP daemon.
         Uses systemctl checks to delineate between stopped services and daemon failures.
-        
+
         Returns:
             WarpState: The current enum state of WARP.
         """
         success, output = self._run_command("status")
-        
+
         if not success:
             if self.is_service_active():
                 return WarpState.DAEMON_ERROR
@@ -206,7 +199,7 @@ class WarpEngine:
     def set_mode(self, mode_str: str) -> bool:
         """
         Set the operational mode of the daemon.
-        
+
         Args:
             mode_str (str): The desired routing mode (e.g., 'warp', 'doh').
         """
@@ -216,35 +209,32 @@ class WarpEngine:
     def get_current_mode(self) -> str:
         """
         Retrieve the current operational mode directly from the daemon's settings output.
-        
+
         Returns:
             str: The mode value parsed from 'warp-cli settings'. Optional empty if failure.
         """
         success, output = self._run_command("settings")
         if success:
-            for line in output.split('\n'):
+            for line in output.split("\n"):
                 if line.strip().startswith("Mode:"):
-                    return line.split(':', 1)[1].strip()
+                    return line.split(":", 1)[1].strip()
         return ""
 
     def get_diagnostics(self) -> Dict[str, str]:
         """
         Fetch offline telemetry and account information directly from warp-cli.
-        
+
         Returns:
             Dict[str, str]: Map of structured diagnostic info (license, type, status, quota).
         """
-        data = {
-            "license": "Not Registered",
-            "type": "Unknown",
-            "status": "Unknown",
-            "quota": "N/A"
-        }
+        data = {"license": "Not Registered", "type": "Unknown", "status": "Unknown", "quota": "N/A"}
 
         try:
             reg_result = subprocess.run(
                 [self.CLI_PATH, "--accept-tos", "registration", "show"],
-                capture_output=True, text=True, timeout=self.timeout
+                capture_output=True,
+                text=True,
+                timeout=self.timeout,
             )
             if reg_result.returncode == 0:
                 for line in reg_result.stdout.splitlines():
@@ -262,8 +252,7 @@ class WarpEngine:
 
         try:
             status_result = subprocess.run(
-                [self.CLI_PATH, "--accept-tos", "status"],
-                capture_output=True, text=True, timeout=self.timeout
+                [self.CLI_PATH, "--accept-tos", "status"], capture_output=True, text=True, timeout=self.timeout
             )
             if status_result.returncode == 0:
                 clean_status = status_result.stdout.replace("Status update:", "").strip()

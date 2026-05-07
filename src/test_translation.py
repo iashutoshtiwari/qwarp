@@ -1,6 +1,9 @@
-import sys, os
+import os
+import sys
+
+from PyQt6.QtCore import QLocale, QSettings, QTranslator
 from PyQt6.QtWidgets import QApplication
-from PyQt6.QtCore import QTranslator, QSettings, QLocale
+
 from qwarp.utils.system import get_asset_dir
 
 app = QApplication(sys.argv)

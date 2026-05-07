@@ -1,14 +1,17 @@
 import logging
-from PyQt6.QtNetwork import QLocalSocket, QLocalServer
+
 from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtNetwork import QLocalServer, QLocalSocket
 
 logger = logging.getLogger(__name__)
+
 
 class SingleInstance(QObject):
     """
     Manages application instances using a local socket.
     If another instance is launched, it sends a wakeup signal to the primary instance.
     """
+
     wakeup_requested = pyqtSignal()
 
     def __init__(self, server_name="qwarp_ipc_socket"):

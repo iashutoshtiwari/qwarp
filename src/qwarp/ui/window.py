@@ -1,26 +1,41 @@
 import logging
 from typing import Optional
 
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-                             QPushButton, QMenu, QToolButton, QStackedWidget,
-                             QDialog, QTabWidget, QComboBox, QCheckBox, QFrame, QFormLayout)
-from PyQt6.QtCore import Qt, QPoint, pyqtSignal, QSize, QSettings, QEvent
-from PyQt6.QtGui import QCloseEvent, QIcon, QPixmap, QPalette
+from PyQt6.QtCore import QEvent, QPoint, QSettings, QSize, Qt, pyqtSignal
+from PyQt6.QtGui import QCloseEvent, QIcon, QPalette, QPixmap
+from PyQt6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QDialog,
+    QFormLayout,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QMenu,
+    QPushButton,
+    QStackedWidget,
+    QTabWidget,
+    QToolButton,
+    QVBoxLayout,
+    QWidget,
+)
 
+from qwarp import __version__
 from qwarp.core.engine import WarpState
 from qwarp.core.state import WarpStateManager
-from qwarp import __version__
-from qwarp.utils.system import is_x11, get_tinted_icon, load_tinted_icon
 from qwarp.ui.toggle import AnimatedToggle
 from qwarp.ui.tray import get_asset_icon
+from qwarp.utils.system import get_tinted_icon, is_x11, load_tinted_icon
 
 logger = logging.getLogger(__name__)
+
 
 class SettingsDialog(QDialog):
     """
     Settings overlay that surfaces application preferences, account information,
     and granular daemon connection settings (mode selection).
     """
+
     def __init__(self, manager: WarpStateManager, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.manager = manager
@@ -41,21 +56,21 @@ class SettingsDialog(QDialog):
         """Constructs the application preferences tab."""
         gen_tab = QWidget()
         gen_layout = QVBoxLayout(gen_tab)
-        
+
         settings = QSettings()
-        
+
         # Minimized to Tray setting
         self.minimized_cb = QCheckBox(self.tr("Start minimized to system tray"))
         self.minimized_cb.setChecked(settings.value("start_minimized", False, type=bool))
         self.minimized_cb.toggled.connect(self._on_minimized_toggled)
-        
+
         gen_layout.addWidget(self.minimized_cb)
         gen_layout.addSpacing(10)
 
         # Language Dropdown setting (v0.7.0 i18n Feature)
         gen_layout.addWidget(QLabel(self.tr("Language:")))
         self.lang_combo = QComboBox()
-        
+
         translations_map = [
             (self.tr("System Default"), ""),
             ("English", "en"),
@@ -65,16 +80,16 @@ class SettingsDialog(QDialog):
             ("Italiano", "it"),
             ("中文", "zh"),
             ("日本語", "ja"),
-            ("हिन्दी", "hi")
+            ("हिन्दी", "hi"),
         ]
-        
+
         current_lang = settings.value("language", "", type=str)
-        
+
         for idx, (display_target, code_target) in enumerate(translations_map):
             self.lang_combo.addItem(display_target, code_target)
             if code_target == current_lang:
                 self.lang_combo.setCurrentIndex(idx)
-                
+
         self.lang_combo.currentIndexChanged.connect(self._on_language_changed)
         gen_layout.addWidget(self.lang_combo)
 
@@ -83,7 +98,7 @@ class SettingsDialog(QDialog):
         lang_notice.setProperty("styleClass", "desc_default")
         lang_notice.setWordWrap(True)
         gen_layout.addWidget(lang_notice)
-        
+
         gen_layout.addStretch()
         self.tabs.addTab(gen_tab, self.tr("General"))
 
@@ -136,7 +151,7 @@ class SettingsDialog(QDialog):
         conn_tab = QWidget()
         conn_layout = QVBoxLayout(conn_tab)
         conn_layout.addWidget(QLabel(self.tr("Routing Mode:")))
-        
+
         self.mode_combo = QComboBox()
         self.mode_combo.addItem(self.tr("1.1.1.1 with WARP"), "warp")
         self.mode_combo.addItem(self.tr("1.1.1.1 (DNS over DoH)"), "doh")
@@ -150,7 +165,9 @@ class SettingsDialog(QDialog):
         if current_daemon_mode:
             current_mode_normalized = current_daemon_mode.lower().replace(" ", "").replace("_", "").replace("+", "")
             for i in range(self.mode_combo.count()):
-                item_data_normalized = self.mode_combo.itemData(i).lower().replace(" ", "").replace("_", "").replace("+", "")
+                item_data_normalized = (
+                    self.mode_combo.itemData(i).lower().replace(" ", "").replace("_", "").replace("+", "")
+                )
                 if item_data_normalized == current_mode_normalized:
                     self.mode_combo.setCurrentIndex(i)
                     break
@@ -184,7 +201,9 @@ class SettingsDialog(QDialog):
         about_layout.addWidget(desc_label)
         about_layout.addSpacing(10)
 
-        author_label = QLabel("Created by Ashutosh Tiwari<br><a href='https://github.com/iashutoshtiwari'>GitHub Profile</a> | <a href='https://github.com/iashutoshtiwari/qwarp'>Repository</a>")
+        author_label = QLabel(
+            "Created by Ashutosh Tiwari<br><a href='https://github.com/iashutoshtiwari'>GitHub Profile</a> | <a href='https://github.com/iashutoshtiwari/qwarp'>Repository</a>"
+        )
         author_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         author_label.setOpenExternalLinks(True)
         about_layout.addWidget(author_label)
@@ -248,11 +267,13 @@ class SettingsDialog(QDialog):
         logger.info("User changed routing mode to: %s", cli_mode)
         self.manager.request_set_mode(cli_mode)
 
+
 class WarpWindow(QWidget):
     """
     Main Application Window. Serves as a dynamic interface to the WARP daemon,
     providing visual status indications and a central connection toggle.
     """
+
     quit_requested = pyqtSignal()
 
     def __init__(self, manager: WarpStateManager, parent: Optional[QWidget] = None):
@@ -311,7 +332,7 @@ class WarpWindow(QWidget):
         # Flow 0: Unregistered User View
         self.page0 = QWidget()
         p0_layout = QVBoxLayout(self.page0)
-        
+
         not_reg_label = QLabel(self.tr("Not Registered"))
         font = not_reg_label.font()
         font.setPointSize(15)
@@ -333,7 +354,7 @@ class WarpWindow(QWidget):
         p0_layout.addSpacing(15)
         p0_layout.addWidget(self.register_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
         p0_layout.addStretch()
-        
+
         self.stack.addWidget(self.page0)
 
         # Flow 1: Primary Connectivity State Driven View
@@ -367,7 +388,7 @@ class WarpWindow(QWidget):
         p1_layout.addWidget(self.status_desc)
         p1_layout.addWidget(self.repair_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
         p1_layout.addStretch()
-        
+
         self.stack.addWidget(self.page1)
         self.main_layout.addWidget(self.stack)
 
@@ -478,14 +499,14 @@ class WarpWindow(QWidget):
             self.status_title.setText(self.tr("ERROR"))
             self._update_status_style("title_error")
             self.status_desc.setText(self.tr("WARP daemon is not running."))
-            
+
         elif state == WarpState.SERVICE_STOPPED:
             self.toggle.setChecked(False)
             self.toggle.setEnabled(False)
             self.status_title.setText(self.tr("SERVICE OFF"))
             self._update_status_style("title_error")
             self.status_desc.setText(self.tr("Cloudflare WARP service is not running."))
-            
+
         else:
             self.toggle.setEnabled(False)
             self.status_title.setText(self.tr("WAIT"))
@@ -496,7 +517,7 @@ class WarpWindow(QWidget):
     def _on_toggle_clicked(self) -> None:
         """Handles the main toggle switch state initiation and locks interactions."""
         self.toggle.setEnabled(False)
-        
+
         status_target = self.tr("CONNECTING") if self.toggle.isChecked() else self.tr("DISCONNECTING")
         self.status_title.setText(status_target)
         self.status_desc.setText(self.tr("Please wait..."))
@@ -519,7 +540,7 @@ class WarpWindow(QWidget):
             self.showNormal()
         else:
             self.showNormal()
-            
+
         self.raise_()
         self.activateWindow()
 

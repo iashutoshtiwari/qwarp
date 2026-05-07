@@ -1,9 +1,10 @@
-import os
 import logging
+import os
 from typing import Callable
-from PyQt6.QtWidgets import QSystemTrayIcon, QMenu, QApplication
-from PyQt6.QtGui import QIcon, QAction, QCursor
+
 from PyQt6.QtCore import QPoint
+from PyQt6.QtGui import QAction, QCursor, QIcon, QPalette
+from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from qwarp.core.engine import WarpState
 from qwarp.core.state import WarpStateManager
@@ -11,9 +12,11 @@ from qwarp.utils.system import get_asset_dir, load_tinted_icon
 
 logger = logging.getLogger(__name__)
 
+
 def get_asset_icon(filename: str, fallback_theme_name: str = "network-wired", palette: QPalette = None) -> QIcon:
     """Loads a tinted SVG from the assets folder."""
     return load_tinted_icon(filename, palette)
+
 
 class WarpTrayIcon(QSystemTrayIcon):
     def __init__(self, manager: WarpStateManager, toggle_callback: Callable[[QPoint], None], parent=None):
