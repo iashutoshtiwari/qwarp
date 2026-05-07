@@ -20,11 +20,11 @@
 ## Screenshots
 
 <div align="center">
-  <h3>Main UI</h3>
-  <img src="screenshots/UI.png" width="400" alt="QWarp Main UI"/>
-  <br><br>
-  <h3>System Tray Area</h3>
-  <img src="screenshots/Tray.png" width="400" alt="QWarp System Tray"/>
+
+| Main UI | System Tray Area |
+|:---:|:---:|
+| <img src="screenshots/UI.png" width="400" alt="QWarp Main UI"/> | <img src="screenshots/Tray.png" width="400" alt="QWarp System Tray"/> |
+
 </div>
 
 ## Features
