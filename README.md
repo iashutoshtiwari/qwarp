@@ -1,14 +1,30 @@
-# QWarp
+<div align="center">
+  <img src="src/qwarp/assets/app-icon.svg" width="128" alt="QWarp Logo"/>
 
-A lightweight, Wayland-native Qt6 GUI wrapper for the `cloudflare-warp-bin` service on Linux.
+  # QWarp
 
-> **Disclaimer:** This is an unofficial community project and is not affiliated with, authorized, maintained, sponsored, or endorsed by Cloudflare.
+  [![GitHub stars](https://img.shields.io/github/stars/iashutoshtiwari/qwarp?style=for-the-badge)](https://github.com/iashutoshtiwari/qwarp/stargazers)
+  [![GitHub forks](https://img.shields.io/github/forks/iashutoshtiwari/qwarp?style=for-the-badge)](https://github.com/iashutoshtiwari/qwarp/network/members)
+  [![GitHub issues](https://img.shields.io/github/issues/iashutoshtiwari/qwarp?style=for-the-badge)](https://github.com/iashutoshtiwari/qwarp/issues)
+  [![License](https://img.shields.io/github/license/iashutoshtiwari/qwarp?style=for-the-badge)](https://github.com/iashutoshtiwari/qwarp/blob/master/LICENSE)
+
+  A lightweight, Wayland-native Qt6 GUI wrapper for the `cloudflare-warp-bin` service on Linux.
+
+  > [!WARNING]
+  > **Early Development:** QWarp is currently in very early development. It is **not** a 1:1 replacement for the official Cloudflare WARP application and may lack certain advanced features or stability. Expect bugs and breaking changes as the project evolves.
+
+  > **Disclaimer:** This is an unofficial community project and is not affiliated with, authorized, maintained, sponsored, or endorsed by Cloudflare.
+</div>
 
 ## Screenshots
 
-| Main UI | System Tray Area |
-|:---:|:---:|
-| <!-- Add link to main UI image below --> <br> <img src="/screenshots/UI.png" width="300"/> | <!-- Add link to tray image below --> <br> <img src="screenshots/Tray.png" width="300"/> |
+<div align="center">
+  <h3>Main UI</h3>
+  <img src="screenshots/UI.png" width="400" alt="QWarp Main UI"/>
+  <br><br>
+  <h3>System Tray Area</h3>
+  <img src="screenshots/Tray.png" width="400" alt="QWarp System Tray"/>
+</div>
 
 ## Features
 
