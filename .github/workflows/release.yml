@@ -206,6 +206,6 @@ jobs:
           files: qwarp-${{ github.ref_name }}-linux-x86_64.tar.gz
           # The auto-generated section from the step above becomes the release body.
           # GitHub appends its own PR-based notes after this via generate_release_notes.
-          body_path: CHANGELOG.md
+          body_path: /tmp/new_section.md
           generate_release_notes: true
 
