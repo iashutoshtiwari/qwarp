@@ -9,12 +9,13 @@
   [![License](https://img.shields.io/github/license/iashutoshtiwari/qwarp?style=for-the-badge)](https://github.com/iashutoshtiwari/qwarp/blob/master/LICENSE)
 
   A lightweight, Wayland-native Qt6 GUI wrapper for the `cloudflare-warp-bin` service on Linux.
-
-  > [!WARNING]
-  > **Early Development:** QWarp is currently in very early development. It is **not** a 1:1 replacement for the official Cloudflare WARP application and may lack certain advanced features or stability. Expect bugs and breaking changes as the project evolves.
-
-  > **Disclaimer:** This is an unofficial community project and is not affiliated with, authorized, maintained, sponsored, or endorsed by Cloudflare.
 </div>
+
+> [!WARNING]
+> **Early Development:** QWarp is currently in very early development. It is **not** a 1:1 replacement for the official Cloudflare WARP application and may lack certain advanced features or stability. Expect bugs and breaking changes as the project evolves.
+
+> [!IMPORTANT]
+> **Disclaimer:** This is an unofficial community project and is not affiliated with, authorized, maintained, sponsored, or endorsed by Cloudflare.
 
 ## Screenshots
 
