@@ -11,8 +11,8 @@
   A lightweight, Wayland-native Qt6 GUI wrapper for the `cloudflare-warp-bin` service on Linux.
 </div>
 
-> [!WARNING]
-> **Early Development:** QWarp is currently in very early development. It is **not** a 1:1 replacement for the official Cloudflare WARP application and may lack certain advanced features or stability. Expect bugs and breaking changes as the project evolves.
+> [!CAUTION]
+> **Project Archived:** As of 12 May, this project has been archived as the official Cloudflare WARP client has been updated with a new UI ([cloudflare-warp-bin 2026.4.1350-1](https://aur.archlinux.org/packages/cloudflare-warp-bin) in the AUR) and has everything that I made QWarp as a replacement for. Therefore, no further development will be done. Feel free to take over this project and contact me if you want to maintain the AUR package as well.
 
 > [!IMPORTANT]
 > **Disclaimer:** This is an unofficial community project and is not affiliated with, authorized, maintained, sponsored, or endorsed by Cloudflare.
@@ -68,7 +68,7 @@ qwarp
 To actually proxy traffic, the official `cloudflare-warp-bin` package must be installed and the `warp-svc` daemon enabled.
 
 ## Known Issues
-This application is currently in very early development. As such, it may possess very little functionality and have incomplete features. Expect breaking changes and bugs as the core stabilizes.
+This application is no longer in development. It may possess incomplete features or bugs, and no further updates will be provided.
 
 ## Contribution
 Any kind of contribution is highly welcome! Whether it's reporting bugs, suggesting new features, or submitting pull requests, I appreciate community input to help build out the application.
