@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.8.1] – 2026-05-25
+
+- refactor: remove provides=('cloudflare-warp-bin') from PKGBUILDs ([1582ff6](https://github.com/iashutoshtiwari/qwarp/commit/1582ff679b2cb4e1e0bc7e47cb0051ac22cac8cd))
+- chore: add scripts/update_warp.sh and populate PKGBUILD checksums ([20328f4](https://github.com/iashutoshtiwari/qwarp/commit/20328f434fcbaeee937c4a3c810aa167db755f55))
+- chore: auto-update CHANGELOG for v0.8.0 [skip ci] ([c4b2ac7](https://github.com/iashutoshtiwari/qwarp/commit/c4b2ac7f8727ba6c8021560158513750f7f5117f))
+
+
 ## [v0.8.0] – 2026-05-25
 
 - chore: bump version to 0.8.0 ([2da8116](https://github.com/iashutoshtiwari/qwarp/commit/2da81168aa5f51f6cf895baabc6a9c3154bf1eab))
