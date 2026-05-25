@@ -137,6 +137,7 @@ jobs:
       - name: Auto-Generate CHANGELOG Entry from Git Log
         id: changelog
         run: |
+          git checkout master || git checkout -b master origin/master
           TAG="${{ github.ref_name }}"
           DATE=$(date +%Y-%m-%d)
 
