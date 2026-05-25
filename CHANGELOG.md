@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.8.2] – 2026-05-25
+
+- fix(ci): switch to master branch in release workflow to avoid detached HEAD non-fast-forward push ([35c3b5e](https://github.com/iashutoshtiwari/qwarp/commit/35c3b5eed510f1b53efd09fadf1dcab7e729db85))
+- chore: bump version to 0.8.2 ([3abfcb7](https://github.com/iashutoshtiwari/qwarp/commit/3abfcb7fc8da95b437414fd122aea4d14df63614))
+- chore: auto-update CHANGELOG for v0.8.1 [skip ci] ([4a02ade](https://github.com/iashutoshtiwari/qwarp/commit/4a02ade514424687d816a1d556a2cdb8cec031a9))
+
+
 ## [v0.8.1] – 2026-05-25
 
 - refactor: remove provides=('cloudflare-warp-bin') from PKGBUILDs ([1582ff6](https://github.com/iashutoshtiwari/qwarp/commit/1582ff679b2cb4e1e0bc7e47cb0051ac22cac8cd))
