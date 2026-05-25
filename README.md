@@ -25,7 +25,10 @@
 |:---:|:---:|
 | <img src="screenshots/UI.png" width="400" alt="QWarp Main UI"/> | <img src="screenshots/Tray.png" width="400" alt="QWarp System Tray"/> |
 
+<sub>*Screenshots captured on KDE Plasma 6 with the Darkly style.*</sub>
+
 </div>
+
 
 ## Features
 
