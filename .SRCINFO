@@ -1,6 +1,6 @@
 pkgbase = qwarp
 	pkgdesc = A lightweight, Wayland-native Qt6 wrapper for Cloudflare WARP
-	pkgver = 0.7.9
+	pkgver = 0.8.0
 	pkgrel = 1
 	url = https://github.com/iashutoshtiwari/qwarp
 	install = qwarp.install
@@ -16,7 +16,7 @@ pkgbase = qwarp
 	provides = cloudflare-warp-bin
 	conflicts = cloudflare-warp-bin
 	noextract = cloudflare-warp-2026.4.1350.0.deb
-	source = qwarp-0.7.9.tar.gz::https://github.com/iashutoshtiwari/qwarp/archive/refs/tags/v0.7.9.tar.gz
+	source = qwarp-0.8.0.tar.gz::https://github.com/iashutoshtiwari/qwarp/archive/refs/tags/v0.8.0.tar.gz
 	source = cloudflare-warp-2026.4.1350.0.deb::https://pkg.cloudflareclient.com/pool/noble/main/c/cloudflare-warp/cloudflare-warp_2026.4.1350.0_amd64.deb
 	sha256sums = SKIP
 	sha256sums = SKIP

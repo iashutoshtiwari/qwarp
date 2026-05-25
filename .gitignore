@@ -20,3 +20,4 @@ skills-lock.json
 /src/warp-extract
 PKGBUILD.local
 AGENTS.md
+uv.lock

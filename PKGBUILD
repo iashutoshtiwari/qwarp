@@ -1,6 +1,6 @@
 # Maintainer: Ashutosh Tiwari <contact@ashutoshtiwari.dev>
 pkgname=qwarp
-pkgver=0.7.9
+pkgver=0.8.0
 pkgrel=1
 _warpver=2026.4.1350.0
 pkgdesc="A lightweight, Wayland-native Qt6 wrapper for Cloudflare WARP"
