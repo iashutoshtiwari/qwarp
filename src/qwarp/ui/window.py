@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (
     QComboBox,
     QDialog,
     QFormLayout,
+    QLineEdit,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -51,6 +52,12 @@ class SettingsDialog(QDialog):
         self._build_about_tab()
 
         self.layout.addWidget(self.tabs)
+        self.manager.error_occurred.connect(self._on_error_occurred)
+
+    def _on_error_occurred(self, msg: str) -> None:
+        """Displays error messages inline."""
+        self.license_error_lbl.setText(msg)
+        self.license_error_lbl.show()
 
     def _build_general_tab(self) -> None:
         """Constructs the application preferences tab."""
@@ -129,6 +136,22 @@ class SettingsDialog(QDialog):
         acc_layout.addLayout(form_layout)
         self.manager.diagnostics_updated.connect(self._on_diagnostics_updated)
 
+        acc_layout.addSpacing(10)
+        license_layout = QHBoxLayout()
+        self.license_input = QLineEdit()
+        self.license_input.setPlaceholderText(self.tr("Enter WARP+ License Key"))
+        self.license_apply_btn = QPushButton(self.tr("Apply"))
+        self.license_apply_btn.clicked.connect(self._on_apply_license_clicked)
+        license_layout.addWidget(self.license_input)
+        license_layout.addWidget(self.license_apply_btn)
+        acc_layout.addLayout(license_layout)
+
+        self.license_error_lbl = QLabel("")
+        self.license_error_lbl.setProperty("styleClass", "title_error")
+        self.license_error_lbl.setWordWrap(True)
+        self.license_error_lbl.hide()
+        acc_layout.addWidget(self.license_error_lbl)
+
         btn_layout = QHBoxLayout()
         self.refresh_btn = QPushButton(self.tr("Refresh Data"))
         self.refresh_btn.clicked.connect(self.manager.request_diagnostics)
@@ -174,6 +197,31 @@ class SettingsDialog(QDialog):
 
         self.mode_combo.currentIndexChanged.connect(self._on_mode_changed)
         conn_layout.addWidget(self.mode_combo)
+
+        conn_layout.addSpacing(15)
+
+        # Families DNS Filtering
+        conn_layout.addWidget(QLabel(self.tr("DNS Content Filtering:")))
+
+        self.families_combo = QComboBox()
+        self.families_combo.addItem(self.tr("Off (No Filtering)"), "off")
+        self.families_combo.addItem(self.tr("Malware Only"), "malware")
+        self.families_combo.addItem(self.tr("Malware + Adult Content"), "full")
+
+        current_families_mode = self.manager.engine.get_families_mode()
+        if current_families_mode:
+            families_mode_map = {"off": 0, "malware": 1, "full": 2}
+            idx = families_mode_map.get(current_families_mode, 0)
+            self.families_combo.setCurrentIndex(idx)
+
+        self.families_combo.currentIndexChanged.connect(self._on_families_mode_changed)
+        conn_layout.addWidget(self.families_combo)
+
+        families_desc = QLabel(self.tr("Uses Cloudflare's 1.1.1.1 for Families to filter DNS queries."))
+        families_desc.setProperty("styleClass", "desc_default")
+        families_desc.setWordWrap(True)
+        conn_layout.addWidget(families_desc)
+
         conn_layout.addStretch()
         self.tabs.addTab(conn_tab, self.tr("Connection"))
 
@@ -257,15 +305,31 @@ class SettingsDialog(QDialog):
             status_text += f" ({data['reason']})"
         self.lbl_daemon_status.setText(status_text)
 
+        if hasattr(self, "license_input"):
+            self.license_input.clear()
+            self.license_error_lbl.hide()
+
     def _on_delete_clicked(self) -> None:
         logger.info("User deleted registration")
         self.manager.request_delete_registration()
         self.accept()
 
+    def _on_apply_license_clicked(self) -> None:
+        self.license_error_lbl.hide()
+        key = self.license_input.text().strip()
+        if key:
+            logger.info("User applied WARP+ license key")
+            self.manager.request_set_license(key)
+
     def _on_mode_changed(self, index: int) -> None:
         cli_mode = self.mode_combo.itemData(index)
         logger.info("User changed routing mode to: %s", cli_mode)
         self.manager.request_set_mode(cli_mode)
+
+    def _on_families_mode_changed(self, index: int) -> None:
+        families_mode = self.families_combo.itemData(index)
+        logger.info("User changed families DNS filtering to: %s", families_mode)
+        self.manager.request_set_families_mode(families_mode)
 
 
 class WarpWindow(QWidget):
@@ -295,8 +359,6 @@ class WarpWindow(QWidget):
 
     def _update_icons(self, palette: QPalette = None) -> None:
         """Reloads all dynamic icons to match the current theme contrast."""
-        self.cloud_btn.setIcon(load_tinted_icon("cloud.svg", palette))
-        self.wifi_btn.setIcon(load_tinted_icon("wifi.svg", palette))
         self.settings_btn.setIcon(load_tinted_icon("gear.svg", palette))
         self.setWindowIcon(load_tinted_icon("app-icon.svg", palette))
 
@@ -397,17 +459,11 @@ class WarpWindow(QWidget):
         footer_layout = QHBoxLayout()
         footer_layout.setContentsMargins(10, 0, 10, 0)
 
-        def create_tool_btn(icon_name: str) -> QToolButton:
-            btn = QToolButton()
-            btn.setIcon(load_tinted_icon(f"{icon_name}.svg"))
-            btn.setIconSize(QSize(22, 22))
-            btn.setProperty("styleClass", "icon")
-            btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            return btn
-
-        self.cloud_btn = create_tool_btn("cloud")
-        self.wifi_btn = create_tool_btn("wifi")
-        self.settings_btn = create_tool_btn("gear")
+        self.settings_btn = QToolButton()
+        self.settings_btn.setIcon(load_tinted_icon("gear.svg"))
+        self.settings_btn.setIconSize(QSize(22, 22))
+        self.settings_btn.setProperty("styleClass", "icon")
+        self.settings_btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.settings_menu = QMenu(self)
         self.pref_action = self.settings_menu.addAction(self.tr("Preferences"))
@@ -419,10 +475,7 @@ class WarpWindow(QWidget):
         self.settings_btn.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.settings_btn.setMenu(self.settings_menu)
 
-        footer_layout.addWidget(self.cloud_btn)
         footer_layout.addStretch()
-        footer_layout.addWidget(self.wifi_btn)
-        footer_layout.addSpacing(10)
         footer_layout.addWidget(self.settings_btn)
 
         self.main_layout.addLayout(footer_layout)

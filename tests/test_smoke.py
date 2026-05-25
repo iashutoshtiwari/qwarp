@@ -123,17 +123,17 @@ class TestWarpEngine:
     @patch("subprocess.run")
     def test_connect_returns_true_on_success(self, mock_run):
         mock_run.return_value = self._make_proc(returncode=0, stdout="Success")
-        assert WarpEngine().connect() is True
+        assert WarpEngine().connect() == (True, "Success")
 
     @patch("subprocess.run")
     def test_connect_returns_false_on_failure(self, mock_run):
         mock_run.return_value = self._make_proc(returncode=1, stderr="error")
-        assert WarpEngine().connect() is False
+        assert WarpEngine().connect() == (False, "error")
 
     @patch("subprocess.run")
     def test_disconnect_returns_true_on_success(self, mock_run):
         mock_run.return_value = self._make_proc(returncode=0, stdout="Success")
-        assert WarpEngine().disconnect() is True
+        assert WarpEngine().disconnect() == (True, "Success")
 
     # ── CLI not installed ─────────────────────────────────────────────────────
 

@@ -6,6 +6,7 @@ dist/
 .venv/
 venv/
 pkg/
+
 # Ignore Arch packaging artifacts from makepkg
 *.pkg.tar.zst
 *.tar.gz
@@ -15,3 +16,7 @@ pkg/
 *.qm
 /.agents
 skills-lock.json
+*.deb
+/src/warp-extract
+PKGBUILD.local
+AGENTS.md

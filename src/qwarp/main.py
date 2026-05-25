@@ -7,7 +7,6 @@ os.environ.setdefault("QT_QPA_PLATFORMTHEME", "xdgdesktopportal")
 
 import logging
 import signal
-import subprocess
 import traceback
 
 from PyQt6.QtCore import QLocale, QPoint, QSettings, QTimer, QTranslator
@@ -33,40 +32,6 @@ def unhandled_exception_hook(exc_type, exc_value, exc_traceback):
     logger.critical("Unhandled UI Exception:\n%s", error_msg)
     # Allows Qt to gracefully crash if absolutely needed
     sys.__excepthook__(exc_type, exc_value, exc_traceback)
-
-
-def neutralize_official_gui() -> None:
-    """
-    Silently disables and stops the official Cloudflare warp-taskbar GUI
-    so it does not conflict with QWarp or trigger Zero Trust popups.
-    """
-    # 1. Stop and disable the systemd user service (Modern approach)
-    try:
-        subprocess.run(["systemctl", "--user", "stop", "warp-taskbar"], stderr=subprocess.DEVNULL)
-        subprocess.run(["systemctl", "--user", "disable", "warp-taskbar"], stderr=subprocess.DEVNULL)
-        logger.info("Disabled warp-taskbar systemd user service.")
-    except Exception as e:
-        logger.debug("Failed to disable warp-taskbar via systemctl: %s", e)
-
-    # 2. Fallback: Kill the active process if it's running outside systemd
-    try:
-        subprocess.run(["pkill", "-x", "warp-taskbar"], stderr=subprocess.DEVNULL)
-    except Exception:
-        pass
-
-    # 3. Fallback: Mask the system autostart for the current user (Legacy approach)
-    autostart_dir = os.path.expanduser("~/.config/autostart")
-    mask_file = os.path.join(autostart_dir, "warp-taskbar.desktop")
-
-    if not os.path.exists(mask_file):
-        try:
-            os.makedirs(autostart_dir, exist_ok=True)
-            with open(mask_file, "w") as f:
-                f.write("[Desktop Entry]\n")
-                f.write("Hidden=true\n")
-            logger.info("Successfully masked legacy warp-taskbar autostart.")
-        except Exception:
-            pass
 
 
 def setup_logging() -> None:
@@ -125,9 +90,6 @@ def main() -> None:
 
     # Enforce single IPC instance
     instance_manager = setup_ipc_instance()
-
-    # Turn off default cloudflare processes
-    neutralize_official_gui()
 
     app.setDesktopFileName("qwarp")  # Wayland integration
     app.setWindowIcon(get_asset_icon("app-icon.svg"))
