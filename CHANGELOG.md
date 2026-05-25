@@ -5,6 +5,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.8.0] – 2026-05-25
+
+- chore: bump version to 0.8.0 ([2da8116](https://github.com/iashutoshtiwari/qwarp/commit/2da81168aa5f51f6cf895baabc6a9c3154bf1eab))
+- style: sort imports in window.py using ruff ([5e28b8e](https://github.com/iashutoshtiwari/qwarp/commit/5e28b8e2433aa6aa6f7b346689a278142f2168ab))
+- chore: bump version to 0.7.9 ([9a1ecc1](https://github.com/iashutoshtiwari/qwarp/commit/9a1ecc1c1c034592c87c4b3535591732b3cedfb5))
+- feat: add WARP+ license, DNS content filtering, and revamp error handling ([8b60ebb](https://github.com/iashutoshtiwari/qwarp/commit/8b60ebb5da390c62c80c150ef2e22ceaa8588464))
+- Revert "Update README.md" ([3c769b7](https://github.com/iashutoshtiwari/qwarp/commit/3c769b7f79819ec9c3ce8945d871974f12cb67ec))
+- Update README.md ([4cb82c5](https://github.com/iashutoshtiwari/qwarp/commit/4cb82c5f28823d58256685cf736bdc3760d91644))
+- fix(ci): scope release body to current version only ([0b97f67](https://github.com/iashutoshtiwari/qwarp/commit/0b97f6752c843203554e9c4a6cd5cfcf19976bca))
+- Update README.md ([de160c5](https://github.com/iashutoshtiwari/qwarp/commit/de160c52802b5262d1da50a52ebe6a9c411ac67d))
+- Update README.md ([df8cbc0](https://github.com/iashutoshtiwari/qwarp/commit/df8cbc06b023e701b406c559f2ee224712f45ba5))
+- Update README.md ([efd6024](https://github.com/iashutoshtiwari/qwarp/commit/efd602407b6969ab7f88afa9a6a0dedd0abca600))
+- Fix CI: replace libasound2 with libasound2t64 for Ubuntu 24.04 compatibility ([961b61b](https://github.com/iashutoshtiwari/qwarp/commit/961b61bfa82cf23aaffd48e986889367b6b2c658))
+- Fix CI failure: Install missing system dependencies and defer Qt imports ([5b982cb](https://github.com/iashutoshtiwari/qwarp/commit/5b982cb5db61c58e9be4dbd42c981a316b6d0a54))
+- Run ruff ([f66c7f3](https://github.com/iashutoshtiwari/qwarp/commit/f66c7f3976bbe5e167d019e9d534cca123780336))
+- Update .SRCINFO ([6a12c79](https://github.com/iashutoshtiwari/qwarp/commit/6a12c79b63ca713306caef4686ad9a2d7f12fe20))
+- chore: auto-update CHANGELOG for v0.7.8 [skip ci] ([ff169d2](https://github.com/iashutoshtiwari/qwarp/commit/ff169d27f54cdda80f4b5186dffc3795b045c7bb))
+
+
 ## [v0.7.8] – 2026-05-07
 
 - chore: bump version to 0.7.8 ([ba8aed8](https://github.com/iashutoshtiwari/qwarp/commit/ba8aed84606c97ac1da85b6aa67bf26b6c0ab7ad))
