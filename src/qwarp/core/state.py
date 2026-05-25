@@ -68,6 +68,7 @@ class ActionWorkerSignals(QObject):
     """Signals for the ActionWorker."""
 
     finished = pyqtSignal()
+    error_occurred = pyqtSignal(str)
 
 
 class ActionWorker(QRunnable):
@@ -86,20 +87,35 @@ class ActionWorker(QRunnable):
     @pyqtSlot()
     def run(self) -> None:
         """Dispatches the defined action to the underlying engine."""
+        success = True
+        msg = ""
+
         if self.action == "connect":
-            self.engine.connect()
+            success, msg = self.engine.connect()
         elif self.action == "disconnect":
-            self.engine.disconnect()
+            success, msg = self.engine.disconnect()
         elif self.action == "register":
-            self.engine.register()
+            success, msg = self.engine.register()
         elif self.action == "delete_registration":
-            self.engine.delete_registration()
+            success, msg = self.engine.delete_registration()
         elif self.action == "set_mode":
             mode = self.kwargs.get("mode")
             if mode:
-                self.engine.set_mode(mode)
+                success, msg = self.engine.set_mode(mode)
+        elif self.action == "set_families_mode":
+            mode = self.kwargs.get("mode")
+            if mode:
+                success, msg = self.engine.set_families_mode(mode)
+        elif self.action == "set_license":
+            key = self.kwargs.get("key")
+            if key:
+                success, msg = self.engine.set_license(key)
         elif self.action == "repair_service":
-            self.engine.repair_service()
+            success, msg = self.engine.repair_service()
+
+        if not success:
+            self.signals.error_occurred.emit(msg.strip() if msg else "Unknown error")
+            return
 
         self.signals.finished.emit()
 
@@ -115,6 +131,9 @@ class WarpStateManager(QObject):
 
     # Emits freshly loaded diagnostics data mappings.
     diagnostics_updated = pyqtSignal(dict)
+
+    # Emits when an explicit action results in an error.
+    error_occurred = pyqtSignal(str)
 
     def __init__(self, engine: WarpEngine, parent: Optional[QObject] = None):
         super().__init__(parent)
@@ -176,6 +195,20 @@ class WarpStateManager(QObject):
         logger.info("Explicit request: set_mode (%s)", mode)
         self._dispatch_action("set_mode", mode=mode)
 
+    @pyqtSlot(str)
+    def request_set_families_mode(self, mode: str) -> None:
+        logger.info("Explicit request: set_families_mode (%s)", mode)
+        self._dispatch_action("set_families_mode", mode=mode)
+
+    @pyqtSlot(str)
+    def request_set_license(self, key: str) -> None:
+        logger.info("Explicit request: set_license")
+        worker = ActionWorker(self.engine, "set_license", key=key)
+        worker.signals.error_occurred.connect(self.error_occurred.emit)
+        worker.signals.finished.connect(self._poll_status)
+        worker.signals.finished.connect(self.request_diagnostics)
+        self.thread_pool.start(worker)
+
     @pyqtSlot()
     def request_repair_service(self) -> None:
         logger.info("Explicit request: repair_service")
@@ -186,6 +219,7 @@ class WarpStateManager(QObject):
         Internal abstractor that spawns ActionWorker tasks and attaches callbacks.
         """
         worker = ActionWorker(self.engine, action, **kwargs)
+        worker.signals.error_occurred.connect(self.error_occurred.emit)
         worker.signals.finished.connect(self._poll_status)
         self.thread_pool.start(worker)
 

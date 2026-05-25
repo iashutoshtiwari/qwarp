@@ -117,13 +117,13 @@ class WarpEngine:
             logger.error("systemctl is-enabled check failed: %s", e)
             return False
 
-    def repair_service(self) -> bool:
+    def repair_service(self) -> Tuple[bool, str]:
         """
         Attempt to enable and start warp-svc.service via pkexec to elevate privileges.
         This prompts the user with an authentication dialog.
 
         Returns:
-            bool: True if the service was successfully enabled and started.
+            Tuple[bool, str]: True if the service was successfully enabled and started.
         """
         cmd_args = [self.PKEXEC_PATH, self.SYSTEMCTL_PATH, "enable", "--now", self.SVC_NAME]
         logger.info("Executing: %s", " ".join(cmd_args))
@@ -138,16 +138,21 @@ class WarpEngine:
                 stdout_val = result.stdout.strip()
                 if stdout_val:
                     logger.debug("pkexec stdout: %s", stdout_val)
-                return True
+                return True, ""
             else:
-                logger.error("repair_service failed (Code %d)", result.returncode)
-                stderr_val = result.stderr.strip()
-                if stderr_val:
-                    logger.debug("pkexec stderr: %s", stderr_val)
-                return False
+                error_msg = result.stderr.strip() or result.stdout.strip()
+                logger.error("pkexec error (Code %d): %s", result.returncode, error_msg)
+                return False, error_msg
+
+        except FileNotFoundError:
+            logger.error("pkexec not found on system.")
+            return False, "pkexec not installed"
+        except subprocess.TimeoutExpired:
+            logger.error("Service repair timed out.")
+            return False, "Service repair timed out"
         except Exception as e:
-            logger.error("repair_service failed with exception: %s", e)
-            return False
+            logger.error("Unexpected error repairing service: %s", e)
+            return False, str(e)
 
     def status(self) -> WarpState:
         """
@@ -176,35 +181,67 @@ class WarpEngine:
         else:
             return WarpState.UNKNOWN
 
-    def connect(self) -> bool:
+    def connect(self) -> Tuple[bool, str]:
         """Attempt to connect the WARP client."""
-        success, _ = self._run_command("connect")
-        return success
+        return self._run_command("connect")
 
-    def disconnect(self) -> bool:
+    def disconnect(self) -> Tuple[bool, str]:
         """Attempt to disconnect the WARP client."""
-        success, _ = self._run_command("disconnect")
-        return success
+        return self._run_command("disconnect")
 
-    def register(self) -> bool:
+    def register(self) -> Tuple[bool, str]:
         """Registers the WARP client unconditionally accepting the ToS."""
-        success, _ = self._run_command("--accept-tos", "registration", "new")
-        return success
+        return self._run_command("--accept-tos", "registration", "new")
 
-    def delete_registration(self) -> bool:
+    def delete_registration(self) -> Tuple[bool, str]:
         """Deletes the current client registration."""
-        success, _ = self._run_command("registration", "delete")
-        return success
+        return self._run_command("registration", "delete")
 
-    def set_mode(self, mode_str: str) -> bool:
+    def set_license(self, key: str) -> Tuple[bool, str]:
+        """Applies a WARP+ license key to the current registration."""
+        return self._run_command("registration", "license", key)
+
+    def set_mode(self, mode_str: str) -> Tuple[bool, str]:
         """
         Set the operational mode of the daemon.
 
         Args:
             mode_str (str): The desired routing mode (e.g., 'warp', 'doh').
         """
-        success, _ = self._run_command("mode", mode_str)
-        return success
+        return self._run_command("mode", mode_str)
+
+    def set_families_mode(self, mode: str) -> Tuple[bool, str]:
+        """
+        Set the Cloudflare WARP for Families DNS filtering mode.
+
+        Args:
+            mode (str): The desired filtering level. Valid values:
+                - 'off': No DNS filtering
+                - 'malware': Blocks malware domains
+                - 'full': Blocks malware and adult content
+        """
+        return self._run_command("dns", "families", mode)
+
+    def get_families_mode(self) -> str:
+        """
+        Retrieve the current Families DNS filtering mode from daemon settings.
+
+        Returns:
+            str: The current families mode ('off', 'malware', or 'full'). Empty string on failure.
+        """
+        success, output = self._run_command("settings")
+        if success:
+            for line in output.split("\n"):
+                parts = line.split(":", 1)
+                if len(parts) == 2 and "families" in parts[0].strip().lower():
+                    val = parts[1].strip().lower()
+                    if "malware" in val:
+                        return "malware"
+                    elif "full" in val or "adult" in val:
+                        return "full"
+                    elif "off" in val:
+                        return "off"
+        return ""
 
     def get_current_mode(self) -> str:
         """
@@ -216,8 +253,9 @@ class WarpEngine:
         success, output = self._run_command("settings")
         if success:
             for line in output.split("\n"):
-                if line.strip().startswith("Mode:"):
-                    return line.split(":", 1)[1].strip()
+                parts = line.split(":", 1)
+                if len(parts) == 2 and parts[0].strip().endswith("Mode"):
+                    return parts[1].strip()
         return ""
 
     def get_diagnostics(self) -> Dict[str, str]:

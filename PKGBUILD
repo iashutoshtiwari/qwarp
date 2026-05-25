@@ -1,17 +1,32 @@
 # Maintainer: Ashutosh Tiwari <contact@ashutoshtiwari.dev>
 pkgname=qwarp
-pkgver=0.7.8
+pkgver=0.7.9
 pkgrel=1
-pkgdesc="A lightweight, Wayland-native Qt6 wrapper for cloudflare-warp-bin"
-arch=('any')
+_warpver=2026.4.1350.0
+pkgdesc="A lightweight, Wayland-native Qt6 wrapper for Cloudflare WARP"
+arch=('x86_64')
 url="https://github.com/iashutoshtiwari/qwarp"
 license=('MIT')
-depends=('python' 'python-pyqt6' 'cloudflare-warp-bin')
+depends=('python' 'python-pyqt6')
 makedepends=('python-build' 'python-installer' 'python-wheel' 'python-setuptools' 'qt6-tools')
+provides=('cloudflare-warp-bin')
+conflicts=('cloudflare-warp-bin')
+install=qwarp.install
 
 # Bash substitution converts "0.6.0_alpha" to "0.6.0-alpha" for GitHub tags
-source=("$pkgname-$pkgver.tar.gz::https://github.com/iashutoshtiwari/qwarp/archive/refs/tags/v${pkgver/_/-}.tar.gz")
-sha256sums=('SKIP') # Remember to run `updpkgsums` before pushing to AUR!
+source=("$pkgname-$pkgver.tar.gz::https://github.com/iashutoshtiwari/qwarp/archive/refs/tags/v${pkgver/_/-}.tar.gz"
+        "cloudflare-warp-${_warpver}.deb::https://pkg.cloudflareclient.com/pool/noble/main/c/cloudflare-warp/cloudflare-warp_${_warpver}_amd64.deb")
+sha256sums=('SKIP'
+            'SKIP') # Remember to run `updpkgsums` before pushing to AUR!
+noextract=("cloudflare-warp-${_warpver}.deb")
+
+prepare() {
+  # Extract only the core binaries and systemd service from the deb package
+  mkdir -p "${srcdir}/warp-extract"
+  bsdtar -xf "${srcdir}/cloudflare-warp-${_warpver}.deb" -C "${srcdir}/warp-extract"
+  bsdtar -xf "${srcdir}/warp-extract/data.tar.gz" -C "${srcdir}/warp-extract" \
+    ./bin/warp-svc ./bin/warp-cli ./lib/systemd/system/warp-svc.service
+}
 
 build() {
   # Enter the directory extracted from the GitHub tarball
@@ -46,4 +61,14 @@ package() {
 
   # Install the license
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+  # Install core Cloudflare WARP binaries (extracted from the official .deb)
+  install -Dm755 "${srcdir}/warp-extract/bin/warp-svc" "${pkgdir}/usr/bin/warp-svc"
+  install -Dm755 "${srcdir}/warp-extract/bin/warp-cli" "${pkgdir}/usr/bin/warp-cli"
+
+  # Install and patch the systemd service (fix binary path for Arch)
+  install -Dm644 "${srcdir}/warp-extract/lib/systemd/system/warp-svc.service" \
+    "${pkgdir}/usr/lib/systemd/system/warp-svc.service"
+  sed -e "s%ExecStart=/bin/warp-svc%ExecStart=/usr/bin/warp-svc%" \
+    -i "${pkgdir}/usr/lib/systemd/system/warp-svc.service"
 }
