@@ -16,8 +16,8 @@ install=qwarp.install
 # Bash substitution converts "0.6.0_alpha" to "0.6.0-alpha" for GitHub tags
 source=("$pkgname-$pkgver.tar.gz::https://github.com/iashutoshtiwari/qwarp/archive/refs/tags/v${pkgver/_/-}.tar.gz"
         "cloudflare-warp-${_warpver}.deb::https://pkg.cloudflareclient.com/pool/noble/main/c/cloudflare-warp/cloudflare-warp_${_warpver}_amd64.deb")
-sha256sums=('SKIP'
-            'SKIP') # Remember to run `updpkgsums` before pushing to AUR!
+sha256sums=('cc9d2488042b0e24b385c261767b9eef091fd9971479f626edb9976b62d8e522'
+            'f35ae16dd97e8a78dd970341cb6ae3e8131af1962f79cb7b9d698a874eab7f2a')
 noextract=("cloudflare-warp-${_warpver}.deb")
 
 prepare() {
