@@ -8,7 +8,7 @@
   [![GitHub issues](https://img.shields.io/github/issues/iashutoshtiwari/qwarp?style=for-the-badge)](https://github.com/iashutoshtiwari/qwarp/issues)
   [![License](https://img.shields.io/github/license/iashutoshtiwari/qwarp?style=for-the-badge)](https://github.com/iashutoshtiwari/qwarp/blob/master/LICENSE)
 
-  A lightweight, self-contained, Wayland-native Qt6 GUI for Cloudflare WARP on Linux.
+  A lightweight, Wayland-native Qt6 GUI wrapper for the official Cloudflare WARP client on Linux.
 </div>
 
 > [!WARNING]
@@ -32,7 +32,7 @@
 
 ## Features
 
-- **Self-Contained**: Ships core WARP binaries directly — no external dependencies on `cloudflare-warp-bin` or conflicting GUIs.
+- **Official WARP Backend**: Uses the `warp-cli` and `warp-svc` supplied by the official `cloudflare-warp-bin` package.
 - **System Integrations**: Lightweight UI, Wayland compatibility, and theme-aware tray icon tinting.
 - **Daemon Control**: Connect/Disconnect from WARP visually and switch routing modes (DoH, DoT, Proxy).
 - **Families DNS Filtering**: Toggle Cloudflare's 1.1.1.1 for Families (malware blocking, adult content filtering).
@@ -46,46 +46,75 @@
 ### Arch Linux (Recommended)
 
 You can install using the AUR using any AUR helper like `yay`:
+
 ```bash
 yay -S qwarp
 ```
 
+The AUR helper will install `cloudflare-warp-bin` as a required dependency.
+
 Or you can install using the provided `PKGBUILD`:
+
 ```bash
+yay -S cloudflare-warp-bin
 git clone https://github.com/iashutoshtiwari/qwarp.git
 cd qwarp
 makepkg -si
 ```
 
 ### Generic Linux Binary
-Download the pre-compiled `qwarp-linux-x86_64.tar.gz` from the Releases section:
+
+First install `cloudflare-warp-bin`, then download the pre-compiled
+`qwarp-0.8.3-linux-x86_64.tar.gz` from the Releases section and verify it
+against the accompanying `SHA256SUMS` file:
+
 ```bash
-tar -xzvf qwarp-linux-x86_64.tar.gz
+sha256sum --check SHA256SUMS
+tar -xzvf qwarp-0.8.3-linux-x86_64.tar.gz
 ./qwarp
 ```
 
 ### Development
 
 To install in editable mode for Python-only changes:
+
 ```bash
-pip install -e .
+python -m pip install -e ".[dev]"
 qwarp
 ```
 
-To build and install the full package (including the Cloudflare daemon, systemd service, and capability configurations) directly from your local source directory:
-```bash
-makepkg -p PKGBUILD.local -si
-```
-
 ## Requirements
-QWarp is self-contained. The WARP daemon (`warp-svc`) and CLI (`warp-cli`) are bundled during installation. After installing, enable the daemon:
+
+QWarp is a GUI frontend and does not bundle the WARP daemon or CLI. The
+`cloudflare-warp-bin` package must remain installed. After installing it, enable
+the daemon:
+
 ```bash
 sudo systemctl enable --now warp-svc
 ```
 
+> [!NOTE]
+> **Upgrading from the self-contained QWarp 0.8.2-1 package:** Prefer upgrading
+> with an AUR helper. If the old package conflict prevents dependency
+> installation, remove `qwarp`, install `cloudflare-warp-bin`, reinstall
+> `qwarp`, and enable `warp-svc` again. The legacy removal hook may stop and
+> disable the service during this transition.
+
+Python 3.11 or newer is required for source installations. Generic release
+archives bundle the Python runtime but still require the official
+`cloudflare-warp-bin` installation.
+
+## Release process
+
+Releases are prepared from `master` through the manually dispatched Release
+workflow. It validates tests, translations, frozen and Arch packages, version
+metadata, source checksums, and a maintainer-completed live QA checklist before
+the protected `release` environment can publish GitHub and AUR updates. The
+workflow never rewrites `master` or generates changelog commits after tagging.
+
 ## Known Issues
+
 - Enterprise Zero Trust (Teams) login is not yet supported. Consumer WARP and WARP+ work fully.
-- If `cloudflare-warp-bin` is already installed, pacman will prompt you to remove it before installing QWarp (they conflict on the same binaries).
 
 ## Contribution
 Any kind of contribution is highly welcome! Whether it's reporting bugs, suggesting new features, or submitting pull requests, I appreciate community input to help build out the application.

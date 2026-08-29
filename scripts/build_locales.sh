@@ -4,7 +4,7 @@
 # This scrapes the `.py` UI files and extracts all `self.tr("...")` or `QCoreApplication.translate(...)` wrappers.
 # It uses the native Qt6 translation utilities which have built-in support for parsing Python source files.
 
-set -e
+set -euo pipefail
 
 # Change to project root
 cd "$(dirname "$0")/.."
@@ -14,16 +14,20 @@ echo "Building QWarp Locale Files..."
 # Auto-resolve the binary names because they vary wildly by distro
 resolve_bin() {
     local base=$1
+    if [ "$base" = "lupdate" ] && command -v pylupdate6 >/dev/null 2>&1; then
+        command -v pylupdate6
+        return 0
+    fi
+    if [ -x "/usr/lib/qt6/bin/$base" ]; then
+        echo "/usr/lib/qt6/bin/$base"
+        return 0
+    fi
     for cmd in "${base}-qt6" "${base}6" "$base"; do
         if command -v "$cmd" >/dev/null 2>&1; then
             command -v "$cmd"
             return 0
         fi
     done
-    if [ -x "/usr/lib/qt6/bin/$base" ]; then
-        echo "/usr/lib/qt6/bin/$base"
-        return 0
-    fi
     echo ""
 }
 

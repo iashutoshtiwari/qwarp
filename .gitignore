@@ -3,6 +3,7 @@ __pycache__/
 build/
 dist/
 *.egg-info/
+*.spec
 .venv/
 venv/
 pkg/
@@ -16,8 +17,4 @@ pkg/
 *.qm
 /.agents
 skills-lock.json
-*.deb
-/src/warp-extract
-PKGBUILD.local
-AGENTS.md
 uv.lock

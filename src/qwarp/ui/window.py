@@ -2,7 +2,7 @@ import logging
 from typing import Optional
 
 from PyQt6.QtCore import QEvent, QPoint, QSettings, QSize, Qt, pyqtSignal
-from PyQt6.QtGui import QCloseEvent, QIcon, QPalette, QPixmap
+from PyQt6.QtGui import QCloseEvent, QIcon, QPalette
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMenu,
+    QMessageBox,
     QPushButton,
     QStackedWidget,
     QTabWidget,
@@ -26,7 +27,7 @@ from qwarp.core.engine import WarpState
 from qwarp.core.state import WarpStateManager
 from qwarp.ui.toggle import AnimatedToggle
 from qwarp.ui.tray import get_asset_icon
-from qwarp.utils.system import get_tinted_icon, is_x11, load_tinted_icon
+from qwarp.utils.system import is_x11, load_tinted_icon
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +38,18 @@ class SettingsDialog(QDialog):
     and granular daemon connection settings (mode selection).
     """
 
-    def __init__(self, manager: WarpStateManager, parent: Optional[QWidget] = None):
+    def __init__(
+        self,
+        manager: WarpStateManager,
+        parent: Optional[QWidget] = None,
+        *,
+        tray_available: bool = True,
+    ):
         super().__init__(parent)
         self.manager = manager
+        self.tray_available = tray_available
+        self._license_value = ""
+        self._license_revealed = False
         self.setWindowTitle(self.tr("Settings"))
         self.setFixedSize(360, 480)
 
@@ -52,12 +62,11 @@ class SettingsDialog(QDialog):
         self._build_about_tab()
 
         self.layout.addWidget(self.tabs)
-        self.manager.error_occurred.connect(self._on_error_occurred)
-
-    def _on_error_occurred(self, msg: str) -> None:
-        """Displays error messages inline."""
-        self.license_error_lbl.setText(msg)
-        self.license_error_lbl.show()
+        self.manager.action_finished.connect(self._on_action_finished)
+        self.manager.busy_changed.connect(self._on_busy_changed)
+        self.manager.settings_updated.connect(self._on_settings_updated)
+        self.manager.request_diagnostics()
+        self.manager.request_settings()
 
     def _build_general_tab(self) -> None:
         """Constructs the application preferences tab."""
@@ -69,6 +78,10 @@ class SettingsDialog(QDialog):
         # Minimized to Tray setting
         self.minimized_cb = QCheckBox(self.tr("Start minimized to system tray"))
         self.minimized_cb.setChecked(settings.value("start_minimized", False, type=bool))
+        if not self.tray_available:
+            self.minimized_cb.setChecked(False)
+            self.minimized_cb.setEnabled(False)
+            settings.setValue("start_minimized", False)
         self.minimized_cb.toggled.connect(self._on_minimized_toggled)
 
         gen_layout.addWidget(self.minimized_cb)
@@ -129,7 +142,16 @@ class SettingsDialog(QDialog):
         self.lbl_daemon_status.setTextInteractionFlags(selectable_flag)
 
         form_layout.addRow(self.tr("Account Type:"), self.lbl_acc_type)
-        form_layout.addRow(self.tr("License Key:"), self.lbl_license)
+        license_value_layout = QHBoxLayout()
+        license_value_layout.setContentsMargins(0, 0, 0, 0)
+        license_value_layout.addWidget(self.lbl_license)
+        self.license_reveal_btn = QPushButton(self.tr("Show"))
+        self.license_reveal_btn.setCheckable(True)
+        self.license_reveal_btn.toggled.connect(self._on_license_reveal_toggled)
+        license_value_layout.addWidget(self.license_reveal_btn)
+        license_value_widget = QWidget()
+        license_value_widget.setLayout(license_value_layout)
+        form_layout.addRow(self.tr("License Key:"), license_value_widget)
         form_layout.addRow(self.tr("Data Quota:"), self.lbl_quota)
         form_layout.addRow(self.tr("Daemon Status:"), self.lbl_daemon_status)
 
@@ -140,9 +162,14 @@ class SettingsDialog(QDialog):
         license_layout = QHBoxLayout()
         self.license_input = QLineEdit()
         self.license_input.setPlaceholderText(self.tr("Enter WARP+ License Key"))
+        self.license_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self.license_input_reveal_btn = QPushButton(self.tr("Show"))
+        self.license_input_reveal_btn.setCheckable(True)
+        self.license_input_reveal_btn.toggled.connect(self._on_license_input_reveal_toggled)
         self.license_apply_btn = QPushButton(self.tr("Apply"))
         self.license_apply_btn.clicked.connect(self._on_apply_license_clicked)
         license_layout.addWidget(self.license_input)
+        license_layout.addWidget(self.license_input_reveal_btn)
         license_layout.addWidget(self.license_apply_btn)
         acc_layout.addLayout(license_layout)
 
@@ -167,8 +194,6 @@ class SettingsDialog(QDialog):
         acc_layout.addLayout(btn_layout)
         self.tabs.addTab(account_tab, self.tr("Account"))
 
-        self.manager.request_diagnostics()
-
     def _build_connection_tab(self) -> None:
         """Constructs the routing mode selection UI."""
         conn_tab = QWidget()
@@ -184,17 +209,6 @@ class SettingsDialog(QDialog):
         self.mode_combo.addItem(self.tr("Local Proxy"), "proxy")
         self.mode_combo.addItem(self.tr("Tunnel Only"), "tunnel_only")
 
-        current_daemon_mode = self.manager.engine.get_current_mode()
-        if current_daemon_mode:
-            current_mode_normalized = current_daemon_mode.lower().replace(" ", "").replace("_", "").replace("+", "")
-            for i in range(self.mode_combo.count()):
-                item_data_normalized = (
-                    self.mode_combo.itemData(i).lower().replace(" ", "").replace("_", "").replace("+", "")
-                )
-                if item_data_normalized == current_mode_normalized:
-                    self.mode_combo.setCurrentIndex(i)
-                    break
-
         self.mode_combo.currentIndexChanged.connect(self._on_mode_changed)
         conn_layout.addWidget(self.mode_combo)
 
@@ -207,12 +221,6 @@ class SettingsDialog(QDialog):
         self.families_combo.addItem(self.tr("Off (No Filtering)"), "off")
         self.families_combo.addItem(self.tr("Malware Only"), "malware")
         self.families_combo.addItem(self.tr("Malware + Adult Content"), "full")
-
-        current_families_mode = self.manager.engine.get_families_mode()
-        if current_families_mode:
-            families_mode_map = {"off": 0, "malware": 1, "full": 2}
-            idx = families_mode_map.get(current_families_mode, 0)
-            self.families_combo.setCurrentIndex(idx)
 
         self.families_combo.currentIndexChanged.connect(self._on_families_mode_changed)
         conn_layout.addWidget(self.families_combo)
@@ -297,7 +305,8 @@ class SettingsDialog(QDialog):
     def _on_diagnostics_updated(self, data: dict) -> None:
         # Backend returns specific strings, wrap generic unreachability
         self.lbl_acc_type.setText(self.tr(data.get("type", "Unknown")))
-        self.lbl_license.setText(self.tr(data.get("license", "Unknown")))
+        self._license_value = data.get("license", "Unknown")
+        self._update_license_display()
         self.lbl_quota.setText(self.tr(data.get("quota", "Unknown")))
 
         status_text = self.tr(data.get("status", "Unknown"))
@@ -310,9 +319,16 @@ class SettingsDialog(QDialog):
             self.license_error_lbl.hide()
 
     def _on_delete_clicked(self) -> None:
-        logger.info("User deleted registration")
-        self.manager.request_delete_registration()
-        self.accept()
+        answer = QMessageBox.question(
+            self,
+            self.tr("Delete Registration"),
+            self.tr("Delete this WARP registration? You will need to register again before reconnecting."),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel,
+            QMessageBox.StandardButton.Cancel,
+        )
+        if answer == QMessageBox.StandardButton.Yes:
+            logger.info("User confirmed registration deletion")
+            self.manager.request_delete_registration()
 
     def _on_apply_license_clicked(self) -> None:
         self.license_error_lbl.hide()
@@ -331,6 +347,71 @@ class SettingsDialog(QDialog):
         logger.info("User changed families DNS filtering to: %s", families_mode)
         self.manager.request_set_families_mode(families_mode)
 
+    def _on_settings_updated(self, settings: dict) -> None:
+        for combo, value in (
+            (self.mode_combo, settings.get("mode", "")),
+            (self.families_combo, settings.get("families", "")),
+        ):
+            index = combo.findData(value)
+            if index >= 0:
+                combo.blockSignals(True)
+                combo.setCurrentIndex(index)
+                combo.blockSignals(False)
+
+    def _on_busy_changed(self, busy: bool) -> None:
+        for widget in (
+            self.license_apply_btn,
+            self.delete_btn,
+            self.mode_combo,
+            self.families_combo,
+        ):
+            widget.setEnabled(not busy)
+
+    def _on_action_finished(self, action: str, success: bool, message: str) -> None:
+        settings_actions = {"set_license", "delete_registration", "set_mode", "set_families_mode"}
+        if action not in settings_actions:
+            return
+        if not success:
+            self.license_error_lbl.setText(message or self.tr("The requested action failed."))
+            self.license_error_lbl.show()
+            if action in {"set_mode", "set_families_mode"}:
+                self.manager.request_settings()
+            return
+        self.license_error_lbl.hide()
+        if action == "set_license":
+            self.license_input.clear()
+        elif action == "delete_registration":
+            self.accept()
+
+    def _on_license_reveal_toggled(self, revealed: bool) -> None:
+        self._license_revealed = revealed
+        self.license_reveal_btn.setText(self.tr("Hide") if revealed else self.tr("Show"))
+        self._update_license_display()
+
+    def _on_license_input_reveal_toggled(self, revealed: bool) -> None:
+        mode = QLineEdit.EchoMode.Normal if revealed else QLineEdit.EchoMode.Password
+        self.license_input.setEchoMode(mode)
+        self.license_input_reveal_btn.setText(self.tr("Hide") if revealed else self.tr("Show"))
+
+    def _update_license_display(self) -> None:
+        value = self._license_value
+        if self._license_revealed or value in {"", "Unknown", "Not Registered"}:
+            display = value or self.tr("Unknown")
+        else:
+            suffix = value[-4:] if len(value) > 4 else ""
+            display = f"••••••••{suffix}"
+        self.lbl_license.setText(self.tr(display))
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        self._license_value = ""
+        self.license_input.clear()
+        super().closeEvent(event)
+
+    def done(self, result: int) -> None:
+        self._license_value = ""
+        self.license_input.clear()
+        super().done(result)
+
 
 class WarpWindow(QWidget):
     """
@@ -340,9 +421,16 @@ class WarpWindow(QWidget):
 
     quit_requested = pyqtSignal()
 
-    def __init__(self, manager: WarpStateManager, parent: Optional[QWidget] = None):
+    def __init__(
+        self,
+        manager: WarpStateManager,
+        parent: Optional[QWidget] = None,
+        *,
+        tray_available: bool = True,
+    ):
         super().__init__(parent)
         self.manager = manager
+        self.tray_available = tray_available
 
         self.setWindowTitle("QWarp")
         self.setFixedSize(340, 480)
@@ -395,7 +483,7 @@ class WarpWindow(QWidget):
         self.page0 = QWidget()
         p0_layout = QVBoxLayout(self.page0)
 
-        not_reg_label = QLabel(self.tr("Not Registered"))
+        not_reg_label = QLabel(self.tr("Setup required"))
         font = not_reg_label.font()
         font.setPointSize(15)
         font.setBold(True)
@@ -406,7 +494,7 @@ class WarpWindow(QWidget):
         info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         info_label.setWordWrap(True)
 
-        self.register_btn = QPushButton(self.tr("Accept && register"))
+        self.register_btn = QPushButton(self.tr("Accept and continue"))
         self.register_btn.setFixedSize(160, 40)
         self.register_btn.setProperty("styleClass", "primary")
 
@@ -415,6 +503,12 @@ class WarpWindow(QWidget):
         p0_layout.addWidget(info_label)
         p0_layout.addSpacing(15)
         p0_layout.addWidget(self.register_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
+        self.registration_error = QLabel("")
+        self.registration_error.setProperty("styleClass", "title_error")
+        self.registration_error.setWordWrap(True)
+        self.registration_error.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.registration_error.hide()
+        p0_layout.addWidget(self.registration_error)
         p0_layout.addStretch()
 
         self.stack.addWidget(self.page0)
@@ -482,12 +576,15 @@ class WarpWindow(QWidget):
 
     def _show_settings(self) -> None:
         """Launches the settings modal dialog."""
-        dialog = SettingsDialog(self.manager, self)
+        dialog = SettingsDialog(self.manager, self, tray_available=self.tray_available)
         dialog.exec()
 
     def _setup_signals(self) -> None:
         """Subscribes and bridges local UI actions to state manager operations."""
         self.manager.state_changed.connect(self._update_ui_state)
+        self.manager.action_started.connect(self._on_action_started)
+        self.manager.action_finished.connect(self._on_action_finished)
+        self.manager.busy_changed.connect(self._on_busy_changed)
         self.toggle.clicked.connect(self._on_toggle_clicked)
         self.register_btn.clicked.connect(self._on_register_clicked)
         self.repair_btn.clicked.connect(self._on_repair_clicked)
@@ -499,6 +596,35 @@ class WarpWindow(QWidget):
     def _on_repair_clicked(self) -> None:
         logger.info("User requested daemon service recovery")
         self.manager.request_repair_service()
+
+    def _on_action_started(self, action: str) -> None:
+        if action in {"connect", "disconnect"}:
+            self.status_title.setText(self.tr("CONNECTING") if action == "connect" else self.tr("DISCONNECTING"))
+            self.status_desc.setText(self.tr("Please wait..."))
+            self._update_status_style("title_disconnected")
+        self.registration_error.hide()
+
+    def _on_action_finished(self, action: str, success: bool, message: str) -> None:
+        if action not in {"connect", "disconnect", "register", "repair_service"}:
+            return
+        self._update_ui_state(self.manager.current_state)
+        if success:
+            return
+        if action == "register":
+            self.registration_error.setText(message or self.tr("Registration failed."))
+            self.registration_error.show()
+        else:
+            self.status_desc.setText(message or self.tr("The requested action failed."))
+            self._update_status_style("title_error")
+
+    def _on_busy_changed(self, busy: bool) -> None:
+        self.register_btn.setEnabled(not busy)
+        self.repair_btn.setEnabled(not busy)
+        self.pref_action.setEnabled(not busy)
+        if busy:
+            self.toggle.setEnabled(False)
+        else:
+            self._update_ui_state(self.manager.current_state)
 
     def _update_status_style(self, style_class: str) -> None:
         """Updates the status title's style class and forces a style refresh."""
@@ -528,14 +654,14 @@ class WarpWindow(QWidget):
 
         if state == WarpState.CONNECTED:
             self.toggle.setChecked(True)
-            self.toggle.setEnabled(True)
+            self.toggle.setEnabled(not self.manager.is_busy)
             self.status_title.setText(self.tr("CONNECTED"))
             self._update_status_style("title_connected")
             self.status_desc.setText(self.tr("Your Internet is private."))
 
         elif state == WarpState.DISCONNECTED:
             self.toggle.setChecked(False)
-            self.toggle.setEnabled(True)
+            self.toggle.setEnabled(not self.manager.is_busy)
             self.status_title.setText(self.tr("DISCONNECTED"))
             self._update_status_style("title_disconnected")
             self.status_desc.setText(self.tr("Your Internet is not private."))
@@ -551,7 +677,7 @@ class WarpWindow(QWidget):
             self.toggle.setEnabled(False)
             self.status_title.setText(self.tr("ERROR"))
             self._update_status_style("title_error")
-            self.status_desc.setText(self.tr("WARP daemon is not running."))
+            self.status_desc.setText(self.tr("Unable to communicate with Cloudflare WARP."))
 
         elif state == WarpState.SERVICE_STOPPED:
             self.toggle.setChecked(False)
@@ -598,6 +724,9 @@ class WarpWindow(QWidget):
         self.activateWindow()
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        """Overrides the window kill-switch, forcing it into a minimized background state."""
-        event.ignore()
-        self.hide()
+        if self.tray_available:
+            event.ignore()
+            self.hide()
+        else:
+            event.accept()
+            self.quit_requested.emit()

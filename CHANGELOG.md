@@ -5,6 +5,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.8.3] – 2026-08-28
+
+### Fixed
+
+- Redact WARP+ license values from subprocess logs and mask them in Settings.
+- Keep daemon commands off the Qt event loop and serialize polling, diagnostics, and actions.
+- Restore window and tray controls after failed actions and report errors to the initiating UI.
+- Parse current Cloudflare routing and Families mode values correctly.
+- Show the registration screen on fresh clients that have not accepted the WARP Terms of Service.
+- Preserve an existing WARP registration when accepting the Terms after an upgrade.
+- Make single-instance startup resilient to stale sockets and concurrent launches.
+- Keep the window reachable when no system tray is available.
+
+### Changed
+
+- Require Python 3.11 or newer.
+- Depend on the complete official `cloudflare-warp-bin` package instead of extracting or owning WARP files.
+- Replace tag-triggered publishing with a manually approved GitHub and AUR release workflow.
+- Add normalized source archives, checksums, provenance, frozen-binary smoke tests, and Arch ownership checks.
+
 ## [v0.8.2] – 2026-05-25
 
 - fix(ci): switch to master branch in release workflow to avoid detached HEAD non-fast-forward push ([35c3b5e](https://github.com/iashutoshtiwari/qwarp/commit/35c3b5eed510f1b53efd09fadf1dcab7e729db85))
@@ -61,8 +81,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Bump version to 0.7.6 and switch CI to master ([46ce029](https://github.com/iashutoshtiwari/qwarp/commit/46ce029cb6129d2554f30983651dba857b3fca1b))
 
-
-<!-- New release entries are automatically inserted here by CI on each tag push -->
 
 ## [0.7.1] – 2026-03-27
 
