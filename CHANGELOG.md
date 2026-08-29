@@ -14,6 +14,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Restore window and tray controls after failed actions and report errors to the initiating UI.
 - Parse current Cloudflare routing and Families mode values correctly.
 - Show the registration screen on fresh clients that have not accepted the WARP Terms of Service.
+- Preserve an existing WARP registration when accepting the Terms after an upgrade.
 - Make single-instance startup resilient to stale sockets and concurrent launches.
 - Keep the window reachable when no system tray is available.
 

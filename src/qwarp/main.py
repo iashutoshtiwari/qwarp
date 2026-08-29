@@ -62,6 +62,13 @@ def setup_ipc_instance() -> SingleInstance:
     return instance_manager
 
 
+def remember_terms_acceptance(settings: QSettings, action: str, success: bool) -> None:
+    """Persist consent only after the onboarding action completes successfully."""
+    if action == "register" and success:
+        settings.setValue("terms_accepted", True)
+        settings.sync()
+
+
 def main() -> None:
     """
     Application entry point. Bootstraps Qt, IPC, background workers, and signals.
@@ -76,10 +83,10 @@ def main() -> None:
     app.setOrganizationName("qwarp")
     app.setApplicationName("qwarp")
     app.setStyleSheet(GLOBAL_QSS)
+    settings = QSettings()
 
     # Localized runtime translation instantiation
-    locales_settings = QSettings()
-    lang_pref = locales_settings.value("language", "", type=str)
+    lang_pref = settings.value("language", "", type=str)
 
     # Smart fallback logic defaulting strictly to system footprint map
     if not lang_pref:
@@ -115,9 +122,13 @@ def main() -> None:
     timer.timeout.connect(lambda: None)
     timer.start(500)
 
-    engine = WarpEngine()
+    engine = WarpEngine(accept_tos=settings.value("terms_accepted", False, type=bool))
     manager = WarpStateManager(engine)
     window = WarpWindow(manager, tray_available=tray_available)
+
+    manager.action_finished.connect(
+        lambda action, success, _message: remember_terms_acceptance(settings, action, success)
+    )
 
     window.quit_requested.connect(app.quit)
 
@@ -149,7 +160,6 @@ def main() -> None:
     else:
         logger.warning("No system tray is available; close-to-hide and start-minimized are disabled")
 
-    settings = QSettings()
     start_minimized = settings.value("start_minimized", False, type=bool)
 
     if not start_minimized or not tray_available:

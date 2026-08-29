@@ -42,8 +42,9 @@ class WarpEngine:
         "tunnelonly": "tunnel_only",
     }
 
-    def __init__(self, timeout: float = 2.0):
+    def __init__(self, timeout: float = 2.0, *, accept_tos: bool = False):
         self.timeout = timeout
+        self.accept_tos = accept_tos
         self._command_lock = threading.RLock()
 
     @staticmethod
@@ -104,8 +105,10 @@ class WarpEngine:
         sensitive_values: tuple[str, ...] = (),
         quiet: Optional[bool] = None,
     ) -> tuple[bool, str]:
+        if self.accept_tos and (not args or args[0] != "--accept-tos"):
+            args = ("--accept-tos", *args)
         if quiet is None:
-            quiet = bool(args and args[0] in {"status", "settings"})
+            quiet = bool(args and args[-1] in {"status", "settings"})
         return self._run_process(
             [self.CLI_PATH, *args],
             quiet=quiet,
@@ -171,7 +174,19 @@ class WarpEngine:
         return self._run_command("disconnect")
 
     def register(self) -> tuple[bool, str]:
-        return self._run_command("--accept-tos", "registration", "new")
+        # Accept the Terms before deciding whether a registration is needed.
+        # A package upgrade can leave a valid daemon registration in place even
+        # though the newly installed CLI still requires Terms acceptance. Never
+        # replace that registration merely to complete onboarding.
+        self.accept_tos = True
+        success, output = self._run_command("registration", "show", quiet=True)
+        if success:
+            return True, ""
+
+        output_lower = output.lower()
+        if "registration missing" in output_lower or "no registration" in output_lower:
+            return self._run_command("registration", "new")
+        return False, output
 
     def delete_registration(self) -> tuple[bool, str]:
         return self._run_command("registration", "delete")

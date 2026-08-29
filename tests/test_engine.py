@@ -83,6 +83,59 @@ def test_actions_forward_expected_arguments(mock_run):
 
 
 @patch("subprocess.run")
+def test_accepted_terms_are_forwarded_to_future_commands(mock_run):
+    mock_run.return_value = process(stdout="ok")
+    engine = WarpEngine(accept_tos=True)
+
+    assert engine.connect() == (True, "ok")
+    assert mock_run.call_args.args[0] == ["warp-cli", "--accept-tos", "connect"]
+
+
+@patch("subprocess.run")
+def test_register_reuses_existing_registration_after_accepting_terms(mock_run):
+    mock_run.return_value = process(stdout="Account type: Free\nLicense: sensitive-value")
+
+    assert WarpEngine().register() == (True, "")
+    mock_run.assert_called_once()
+    assert mock_run.call_args.args[0] == ["warp-cli", "--accept-tos", "registration", "show"]
+
+
+@patch("subprocess.run")
+def test_register_creates_registration_only_when_missing(mock_run):
+    mock_run.side_effect = [
+        process(returncode=1, stderr="Registration Missing"),
+        process(stdout="Success"),
+    ]
+
+    assert WarpEngine().register() == (True, "Success")
+    assert [call.args[0] for call in mock_run.call_args_list] == [
+        ["warp-cli", "--accept-tos", "registration", "show"],
+        ["warp-cli", "--accept-tos", "registration", "new"],
+    ]
+
+
+@patch("subprocess.run")
+def test_register_enables_terms_for_subsequent_status_calls(mock_run):
+    mock_run.side_effect = [
+        process(stdout="Account type: Free"),
+        process(stdout="Status update: Disconnected"),
+    ]
+    engine = WarpEngine()
+
+    assert engine.register() == (True, "")
+    assert engine.status() == WarpState.DISCONNECTED
+    assert mock_run.call_args.args[0] == ["warp-cli", "--accept-tos", "status"]
+
+
+@patch("subprocess.run")
+def test_register_does_not_replace_registration_on_unexpected_inspection_failure(mock_run):
+    mock_run.return_value = process(returncode=1, stderr="Old registration is still around")
+
+    assert WarpEngine().register() == (False, "Old registration is still around")
+    mock_run.assert_called_once()
+
+
+@patch("subprocess.run")
 def test_license_is_redacted_from_logs_and_error(mock_run, caplog):
     sensitive_value = "synthetic-license-value"
     mock_run.return_value = process(returncode=1, stderr=f"rejected {sensitive_value}")

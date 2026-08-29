@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 from PyQt6.QtGui import QCloseEvent
-from PyQt6.QtWidgets import QDialog, QMessageBox
+from PyQt6.QtWidgets import QDialog, QLabel, QMessageBox
 
 from qwarp.core.engine import WarpState
 from qwarp.core.state import WarpStateManager
@@ -60,6 +60,15 @@ def test_failed_connect_restores_toggle_and_shows_contextual_error(qapp, wait_un
     assert window.status_desc.text() == "simulated failure"
     window.deleteLater()
     manager.shutdown()
+
+
+def test_onboarding_copy_does_not_claim_existing_registration_is_missing(qapp, manager):
+    window = WarpWindow(manager)
+    manager._on_status_result(WarpState.UNREGISTERED)
+
+    assert window.register_btn.text() == "Accept and continue"
+    assert "Setup required" in {label.text() for label in window.page0.findChildren(QLabel)}
+    window.deleteLater()
 
 
 @pytest.mark.parametrize(

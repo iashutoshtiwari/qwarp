@@ -483,7 +483,7 @@ class WarpWindow(QWidget):
         self.page0 = QWidget()
         p0_layout = QVBoxLayout(self.page0)
 
-        not_reg_label = QLabel(self.tr("Not Registered"))
+        not_reg_label = QLabel(self.tr("Setup required"))
         font = not_reg_label.font()
         font.setPointSize(15)
         font.setBold(True)
@@ -494,7 +494,7 @@ class WarpWindow(QWidget):
         info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         info_label.setWordWrap(True)
 
-        self.register_btn = QPushButton(self.tr("Accept && register"))
+        self.register_btn = QPushButton(self.tr("Accept and continue"))
         self.register_btn.setFixedSize(160, 40)
         self.register_btn.setProperty("styleClass", "primary")
 

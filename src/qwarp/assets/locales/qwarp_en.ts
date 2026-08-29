@@ -274,7 +274,7 @@
     <name>WarpWindow</name>
     <message>
         <location filename="../../ui/window.py" line="486" />
-        <source>Not Registered</source>
+        <source>Setup required</source>
         <translation type="unfinished" />
     </message>
     <message>
@@ -284,7 +284,7 @@
     </message>
     <message>
         <location filename="../../ui/window.py" line="497" />
-        <source>Accept &amp;&amp; register</source>
+        <source>Accept and continue</source>
         <translation type="unfinished" />
     </message>
     <message>

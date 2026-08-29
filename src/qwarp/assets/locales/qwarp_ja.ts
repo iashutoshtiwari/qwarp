@@ -274,8 +274,8 @@
     <name>WarpWindow</name>
     <message>
         <location filename="../../ui/window.py" line="486" />
-        <source>Not Registered</source>
-        <translation>未登録</translation>
+        <source>Setup required</source>
+        <translation type="unfinished" />
     </message>
     <message>
         <location filename="../../ui/window.py" line="493" />
@@ -284,8 +284,8 @@
     </message>
     <message>
         <location filename="../../ui/window.py" line="497" />
-        <source>Accept &amp;&amp; register</source>
-        <translation>同意して登録</translation>
+        <source>Accept and continue</source>
+        <translation type="unfinished" />
     </message>
     <message>
         <location filename="../../ui/window.py" line="523" />
@@ -395,6 +395,14 @@
         <location filename="../../ui/window.py" line="692" />
         <source>Checking status...</source>
         <translation>ステータスを確認中...</translation>
+    </message>
+    <message>
+        <source>Not Registered</source>
+        <translation type="vanished">未登録</translation>
+    </message>
+    <message>
+        <source>Accept &amp;&amp; register</source>
+        <translation type="vanished">同意して登録</translation>
     </message>
     <message>
         <source>WARP daemon is not running.</source>

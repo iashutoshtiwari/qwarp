@@ -2,10 +2,10 @@ import os
 import uuid
 from unittest.mock import patch
 
-from PyQt6.QtCore import QCoreApplication
+from PyQt6.QtCore import QCoreApplication, QSettings
 
 from qwarp.core.instance import InstanceRole, SingleInstance
-from qwarp.main import parse_cli_args
+from qwarp.main import parse_cli_args, remember_terms_acceptance
 from qwarp.utils.system import get_asset_dir
 
 
@@ -52,3 +52,17 @@ def test_version_option_has_no_qt_or_daemon_side_effect(capsys):
         else:
             raise AssertionError("--version did not exit")
     assert "QWarp 0.8.3" in capsys.readouterr().out
+
+
+def test_terms_acceptance_is_persisted_only_after_success(qapp):
+    settings = QSettings()
+    settings.remove("terms_accepted")
+
+    remember_terms_acceptance(settings, "register", False)
+    assert settings.value("terms_accepted", False, type=bool) is False
+    remember_terms_acceptance(settings, "connect", True)
+    assert settings.value("terms_accepted", False, type=bool) is False
+    remember_terms_acceptance(settings, "register", True)
+    assert settings.value("terms_accepted", False, type=bool) is True
+
+    settings.remove("terms_accepted")
