@@ -129,7 +129,13 @@ class TestTaskbar:
         assert success
         assert "suppressed" in msg.lower()
         # Verify mask --now was called
-        assert mock_run.call_args_list[1].kwargs.get("args", mock_run.call_args_list[1].args[0]) == ["systemctl", "--user", "mask", "--now", "warp-taskbar.service"]
+        assert mock_run.call_args_list[1].kwargs.get("args", mock_run.call_args_list[1].args[0]) == [
+            "systemctl",
+            "--user",
+            "mask",
+            "--now",
+            "warp-taskbar.service",
+        ]
 
     @patch("subprocess.run")
     def test_suppress_idempotent_when_already_masked(self, mock_run):

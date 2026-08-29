@@ -119,7 +119,7 @@ jobs:
   debian-package:
     name: Build Debian package
     needs: package
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
@@ -134,8 +134,9 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
-            build-essential debhelper dh-python python3-all python3-setuptools \
-            python3-build qt6-l10n-tools qt6-tools-dev-tools dpkg-dev
+            build-essential debhelper dh-python pybuild-plugin-pyproject \
+            python3-all python3-setuptools python3-build qt6-l10n-tools \
+            qt6-tools-dev-tools dpkg-dev
       - name: Build .deb
         run: |
           tar xzf dist/release/qwarp-0.9.0-source.tar.gz
@@ -167,7 +168,8 @@ jobs:
       - name: Install dependencies
         run: |
           dnf install -y rpm-build python3-devel python3-setuptools \
-            python3-build python3-pip python3-wheel qt6-linguist
+            python3-build python3-pip python3-wheel pyproject-rpm-macros \
+            qt6-linguist
       - name: Build .rpm
         run: |
           mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}

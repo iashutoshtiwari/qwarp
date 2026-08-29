@@ -2,7 +2,7 @@ Source: qwarp
 Section: net
 Priority: optional
 Maintainer: Ashutosh Tiwari <contact@ashutoshtiwari.dev>
-Build-Depends: debhelper-compat (= 13), dh-python, python3-all, python3-setuptools, python3-build, qt6-l10n-tools, qt6-tools-dev-tools
+Build-Depends: debhelper-compat (= 13), dh-python, pybuild-plugin-pyproject, python3-all, python3-setuptools, python3-build, qt6-l10n-tools, qt6-tools-dev-tools
 Standards-Version: 4.6.2
 Homepage: https://github.com/iashutoshtiwari/qwarp
 Rules-Requires-Root: no

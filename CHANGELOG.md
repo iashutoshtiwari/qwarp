@@ -5,6 +5,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.9.0] – 2026-08-29
+
+### Added
+
+- Add guided Terms acceptance, registration, and Cloudflare Zero Trust organization enrollment.
+- Add account details, organization switching, connection-mode selection, and an advanced diagnostics view.
+- Add XDG autostart management and supported taskbar suppression for tray-first desktop use.
+- Add Debian, RPM, Arch, and generic Linux release packaging with CI validation.
+
+### Changed
+
+- Update status, settings, and account parsing for the Cloudflare One Client CLI.
+- Keep account and tunnel mutations serialized through the state manager and refresh state immediately after actions.
+- Expand translated UI catalogs for the new onboarding, account, settings, and diagnostics flows.
+
+### Fixed
+
+- Preserve existing registrations while accepting updated Terms of Service.
+- Keep sensitive license and account values out of logs and command diagnostics.
+- Restore correct controls and connection state across missing registration, Zero Trust, proxy, and daemon error states.
+
 ## [v0.8.3] – 2026-08-28
 
 ### Fixed

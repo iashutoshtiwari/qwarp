@@ -1,7 +1,8 @@
+from unittest.mock import patch
+
 import pytest
 from PyQt6.QtGui import QCloseEvent
-from PyQt6.QtWidgets import QDialog, QLabel, QMessageBox, QCheckBox
-from unittest.mock import patch
+from PyQt6.QtWidgets import QDialog, QLabel, QMessageBox
 
 from qwarp.core.engine import CliCapabilities, WarpState
 from qwarp.core.state import WarpStateManager
@@ -124,7 +125,7 @@ def test_zero_trust_shows_org_badge_and_disables_consumer_settings(qapp, manager
     assert not dialog.protocol_combo.isEnabled()
     assert not dialog.trust_eth_cb.isEnabled()
     assert not dialog.trust_wifi_cb.isEnabled()
-    
+
     window.deleteLater()
     dialog.deleteLater()
 

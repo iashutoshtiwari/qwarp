@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from PyQt6.QtCore import QEvent, QPoint, QSettings, QSize, Qt, pyqtSignal, QThread
+from PyQt6.QtCore import QEvent, QPoint, QSettings, QSize, Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QCloseEvent, QIcon, QPalette
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -10,7 +10,6 @@ from PyQt6.QtWidgets import (
     QFormLayout,
     QFrame,
     QHBoxLayout,
-    QInputDialog,
     QLabel,
     QLineEdit,
     QMenu,
@@ -96,7 +95,7 @@ class SettingsDialog(QDialog):
         self.manager.capabilities_detected.connect(self._on_capabilities_updated)
         self.manager.request_diagnostics()
         self.manager.request_settings()
-        
+
         self.worker = None
         self._refresh_diagnostics_tab()
 
@@ -122,7 +121,7 @@ class SettingsDialog(QDialog):
             settings.setValue("start_minimized", False)
         elif not self.autostart_cb.isChecked():
             self.minimized_cb.setEnabled(False)
-            
+
         self.minimized_cb.toggled.connect(self._on_minimized_toggled)
 
         gen_layout.addWidget(self.minimized_cb)
@@ -157,7 +156,9 @@ class SettingsDialog(QDialog):
         # Mask taskbar setting
         self.suppress_taskbar_cb = QCheckBox(self.tr("Hide official Cloudflare tray icon"))
         self.suppress_taskbar_cb.setChecked(settings.value("suppress_taskbar", False, type=bool))
-        self.suppress_taskbar_cb.setToolTip(self.tr("Prevents the official Cloudflare client from showing its own tray icon while QWarp is running."))
+        self.suppress_taskbar_cb.setToolTip(
+            self.tr("Prevents the official Cloudflare client from showing its own tray icon while QWarp is running.")
+        )
         self.suppress_taskbar_cb.toggled.connect(self._on_suppress_taskbar_toggled)
         gen_layout.addWidget(self.suppress_taskbar_cb)
 
@@ -245,38 +246,38 @@ class SettingsDialog(QDialog):
         """Constructs the device and registration info tab."""
         device_tab = QWidget()
         device_layout = QVBoxLayout(device_tab)
-        
+
         form_layout = QFormLayout()
         self.lbl_reg_status = QLabel(self.tr("Loading..."))
         self.lbl_device_id = QLabel(self.tr("Loading..."))
         self.lbl_org = QLabel(self.tr(""))
-        
+
         selectable_flag = Qt.TextInteractionFlag.TextSelectableByMouse
         self.lbl_reg_status.setTextInteractionFlags(selectable_flag)
         self.lbl_device_id.setTextInteractionFlags(selectable_flag)
         self.lbl_org.setTextInteractionFlags(selectable_flag)
-        
+
         form_layout.addRow(self.tr("Registration Status:"), self.lbl_reg_status)
         form_layout.addRow(self.tr("Device ID:"), self.lbl_device_id)
-        
+
         self.org_label_widget = QLabel(self.tr("Organization:"))
         form_layout.addRow(self.org_label_widget, self.lbl_org)
-        
+
         device_layout.addLayout(form_layout)
         device_layout.addSpacing(10)
-        
+
         btn_layout = QHBoxLayout()
         self.dev_refresh_btn = QPushButton(self.tr("Refresh"))
         self.dev_refresh_btn.clicked.connect(self.manager.request_diagnostics)
-        
+
         self.leave_org_btn = QPushButton(self.tr("Leave Organization"))
         self.leave_org_btn.setProperty("styleClass", "danger")
         self.leave_org_btn.clicked.connect(self._on_leave_org_clicked)
         self.leave_org_btn.hide()
-        
+
         btn_layout.addWidget(self.dev_refresh_btn)
         btn_layout.addWidget(self.leave_org_btn)
-        
+
         device_layout.addStretch()
         device_layout.addLayout(btn_layout)
         self.tabs.addTab(device_tab, self.tr("Device"))
@@ -313,19 +314,19 @@ class SettingsDialog(QDialog):
 
         self.families_combo.currentIndexChanged.connect(self._on_families_mode_changed)
         conn_layout.addWidget(self.families_combo)
-        
+
         sep1 = QFrame()
         sep1.setFrameShape(QFrame.Shape.HLine)
         sep1.setFrameShadow(QFrame.Shadow.Sunken)
         conn_layout.addWidget(sep1)
-        
+
         conn_layout.addWidget(QLabel(self.tr("Tunnel Protocol:")))
         self.protocol_combo = QComboBox()
         self.protocol_combo.addItem(self.tr("MASQUE (Default)"), "MASQUE")
         self.protocol_combo.addItem(self.tr("WireGuard (Legacy)"), "WireGuard")
         self.protocol_combo.currentIndexChanged.connect(self._on_protocol_changed)
         conn_layout.addWidget(self.protocol_combo)
-        
+
         proxy_layout = QHBoxLayout()
         proxy_layout.addWidget(QLabel(self.tr("Proxy Port:")))
         self.proxy_port_spin = QSpinBox()
@@ -335,24 +336,24 @@ class SettingsDialog(QDialog):
         self.proxy_port_spin.valueChanged.connect(self._on_proxy_port_changed)
         proxy_layout.addWidget(self.proxy_port_spin)
         conn_layout.addLayout(proxy_layout)
-        
+
         sep2 = QFrame()
         sep2.setFrameShape(QFrame.Shape.HLine)
         sep2.setFrameShadow(QFrame.Shadow.Sunken)
         conn_layout.addWidget(sep2)
-        
+
         trusted_header = QLabel(self.tr("Trusted Networks:"))
         trusted_header.setStyleSheet("font-weight: bold;")
         conn_layout.addWidget(trusted_header)
-        
+
         self.trust_eth_cb = QCheckBox(self.tr("Auto-disconnect on Ethernet"))
         self.trust_eth_cb.toggled.connect(self._on_trust_eth_toggled)
         conn_layout.addWidget(self.trust_eth_cb)
-        
+
         self.trust_wifi_cb = QCheckBox(self.tr("Auto-disconnect on Wi-Fi"))
         self.trust_wifi_cb.toggled.connect(self._on_trust_wifi_toggled)
         conn_layout.addWidget(self.trust_wifi_cb)
-        
+
         self.zt_note_lbl = QLabel(self.tr("(Consumer only — managed by organization policy in Zero Trust mode)"))
         self.zt_note_lbl.setProperty("styleClass", "desc_default")
         self.zt_note_lbl.setWordWrap(True)
@@ -360,12 +361,12 @@ class SettingsDialog(QDialog):
 
         conn_layout.addStretch()
         self.tabs.addTab(conn_tab, self.tr("Connection"))
-        
+
     def _build_diagnostics_tab(self) -> None:
         """Constructs the diagnostics information tab."""
         diag_tab = QWidget()
         diag_layout = QVBoxLayout(diag_tab)
-        
+
         def _add_section(title: str) -> QFormLayout:
             lbl = QLabel(title)
             lbl.setStyleSheet("font-weight: bold;")
@@ -373,64 +374,64 @@ class SettingsDialog(QDialog):
             fl = QFormLayout()
             diag_layout.addLayout(fl)
             return fl
-            
+
         selectable_flag = Qt.TextInteractionFlag.TextSelectableByMouse
-        
+
         net_fl = _add_section(self.tr("Network Information"))
         self.lbl_iface = QLabel(self.tr("Loading..."))
         self.lbl_gateway = QLabel(self.tr("Loading..."))
         self.lbl_dns = QLabel(self.tr("Loading..."))
-        for l in (self.lbl_iface, self.lbl_gateway, self.lbl_dns):
-            l.setTextInteractionFlags(selectable_flag)
+        for label in (self.lbl_iface, self.lbl_gateway, self.lbl_dns):
+            label.setTextInteractionFlags(selectable_flag)
         net_fl.addRow(self.tr("Interface:"), self.lbl_iface)
         net_fl.addRow(self.tr("Gateway:"), self.lbl_gateway)
         net_fl.addRow(self.tr("DNS Servers:"), self.lbl_dns)
-        
+
         conn_fl = _add_section(self.tr("Connection Statistics"))
         self.lbl_tun_status = QLabel(self.tr("Loading..."))
         self.lbl_override = QLabel(self.tr("Loading..."))
-        for l in (self.lbl_tun_status, self.lbl_override):
-            l.setTextInteractionFlags(selectable_flag)
+        for label in (self.lbl_tun_status, self.lbl_override):
+            label.setTextInteractionFlags(selectable_flag)
         conn_fl.addRow(self.tr("Tunnel Status:"), self.lbl_tun_status)
         conn_fl.addRow(self.tr("Override:"), self.lbl_override)
-        
+
         split_fl = _add_section(self.tr("Split Tunnel"))
         self.lbl_split_mode = QLabel(self.tr("Loading..."))
         self.lbl_ip_rules = QLabel(self.tr("Loading..."))
         self.lbl_host_rules = QLabel(self.tr("Loading..."))
         self.lbl_fallback = QLabel(self.tr("Loading..."))
-        for l in (self.lbl_split_mode, self.lbl_ip_rules, self.lbl_host_rules, self.lbl_fallback):
-            l.setTextInteractionFlags(selectable_flag)
+        for label in (self.lbl_split_mode, self.lbl_ip_rules, self.lbl_host_rules, self.lbl_fallback):
+            label.setTextInteractionFlags(selectable_flag)
         split_fl.addRow(self.tr("Mode:"), self.lbl_split_mode)
         split_fl.addRow(self.tr("IP Rules:"), self.lbl_ip_rules)
         split_fl.addRow(self.tr("Host Rules:"), self.lbl_host_rules)
         split_fl.addRow(self.tr("Fallback Domains:"), self.lbl_fallback)
-        
+
         diag_layout.addSpacing(10)
         self.diag_refresh_btn = QPushButton(self.tr("Refresh"))
         self.diag_refresh_btn.clicked.connect(self._refresh_diagnostics_tab)
         diag_layout.addWidget(self.diag_refresh_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
-        
+
         diag_layout.addStretch()
         self.tabs.addTab(diag_tab, self.tr("Diagnostics"))
-        
+
     def _refresh_diagnostics_tab(self) -> None:
         if self.worker and self.worker.isRunning():
             return
-        if not hasattr(self.manager, 'engine'):
+        if not hasattr(self.manager, "engine"):
             return
         self.worker = QueryWorker(self.manager.engine, self)
         self.worker.finished_query.connect(self._on_query_worker_finished)
         self.worker.start()
-        
+
     def _on_query_worker_finished(self, net_info: dict, over_info: dict, split_info: dict) -> None:
         self.lbl_iface.setText(self.tr(net_info.get("interface", "Unknown")))
         self.lbl_gateway.setText(self.tr(net_info.get("gateway", "Unknown")))
         self.lbl_dns.setText(self.tr(", ".join(net_info.get("dns", [])) or "Unknown"))
-        
+
         self.lbl_tun_status.setText(self.tr(str(net_info.get("tunnel_status", "Unknown"))))
         self.lbl_override.setText(self.tr(str(over_info.get("status", "Unknown"))))
-        
+
         self.lbl_split_mode.setText(self.tr(split_info.get("mode", "Unknown")))
         self.lbl_ip_rules.setText(self.tr(str(len(split_info.get("ip_rules", []))) + " rules"))
         self.lbl_host_rules.setText(self.tr(str(len(split_info.get("host_rules", []))) + " rules"))
@@ -454,8 +455,8 @@ class SettingsDialog(QDialog):
         title_font.setPointSize(16)
         title_label.setFont(title_font)
         about_layout.addWidget(title_label)
-        
-        self.cli_version_label = QLabel('')
+
+        self.cli_version_label = QLabel("")
         self.cli_version_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         about_layout.addWidget(self.cli_version_label)
 
@@ -503,10 +504,11 @@ class SettingsDialog(QDialog):
         settings.setValue("autostart_enabled", checked)
         try:
             from qwarp.platform.autostart import set_autostart_enabled
+
             set_autostart_enabled(checked, minimize=self.minimized_cb.isChecked())
         except ImportError:
             pass
-            
+
         if not checked:
             self.minimized_cb.setEnabled(False)
         elif self.tray_available:
@@ -519,6 +521,7 @@ class SettingsDialog(QDialog):
         if self.autostart_cb.isChecked():
             try:
                 from qwarp.platform.autostart import set_autostart_enabled
+
                 set_autostart_enabled(True, minimize=checked)
             except ImportError:
                 pass
@@ -529,7 +532,8 @@ class SettingsDialog(QDialog):
         settings.setValue("suppress_taskbar", checked)
         settings.setValue("qwarp_masked_taskbar", checked)
         try:
-            from qwarp.platform.taskbar import suppress_taskbar, restore_taskbar
+            from qwarp.platform.taskbar import restore_taskbar, suppress_taskbar
+
             if checked:
                 suppress_taskbar()
             else:
@@ -555,10 +559,10 @@ class SettingsDialog(QDialog):
         if data.get("reason"):
             status_text += f" ({data['reason']})"
         self.lbl_daemon_status.setText(status_text)
-        
+
         self.lbl_reg_status.setText(self.tr(data.get("status", "Unknown")))
         self.lbl_device_id.setText(self.tr(data.get("device_id", "Unknown")))
-        
+
         org = data.get("organization", "")
         if org:
             self.lbl_org.setText(self.tr(org))
@@ -573,11 +577,11 @@ class SettingsDialog(QDialog):
         if hasattr(self, "license_input"):
             self.license_input.clear()
             self.license_error_lbl.hide()
-            
+
     def _on_capabilities_updated(self, caps: CliCapabilities) -> None:
-        version_text = caps.version.replace('warp-cli ', '') if caps.version else 'Unknown'
+        version_text = caps.version.replace("warp-cli ", "") if caps.version else "Unknown"
         self.cli_version_label.setText(self.tr(f"cloudflare-warp version: {version_text}"))
-        
+
         # Disable consumer-only controls when is_zero_trust is True or mode_switch_allowed is False
         disable_consumer = caps.is_zero_trust or not caps.mode_switch_allowed
         self.families_combo.setEnabled(not disable_consumer)
@@ -595,7 +599,7 @@ class SettingsDialog(QDialog):
         )
         if answer == QMessageBox.StandardButton.Yes:
             logger.info("User confirmed leaving organization")
-            if hasattr(self.manager, 'request_delete_registration'):
+            if hasattr(self.manager, "request_delete_registration"):
                 self.manager.request_delete_registration()
 
     def _on_delete_clicked(self) -> None:
@@ -627,23 +631,23 @@ class SettingsDialog(QDialog):
         families_mode = self.families_combo.itemData(index)
         logger.info("User changed families DNS filtering to: %s", families_mode)
         self.manager.request_set_families_mode(families_mode)
-        
+
     def _on_protocol_changed(self, index: int) -> None:
         proto = self.protocol_combo.itemData(index)
         logger.info("User changed protocol to: %s", proto)
-        if hasattr(self.manager, 'request_set_tunnel_protocol'):
+        if hasattr(self.manager, "request_set_tunnel_protocol"):
             self.manager.request_set_tunnel_protocol(proto)
-            
+
     def _on_proxy_port_changed(self, value: int) -> None:
-        if hasattr(self.manager, 'request_set_proxy_port'):
+        if hasattr(self.manager, "request_set_proxy_port"):
             self.manager.request_set_proxy_port(value)
-            
+
     def _on_trust_eth_toggled(self, checked: bool) -> None:
-        if hasattr(self.manager, 'request_set_trusted_ethernet'):
+        if hasattr(self.manager, "request_set_trusted_ethernet"):
             self.manager.request_set_trusted_ethernet(checked)
-            
+
     def _on_trust_wifi_toggled(self, checked: bool) -> None:
-        if hasattr(self.manager, 'request_set_trusted_wifi'):
+        if hasattr(self.manager, "request_set_trusted_wifi"):
             self.manager.request_set_trusted_wifi(checked)
 
     def _on_settings_updated(self, settings: dict) -> None:
@@ -657,17 +661,17 @@ class SettingsDialog(QDialog):
                 combo.blockSignals(True)
                 combo.setCurrentIndex(index)
                 combo.blockSignals(False)
-                
+
         self.proxy_port_spin.blockSignals(True)
         self.proxy_port_spin.setValue(settings.get("proxy_port", 40000))
         self.proxy_port_spin.blockSignals(False)
-        
+
         self.proxy_port_spin.setEnabled(settings.get("mode", "") == "proxy")
-        
+
         self.trust_eth_cb.blockSignals(True)
         self.trust_eth_cb.setChecked(settings.get("trust_ethernet", False))
         self.trust_eth_cb.blockSignals(False)
-        
+
         self.trust_wifi_cb.blockSignals(True)
         self.trust_wifi_cb.setChecked(settings.get("trust_wifi", False))
         self.trust_wifi_cb.blockSignals(False)
@@ -790,9 +794,9 @@ class WarpWindow(QWidget):
         self.header_label.setProperty("styleClass", "header")
         self.header_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.main_layout.addWidget(self.header_label)
-        
-        self.org_badge = QLabel('')
-        self.org_badge.setProperty('styleClass', 'org_badge')
+
+        self.org_badge = QLabel("")
+        self.org_badge.setProperty("styleClass", "org_badge")
         self.org_badge.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.org_badge.hide()
         self.main_layout.addWidget(self.org_badge)
@@ -822,12 +826,14 @@ class WarpWindow(QWidget):
         self.register_btn = QPushButton(self.tr("Accept and continue"))
         self.register_btn.setFixedSize(160, 40)
         self.register_btn.setProperty("styleClass", "primary")
-        
+
         self.org_toggle_btn = QPushButton(self.tr("Have an organization?"))
         self.org_toggle_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.org_toggle_btn.setStyleSheet("color: #0066cc; text-decoration: underline; border: none; background: transparent;")
+        self.org_toggle_btn.setStyleSheet(
+            "color: #0066cc; text-decoration: underline; border: none; background: transparent;"
+        )
         self.org_toggle_btn.clicked.connect(self._toggle_org_input)
-        
+
         self.org_input = QLineEdit()
         self.org_input.setPlaceholderText(self.tr("Organization name"))
         self.org_input.hide()
@@ -849,11 +855,11 @@ class WarpWindow(QWidget):
         p0_layout.addSpacing(10)
 
         self.stack.addWidget(self.page0)
-        
+
         # Flow 1: Missing Client View
         self.page1 = QWidget()
         p1_layout = QVBoxLayout(self.page1)
-        
+
         missing_lbl = QLabel(self.tr("Official Cloudflare client not found"))
         font_miss = missing_lbl.font()
         font_miss.setPointSize(13)
@@ -861,18 +867,22 @@ class WarpWindow(QWidget):
         missing_lbl.setFont(font_miss)
         missing_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         missing_lbl.setWordWrap(True)
-        
-        missing_desc = QLabel(self.tr("QWarp requires the official warp-cli to be installed to function properly. Please install it and restart QWarp.<br><br><a href='https://pkg.cloudflareclient.com/'>Installation Instructions</a>"))
+
+        missing_desc = QLabel(
+            self.tr(
+                "QWarp requires the official warp-cli to be installed to function properly. Please install it and restart QWarp.<br><br><a href='https://pkg.cloudflareclient.com/'>Installation Instructions</a>"
+            )
+        )
         missing_desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
         missing_desc.setWordWrap(True)
         missing_desc.setOpenExternalLinks(True)
-        
+
         p1_layout.addStretch()
         p1_layout.addWidget(missing_lbl)
         p1_layout.addSpacing(10)
         p1_layout.addWidget(missing_desc)
         p1_layout.addStretch()
-        
+
         self.stack.addWidget(self.page1)
 
         # Flow 2: Primary Connectivity State Driven View
@@ -909,7 +919,7 @@ class WarpWindow(QWidget):
 
         self.stack.addWidget(self.page2)
         self.main_layout.addWidget(self.stack)
-        
+
     def _toggle_org_input(self) -> None:
         if self.org_input.isHidden():
             self.org_input.show()
@@ -968,7 +978,7 @@ class WarpWindow(QWidget):
         if not caps.cli_found:
             self.stack.setCurrentIndex(1)
             self.settings_btn.setEnabled(False)
-            
+
         if caps.is_zero_trust and caps.organization:
             self.org_badge.setText(self.tr(caps.organization))
             self.org_badge.show()
@@ -983,7 +993,7 @@ class WarpWindow(QWidget):
                 self.registration_error.setText(self.tr("Please enter an organization name."))
                 self.registration_error.show()
                 return
-            if hasattr(self.manager, 'request_register_with_org'):
+            if hasattr(self.manager, "request_register_with_org"):
                 self.manager.request_register_with_org(org)
             else:
                 self.manager.request_register()
@@ -1129,4 +1139,3 @@ class WarpWindow(QWidget):
         else:
             event.accept()
             self.quit_requested.emit()
-

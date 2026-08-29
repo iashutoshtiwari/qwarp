@@ -4,6 +4,7 @@ build/
 dist/
 *.egg-info/
 *.spec
+!packaging/rpm/qwarp.spec
 .venv/
 venv/
 pkg/

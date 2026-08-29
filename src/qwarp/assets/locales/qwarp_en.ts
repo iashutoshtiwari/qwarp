@@ -4,32 +4,32 @@
 <context>
     <name>SettingsDialog</name>
     <message>
-        <location filename="../../ui/window.py" line="78" />
+        <location filename="../../ui/window.py" line="77" />
         <source>Settings</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="111" />
+        <location filename="../../ui/window.py" line="110" />
         <source>Start QWarp on login</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="117" />
+        <location filename="../../ui/window.py" line="116" />
         <source>Start minimized to system tray</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="132" />
+        <location filename="../../ui/window.py" line="131" />
         <source>Language:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="136" />
+        <location filename="../../ui/window.py" line="135" />
         <source>System Default</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="158" />
+        <location filename="../../ui/window.py" line="157" />
         <source>Hide official Cloudflare tray icon</source>
         <translation type="unfinished" />
     </message>
@@ -39,328 +39,328 @@
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="165" />
+        <location filename="../../ui/window.py" line="166" />
         <source>(Requires application restart to take effect)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="171" />
+        <location filename="../../ui/window.py" line="172" />
         <source>General</source>
         <translation type="unfinished" />
     </message>
     <message>
+        <location filename="../../ui/window.py" line="402" />
         <location filename="../../ui/window.py" line="401" />
         <location filename="../../ui/window.py" line="400" />
         <location filename="../../ui/window.py" line="399" />
-        <location filename="../../ui/window.py" line="398" />
+        <location filename="../../ui/window.py" line="392" />
         <location filename="../../ui/window.py" line="391" />
-        <location filename="../../ui/window.py" line="390" />
+        <location filename="../../ui/window.py" line="383" />
         <location filename="../../ui/window.py" line="382" />
         <location filename="../../ui/window.py" line="381" />
-        <location filename="../../ui/window.py" line="380" />
+        <location filename="../../ui/window.py" line="252" />
         <location filename="../../ui/window.py" line="251" />
-        <location filename="../../ui/window.py" line="250" />
+        <location filename="../../ui/window.py" line="185" />
         <location filename="../../ui/window.py" line="184" />
         <location filename="../../ui/window.py" line="183" />
         <location filename="../../ui/window.py" line="182" />
-        <location filename="../../ui/window.py" line="181" />
         <source>Loading...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="192" />
+        <location filename="../../ui/window.py" line="193" />
         <source>Account Type:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="713" />
-        <location filename="../../ui/window.py" line="707" />
-        <location filename="../../ui/window.py" line="213" />
-        <location filename="../../ui/window.py" line="196" />
+        <location filename="../../ui/window.py" line="717" />
+        <location filename="../../ui/window.py" line="711" />
+        <location filename="../../ui/window.py" line="214" />
+        <location filename="../../ui/window.py" line="197" />
         <source>Show</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="202" />
+        <location filename="../../ui/window.py" line="203" />
         <source>License Key:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="203" />
+        <location filename="../../ui/window.py" line="204" />
         <source>Data Quota:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="204" />
+        <location filename="../../ui/window.py" line="205" />
         <source>Daemon Status:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="211" />
+        <location filename="../../ui/window.py" line="212" />
         <source>Enter WARP+ License Key</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="216" />
+        <location filename="../../ui/window.py" line="217" />
         <source>Apply</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="230" />
+        <location filename="../../ui/window.py" line="231" />
         <source>Refresh Data</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="604" />
-        <location filename="../../ui/window.py" line="233" />
+        <location filename="../../ui/window.py" line="608" />
+        <location filename="../../ui/window.py" line="234" />
         <source>Delete Registration</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="242" />
+        <location filename="../../ui/window.py" line="243" />
         <source>Account</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="259" />
+        <location filename="../../ui/window.py" line="260" />
         <source>Registration Status:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="260" />
+        <location filename="../../ui/window.py" line="261" />
         <source>Device ID:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="262" />
+        <location filename="../../ui/window.py" line="263" />
         <source>Organization:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="410" />
-        <location filename="../../ui/window.py" line="269" />
+        <location filename="../../ui/window.py" line="411" />
+        <location filename="../../ui/window.py" line="270" />
         <source>Refresh</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="591" />
-        <location filename="../../ui/window.py" line="272" />
+        <location filename="../../ui/window.py" line="595" />
+        <location filename="../../ui/window.py" line="273" />
         <source>Leave Organization</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="282" />
+        <location filename="../../ui/window.py" line="283" />
         <source>Device</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="290" />
+        <location filename="../../ui/window.py" line="291" />
         <source>Routing Mode:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="293" />
+        <location filename="../../ui/window.py" line="294" />
         <source>1.1.1.1 with WARP</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="294" />
+        <location filename="../../ui/window.py" line="295" />
         <source>1.1.1.1 (DNS over DoH)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="295" />
+        <location filename="../../ui/window.py" line="296" />
         <source>WARP + DoH</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="296" />
+        <location filename="../../ui/window.py" line="297" />
         <source>1.1.1.1 (DNS over DoT)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="297" />
+        <location filename="../../ui/window.py" line="298" />
         <source>WARP + DoT</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="298" />
+        <location filename="../../ui/window.py" line="299" />
         <source>Local Proxy</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="299" />
+        <location filename="../../ui/window.py" line="300" />
         <source>Tunnel Only</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="307" />
+        <location filename="../../ui/window.py" line="308" />
         <source>DNS Content Filtering:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="310" />
+        <location filename="../../ui/window.py" line="311" />
         <source>Off (No Filtering)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="311" />
+        <location filename="../../ui/window.py" line="312" />
         <source>Malware Only</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="312" />
+        <location filename="../../ui/window.py" line="313" />
         <source>Malware + Adult Content</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="322" />
+        <location filename="../../ui/window.py" line="323" />
         <source>Tunnel Protocol:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="324" />
+        <location filename="../../ui/window.py" line="325" />
         <source>MASQUE (Default)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="325" />
+        <location filename="../../ui/window.py" line="326" />
         <source>WireGuard (Legacy)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="330" />
+        <location filename="../../ui/window.py" line="331" />
         <source>Proxy Port:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="344" />
+        <location filename="../../ui/window.py" line="345" />
         <source>Trusted Networks:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="348" />
+        <location filename="../../ui/window.py" line="349" />
         <source>Auto-disconnect on Ethernet</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="352" />
+        <location filename="../../ui/window.py" line="353" />
         <source>Auto-disconnect on Wi-Fi</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="356" />
+        <location filename="../../ui/window.py" line="357" />
         <source>(Consumer only — managed by organization policy in Zero Trust mode)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="362" />
+        <location filename="../../ui/window.py" line="363" />
         <source>Connection</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="379" />
+        <location filename="../../ui/window.py" line="380" />
         <source>Network Information</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="385" />
+        <location filename="../../ui/window.py" line="386" />
         <source>Interface:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="386" />
+        <location filename="../../ui/window.py" line="387" />
         <source>Gateway:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="387" />
+        <location filename="../../ui/window.py" line="388" />
         <source>DNS Servers:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="389" />
+        <location filename="../../ui/window.py" line="390" />
         <source>Connection Statistics</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="394" />
+        <location filename="../../ui/window.py" line="395" />
         <source>Tunnel Status:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="395" />
+        <location filename="../../ui/window.py" line="396" />
         <source>Override:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="397" />
+        <location filename="../../ui/window.py" line="398" />
         <source>Split Tunnel</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="404" />
+        <location filename="../../ui/window.py" line="405" />
         <source>Mode:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="405" />
+        <location filename="../../ui/window.py" line="406" />
         <source>IP Rules:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="406" />
+        <location filename="../../ui/window.py" line="407" />
         <source>Host Rules:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="407" />
+        <location filename="../../ui/window.py" line="408" />
         <source>Fallback Domains:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="415" />
+        <location filename="../../ui/window.py" line="416" />
         <source>Diagnostics</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="462" />
+        <location filename="../../ui/window.py" line="463" />
         <source>A Wayland-native Qt6 wrapper for Cloudflare WARP.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="480" />
+        <location filename="../../ui/window.py" line="481" />
         <source>Disclaimer: QWarp is an unofficial community project and is not affiliated with, authorized, maintained, sponsored, or endorsed by Cloudflare, Inc.&lt;br&gt;&lt;br&gt;Cloudflare, the Cloudflare logo, and Cloudflare Workers are trademarks and/or registered trademarks of Cloudflare, Inc. in the United States and other jurisdictions.&lt;br&gt;&lt;br&gt;&lt;a href='https://www.cloudflare.com/website-terms/'&gt;Terms and Conditions&lt;/a&gt; | &lt;a href='https://www.cloudflare.com/privacypolicy/'&gt;Privacy Policy&lt;/a&gt;</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="498" />
+        <location filename="../../ui/window.py" line="499" />
         <source>About</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="592" />
+        <location filename="../../ui/window.py" line="596" />
         <source>Are you sure you want to leave this organization?</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="605" />
+        <location filename="../../ui/window.py" line="609" />
         <source>Delete this WARP registration? You will need to register again before reconnecting.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="694" />
+        <location filename="../../ui/window.py" line="698" />
         <source>The requested action failed.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="713" />
-        <location filename="../../ui/window.py" line="707" />
+        <location filename="../../ui/window.py" line="717" />
+        <location filename="../../ui/window.py" line="711" />
         <source>Hide</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="718" />
+        <location filename="../../ui/window.py" line="722" />
         <source>Unknown</source>
         <translation type="unfinished" />
     </message>
@@ -436,163 +436,163 @@
 </context><context>
     <name>WarpWindow</name>
     <message>
-        <location filename="../../ui/window.py" line="811" />
+        <location filename="../../ui/window.py" line="815" />
         <source>Setup required</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="818" />
+        <location filename="../../ui/window.py" line="822" />
         <source>You must accept the Cloudflare Terms of Service to continue.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="922" />
-        <location filename="../../ui/window.py" line="822" />
+        <location filename="../../ui/window.py" line="932" />
+        <location filename="../../ui/window.py" line="826" />
         <source>Accept and continue</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="921" />
-        <location filename="../../ui/window.py" line="826" />
+        <location filename="../../ui/window.py" line="931" />
+        <location filename="../../ui/window.py" line="830" />
         <source>Have an organization?</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="832" />
+        <location filename="../../ui/window.py" line="838" />
         <source>Organization name</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="857" />
+        <location filename="../../ui/window.py" line="863" />
         <source>Official Cloudflare client not found</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="865" />
+        <location filename="../../ui/window.py" line="872" />
         <source>QWarp requires the official warp-cli to be installed to function properly. Please install it and restart QWarp.&lt;br&gt;&lt;br&gt;&lt;a href='https://pkg.cloudflareclient.com/'&gt;Installation Instructions&lt;/a&gt;</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="885" />
+        <location filename="../../ui/window.py" line="895" />
         <source>Enable service</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="891" />
+        <location filename="../../ui/window.py" line="901" />
         <source>UNKNOWN</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="898" />
+        <location filename="../../ui/window.py" line="908" />
         <source>Connecting to daemon...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="916" />
+        <location filename="../../ui/window.py" line="926" />
         <source>Use personal account instead</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="917" />
+        <location filename="../../ui/window.py" line="927" />
         <source>Join Organization</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="937" />
+        <location filename="../../ui/window.py" line="947" />
         <source>Preferences</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="940" />
+        <location filename="../../ui/window.py" line="950" />
         <source>Exit</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="983" />
+        <location filename="../../ui/window.py" line="993" />
         <source>Please enter an organization name.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="1099" />
-        <location filename="../../ui/window.py" line="1070" />
-        <location filename="../../ui/window.py" line="999" />
+        <location filename="../../ui/window.py" line="1109" />
+        <location filename="../../ui/window.py" line="1080" />
+        <location filename="../../ui/window.py" line="1009" />
         <source>CONNECTING</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="1099" />
-        <location filename="../../ui/window.py" line="999" />
+        <location filename="../../ui/window.py" line="1109" />
+        <location filename="../../ui/window.py" line="1009" />
         <source>DISCONNECTING</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="1101" />
-        <location filename="../../ui/window.py" line="1000" />
+        <location filename="../../ui/window.py" line="1111" />
+        <location filename="../../ui/window.py" line="1010" />
         <source>Please wait...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="1011" />
+        <location filename="../../ui/window.py" line="1021" />
         <source>Registration failed.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="1014" />
+        <location filename="../../ui/window.py" line="1024" />
         <source>The requested action failed.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="1057" />
+        <location filename="../../ui/window.py" line="1067" />
         <source>CONNECTED</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="1059" />
+        <location filename="../../ui/window.py" line="1069" />
         <source>Your Internet is private.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="1064" />
+        <location filename="../../ui/window.py" line="1074" />
         <source>DISCONNECTED</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="1066" />
+        <location filename="../../ui/window.py" line="1076" />
         <source>Your Internet is not private.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="1072" />
+        <location filename="../../ui/window.py" line="1082" />
         <source>Securing connection...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="1077" />
+        <location filename="../../ui/window.py" line="1087" />
         <source>ERROR</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="1079" />
+        <location filename="../../ui/window.py" line="1089" />
         <source>Unable to communicate with Cloudflare WARP.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="1084" />
+        <location filename="../../ui/window.py" line="1094" />
         <source>SERVICE OFF</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="1086" />
+        <location filename="../../ui/window.py" line="1096" />
         <source>Cloudflare WARP service is not running.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="1090" />
+        <location filename="../../ui/window.py" line="1100" />
         <source>WAIT</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="1091" />
+        <location filename="../../ui/window.py" line="1101" />
         <source>Checking status...</source>
         <translation type="unfinished" />
     </message>
