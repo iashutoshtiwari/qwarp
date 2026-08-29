@@ -14,6 +14,10 @@ echo "Building QWarp Locale Files..."
 # Auto-resolve the binary names because they vary wildly by distro
 resolve_bin() {
     local base=$1
+    if [ "$base" = "lupdate" ] && command -v pylupdate6 >/dev/null 2>&1; then
+        command -v pylupdate6
+        return 0
+    fi
     if [ -x "/usr/lib/qt6/bin/$base" ]; then
         echo "/usr/lib/qt6/bin/$base"
         return 0
