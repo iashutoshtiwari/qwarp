@@ -100,10 +100,11 @@ def test_register_reuses_existing_registration_after_accepting_terms(mock_run):
     assert mock_run.call_args.args[0] == ["warp-cli", "--accept-tos", "registration", "show"]
 
 
+@pytest.mark.parametrize("missing_message", ["Registration Missing", "Missing registration", "No registration"])
 @patch("subprocess.run")
-def test_register_creates_registration_only_when_missing(mock_run):
+def test_register_creates_registration_only_when_missing(mock_run, missing_message):
     mock_run.side_effect = [
-        process(returncode=1, stderr="Registration Missing"),
+        process(returncode=1, stderr=missing_message),
         process(stdout="Success"),
     ]
 
@@ -156,6 +157,7 @@ def test_license_is_redacted_from_logs_and_error(mock_run, caplog):
         ("DnsOverTls", "dot"),
         ("WarpWithDnsOverTls", "warp+dot"),
         ("WarpProxy", "proxy"),
+        ("WarpProxy on port 40000", "proxy"),
         ("TunnelOnly", "tunnel_only"),
     ],
 )
@@ -177,11 +179,30 @@ def test_families_parser_prefers_full_over_malware(value, expected):
     assert settings["families"] == expected
 
 
+@pytest.mark.parametrize(
+    ("resolver", "expected"),
+    [
+        ("security.cloudflare-dns.com @ [1.1.1.2, 2606:4700:4700::1112]", "malware"),
+        ("family.cloudflare-dns.com @ [1.1.1.3, 2606:4700:4700::1113]", "full"),
+    ],
+)
+def test_families_parser_current_resolver_variants(resolver, expected):
+    settings = WarpEngine.parse_settings(f"(user set)\tResolve via: {resolver}")
+    assert settings["families"] == expected
+
+
 @patch("subprocess.run")
 def test_settings_are_fetched_once(mock_run):
     mock_run.return_value = process(stdout="Mode: WarpWithDnsOverHttps\nFamilies mode: Full")
     assert WarpEngine().get_settings() == {"mode": "warp+doh", "families": "full"}
     mock_run.assert_called_once()
+
+
+@patch("subprocess.run")
+def test_successful_settings_without_families_defaults_to_off(mock_run):
+    mock_run.return_value = process(stdout="Mode: WarpWithDnsOverHttps")
+
+    assert WarpEngine().get_settings() == {"mode": "warp+doh", "families": "off"}
 
 
 @patch("subprocess.run")

@@ -184,7 +184,9 @@ class WarpEngine:
             return True, ""
 
         output_lower = output.lower()
-        if "registration missing" in output_lower or "no registration" in output_lower:
+        if any(
+            marker in output_lower for marker in ("registration missing", "missing registration", "no registration")
+        ):
             return self._run_command("registration", "new")
         return False, output
 
@@ -214,7 +216,10 @@ class WarpEngine:
             normalized_key = cls._normalize_setting(key)
             normalized_value = cls._normalize_setting(raw_value)
             if normalized_key.endswith("mode") and "families" not in normalized_key:
-                settings["mode"] = cls.MODE_ALIASES.get(normalized_value, "")
+                if normalized_value.startswith("warpproxy"):
+                    settings["mode"] = "proxy"
+                else:
+                    settings["mode"] = cls.MODE_ALIASES.get(normalized_value, "")
             elif "families" in normalized_key:
                 if "full" in normalized_value or "adult" in normalized_value:
                     settings["families"] = "full"
@@ -222,11 +227,21 @@ class WarpEngine:
                     settings["families"] = "malware"
                 elif "off" in normalized_value:
                     settings["families"] = "off"
+            elif "resolvevia" in normalized_key:
+                if "familycloudflarednscom" in normalized_value:
+                    settings["families"] = "full"
+                elif "securitycloudflarednscom" in normalized_value:
+                    settings["families"] = "malware"
         return settings
 
     def get_settings(self) -> dict[str, str]:
         success, output = self._run_command("settings")
-        return self.parse_settings(output) if success else {"mode": "", "families": ""}
+        if not success:
+            return {"mode": "", "families": ""}
+        settings = self.parse_settings(output)
+        if not settings["families"]:
+            settings["families"] = "off"
+        return settings
 
     def get_current_mode(self) -> str:
         return self.get_settings()["mode"]
