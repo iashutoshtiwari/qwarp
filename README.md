@@ -83,6 +83,13 @@ python -m pip install -e ".[dev]"
 qwarp
 ```
 
+### Agent-assisted maintenance
+
+Any LLM or coding agent working on this repository must read and follow
+[`AGENTS.md`](AGENTS.md) before changing code, packaging, CI, or release
+configuration. Agent tooling is optional maintainer infrastructure and is not
+required to build, install, use, or contribute to QWarp.
+
 ## Requirements
 
 QWarp is a GUI frontend and does not bundle the WARP daemon or CLI. The
@@ -111,6 +118,8 @@ workflow. It validates tests, translations, frozen and Arch packages, version
 metadata, source checksums, and a maintainer-completed live QA checklist before
 the protected `release` environment can publish GitHub and AUR updates. The
 workflow never rewrites `master` or generates changelog commits after tagging.
+Published tags and release assets are immutable; new work must target a later
+version rather than replacing `v0.8.3`.
 
 ## Known Issues
 

@@ -3,6 +3,40 @@
 This file is the repository-wide guide for coding agents working on QWarp. It
 applies to the whole tree.
 
+## Agent handoff
+
+These instructions are the shared operating contract for every LLM or coding
+agent that works on QWarp. Agent-specific defaults must not override them.
+
+At the beginning of each task, read this file, inspect `git status`, confirm the
+current branch and upstream, and review the relevant code and recent history
+before editing. Do not assume the checkout is clean, discard unrelated changes,
+expose local credentials, or reuse a release attestation for a different
+commit.
+
+The handoff baseline is:
+
+- `v0.8.3` / Arch `0.8.3-1` is already published from merge commit
+  `fdc3afd5b2a7d5516a3aab1a2535482e7a141335`. Do not recreate, move, or
+  overwrite that tag or its release assets.
+- The AUR `qwarp` package depends on the separately installed
+  `cloudflare-warp-bin` package and owns no Cloudflare binaries or services.
+- The 0.8.3 verification baseline is 58 offscreen tests plus Ruff, locale,
+  wheel/sdist, PyInstaller, checksum, Arch ownership, Wayland, X11/XWayland,
+  registration, routing, Families, service-repair, and uninstall-retention
+  checks.
+- Cloudflare WARP 2026.6 CLI compatibility includes `Missing registration`,
+  `WarpProxy on port ...`, resolver-based Families values, and per-command
+  `--accept-tos` handling. Preserve these parser variants and the existing
+  registration during Terms acceptance.
+- GitHub release and AUR credentials live only in the protected GitHub
+  `release` environment. Never copy them into the checkout, print them, or use
+  them outside an explicitly authorized release.
+
+Future feature and release work begins after 0.8.3. Treat a published release
+as immutable and prepare subsequent changes through a branch and reviewed CI
+before merging to `master`.
+
 ## Project priorities
 
 QWarp is an unofficial, Linux-only PyQt6 GUI for the Cloudflare WARP client. It
