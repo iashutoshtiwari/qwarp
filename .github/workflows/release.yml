@@ -115,9 +115,72 @@ jobs:
           grep -q 'cloudflare-warp-bin' .SRCINFO
           ! grep -Eq '^\s*(conflicts|install)\s*=' .SRCINFO
 
+
+  debian-package:
+    name: Build Debian package
+    needs: validate-build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Download source artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: qwarp-${{ inputs.version }}-release
+          path: dist/release
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends             build-essential debhelper dh-python python3-all python3-setuptools             python3-build qt6-l10n-tools qt6-tools-dev-tools dpkg-dev
+      - name: Build .deb
+        run: |
+          tar xzf dist/release/qwarp-$RELEASE_VERSION-source.tar.gz
+          cd qwarp-$RELEASE_VERSION
+          cp -r ../packaging/debian debian
+          dpkg-buildpackage -us -uc -b
+      - name: Upload .deb
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: qwarp-${{ inputs.version }}-deb
+          path: qwarp_${{ inputs.version }}-1_all.deb
+          retention-days: 7
+
+  rpm-package:
+    name: Build RPM package
+    needs: validate-build
+    runs-on: ubuntu-22.04
+    container: fedora:latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Download source artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: qwarp-${{ inputs.version }}-release
+          path: dist/release
+      - name: Install dependencies
+        run: |
+          dnf install -y rpm-build python3-devel python3-setuptools             python3-build python3-pip python3-wheel qt6-linguist
+      - name: Build .rpm
+        run: |
+          mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+          cp dist/release/qwarp-$RELEASE_VERSION-source.tar.gz ~/rpmbuild/SOURCES/
+          cp packaging/rpm/qwarp.spec ~/rpmbuild/SPECS/
+          rpmbuild -bb ~/rpmbuild/SPECS/qwarp.spec
+      - name: Upload .rpm
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: qwarp-${{ inputs.version }}-rpm
+          path: /github/home/rpmbuild/RPMS/noarch/qwarp-${{ inputs.version }}-1*.rpm
+          retention-days: 7
+
   publish:
     name: Publish GitHub and AUR
-    needs: [validate-build, arch-package]
+    needs: [validate-build, arch-package, debian-package, rpm-package]
     runs-on: ubuntu-22.04
     environment: release
     permissions:
@@ -134,6 +197,18 @@ jobs:
         with:
           name: qwarp-${{ inputs.version }}-release
           path: dist/release
+
+      - name: Download .deb artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: qwarp-${{ inputs.version }}-deb
+          path: dist/release
+      - name: Download .rpm artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: qwarp-${{ inputs.version }}-rpm
+          path: dist/release
+
       - name: Revalidate commit and checksums
         run: |
           git fetch origin master --tags
@@ -168,7 +243,12 @@ jobs:
             "dist/release/qwarp-$RELEASE_VERSION-linux-x86_64.tar.gz"
             "dist/release/qwarp-$RELEASE_VERSION-source.tar.gz"
             "dist/release/SHA256SUMS"
+            "dist/release/qwarp_${RELEASE_VERSION}-1_all.deb"
           )
+          rpm_file=$(find dist/release -name "qwarp-${RELEASE_VERSION}-1*.rpm" -print -quit)
+          if [ -n "$rpm_file" ]; then
+            files+=("$rpm_file")
+          fi
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "${files[@]}" --clobber
             gh release edit "$TAG" --notes-file dist/release/RELEASE_NOTES.md

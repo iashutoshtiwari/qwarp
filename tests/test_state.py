@@ -1,6 +1,6 @@
 import threading
 
-from qwarp.core.engine import WarpState
+from qwarp.core.engine import CliCapabilities, WarpState
 from qwarp.core.state import ActionWorker, WarpStateManager
 
 
@@ -22,7 +22,7 @@ class FakeEngine:
     def disconnect(self):
         return True, ""
 
-    def register(self):
+    def register(self, organization=""):
         return True, ""
 
     def delete_registration(self):
@@ -40,12 +40,38 @@ class FakeEngine:
     def set_license(self, _key):
         return True, ""
 
+    def set_tunnel_protocol(self, _protocol):
+        return True, ""
+
+    def set_proxy_port(self, _port):
+        return True, ""
+
+    def set_trusted_ethernet(self, _enable):
+        return True, ""
+
+    def set_trusted_wifi(self, _enable):
+        return True, ""
+
     def get_diagnostics(self):
-        return {"type": "Free", "license": "Not Registered", "quota": "N/A", "status": "Disconnected"}
+        return {
+            "type": "Free",
+            "license": "Not Registered",
+            "quota": "N/A",
+            "status": "Disconnected",
+            "device_id": "",
+            "organization": "",
+        }
 
     def get_settings(self):
         self.settings_thread = threading.get_ident()
         return {"mode": "warp+doh", "families": "full"}
+
+    def detect_capabilities(self):
+        return CliCapabilities(
+            version="warp-cli 2026.6.880.0",
+            has_json=True,
+            cli_found=True,
+        )
 
 
 def test_action_worker_rejects_unknown_and_missing_arguments(qapp):
@@ -115,4 +141,47 @@ def test_state_changed_only_on_transition_but_refresh_always_emits(qapp):
     manager._on_status_result(WarpState.DISCONNECTED)
     assert changed == [WarpState.DISCONNECTED]
     assert refreshed == [WarpState.DISCONNECTED, WarpState.DISCONNECTED]
+    manager.shutdown()
+
+
+def test_capabilities_query(qapp, wait_until):
+    """Capability detection runs on a background thread and emits signal."""
+    engine = FakeEngine()
+    manager = WarpStateManager(engine, start_polling=False)
+    results = []
+    manager.capabilities_detected.connect(results.append)
+    manager.request_capabilities()
+    wait_until(lambda: bool(results))
+    assert isinstance(results[0], CliCapabilities)
+    assert results[0].cli_found is True
+    manager.shutdown()
+
+
+def test_new_action_types(qapp, wait_until):
+    """New v0.9.0 action types work through the dispatcher."""
+    engine = FakeEngine()
+    manager = WarpStateManager(engine, start_polling=False)
+    results = []
+    manager.action_finished.connect(lambda *args: results.append(args))
+
+    manager.request_set_tunnel_protocol("MASQUE")
+    wait_until(lambda: bool(results))
+    assert results[-1] == ("set_tunnel_protocol", True, "")
+
+    manager.request_set_trusted_ethernet(True)
+    wait_until(lambda: len(results) >= 2)
+    assert results[-1] == ("set_trusted_ethernet", True, "")
+
+    manager.shutdown()
+
+
+def test_register_with_org(qapp, wait_until):
+    """Register with organization dispatches correctly."""
+    engine = FakeEngine()
+    manager = WarpStateManager(engine, start_polling=False)
+    results = []
+    manager.action_finished.connect(lambda *args: results.append(args))
+    manager.request_register_with_org("my-corp")
+    wait_until(lambda: bool(results))
+    assert results[-1] == ("register", True, "")
     manager.shutdown()

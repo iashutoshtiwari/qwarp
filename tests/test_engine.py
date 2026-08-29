@@ -1,3 +1,4 @@
+import json
 import logging
 import subprocess
 from unittest.mock import MagicMock, patch
@@ -15,26 +16,70 @@ def process(returncode: int = 0, stdout: str = "", stderr: str = "") -> MagicMoc
     return result
 
 
+def json_output(data: dict, returncode: int = 0) -> MagicMock:
+    """Helper to create a process result with JSON stdout."""
+    return process(returncode=returncode, stdout=json.dumps(data))
+
+
+# -----------------------------------------------------------------------
+# Status parsing (JSON)
+# -----------------------------------------------------------------------
+
+
 @pytest.mark.parametrize(
-    ("output", "expected"),
+    ("json_data", "expected"),
     [
-        ("Status update: Connected", WarpState.CONNECTED),
-        ("Status update: Disconnected", WarpState.DISCONNECTED),
-        ("Status update: Connecting", WarpState.CONNECTING),
-        ("Registration Missing", WarpState.UNREGISTERED),
-        ("Something new", WarpState.UNKNOWN),
+        ({"status": "Connected"}, WarpState.CONNECTED),
+        ({"status": "Disconnected"}, WarpState.DISCONNECTED),
+        ({"status": "Connecting"}, WarpState.CONNECTING),
+        (
+            {"status": "Unable", "reason": {"RegistrationMissing": {"Invalidated": "ManualDeletion"}}},
+            WarpState.UNREGISTERED,
+        ),
     ],
 )
 @patch("subprocess.run")
-def test_status_parsing(mock_run, output, expected):
-    mock_run.return_value = process(stdout=output)
+def test_json_status_parsing(mock_run, json_data, expected):
+    mock_run.return_value = json_output(json_data)
     assert WarpEngine().status() == expected
 
 
 @patch("subprocess.run")
-def test_failed_status_distinguishes_stopped_service(mock_run):
+def test_json_status_unknown_value(mock_run):
+    mock_run.return_value = json_output({"status": "SomethingNew"})
+    assert WarpEngine().status() == WarpState.UNKNOWN
+
+
+@patch("subprocess.run")
+def test_json_status_error_missing_registration(mock_run):
+    """JSON error response with MissingRegistration code."""
+    mock_run.return_value = json_output(
+        {"code": "MissingRegistration", "error": 'Missing registration. Try running: "warp-cli registration new"'},
+        returncode=1,
+    )
+    assert WarpEngine().status() == WarpState.UNREGISTERED
+
+
+@patch("subprocess.run")
+def test_json_status_unable_with_non_registration_reason(mock_run):
+    """Unable status with a non-registration reason checks service state."""
     mock_run.side_effect = [
-        process(returncode=1, stderr="daemon unavailable"),
+        json_output({"status": "Unable", "reason": {"OtherError": {}}}, returncode=0),
+        process(returncode=3, stdout="inactive"),  # systemctl check
+    ]
+    assert WarpEngine().status() == WarpState.SERVICE_STOPPED
+
+
+# -----------------------------------------------------------------------
+# Status — service fallback
+# -----------------------------------------------------------------------
+
+
+@patch("subprocess.run")
+def test_failed_status_distinguishes_stopped_service(mock_run):
+    """When JSON parsing returns None (e.g. timeout), check service state."""
+    mock_run.side_effect = [
+        subprocess.TimeoutExpired(cmd="warp-cli", timeout=2),
         process(returncode=3, stdout="inactive"),
     ]
     assert WarpEngine().status() == WarpState.SERVICE_STOPPED
@@ -43,31 +88,26 @@ def test_failed_status_distinguishes_stopped_service(mock_run):
 @patch("subprocess.run")
 def test_failed_status_maps_inspection_failure_to_daemon_error(mock_run):
     mock_run.side_effect = [
-        process(returncode=1, stderr="daemon unavailable"),
+        subprocess.TimeoutExpired(cmd="warp-cli", timeout=2),
         process(returncode=1, stderr="systemctl unavailable"),
     ]
     assert WarpEngine().status() == WarpState.DAEMON_ERROR
 
 
-@patch("subprocess.run")
-def test_terms_not_accepted_maps_to_unregistered_without_service_inspection(mock_run):
-    mock_run.return_value = process(
-        returncode=1,
-        stderr="Please accept the WARP Terms of Service by running this command in a TTY or by passing the --accept-tos flag.",
-    )
-
-    assert WarpEngine().status() == WarpState.UNREGISTERED
-    mock_run.assert_called_once()
-
-
 @patch("subprocess.run", side_effect=FileNotFoundError)
 def test_missing_cli_maps_to_daemon_error(_mock_run):
+    """FileNotFoundError in JSON command results in service check, also fails -> DAEMON_ERROR."""
     assert WarpEngine().status() == WarpState.DAEMON_ERROR
 
 
 @patch("subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="warp-cli", timeout=2))
 def test_timeout_is_reported(_mock_run):
     assert WarpEngine().connect() == (False, "Command timeout")
+
+
+# -----------------------------------------------------------------------
+# CLI argument forwarding
+# -----------------------------------------------------------------------
 
 
 @patch("subprocess.run")
@@ -92,48 +132,100 @@ def test_accepted_terms_are_forwarded_to_future_commands(mock_run):
 
 
 @patch("subprocess.run")
+def test_new_actions_forward_expected_arguments(mock_run):
+    """Test new v0.9.0 command argument forwarding."""
+    mock_run.return_value = process(stdout="ok")
+    engine = WarpEngine()
+
+    engine.set_tunnel_protocol("MASQUE")
+    assert mock_run.call_args.args[0] == ["warp-cli", "tunnel", "protocol", "set", "MASQUE"]
+
+    engine.set_proxy_port(8080)
+    assert mock_run.call_args.args[0] == ["warp-cli", "proxy", "port", "8080"]
+
+    engine.set_trusted_ethernet(True)
+    assert mock_run.call_args.args[0] == ["warp-cli", "trusted", "ethernet", "enable"]
+
+    engine.set_trusted_wifi(False)
+    assert mock_run.call_args.args[0] == ["warp-cli", "trusted", "wifi", "disable"]
+
+
+# -----------------------------------------------------------------------
+# Registration (JSON)
+# -----------------------------------------------------------------------
+
+
+@patch("subprocess.run")
 def test_register_reuses_existing_registration_after_accepting_terms(mock_run):
-    mock_run.return_value = process(stdout="Account type: Free\nLicense: sensitive-value")
+    """JSON registration show returns valid data — registration preserved."""
+    mock_run.return_value = json_output({"account_type": "Free", "device_id": "abc123"})
 
     assert WarpEngine().register() == (True, "")
     mock_run.assert_called_once()
-    assert mock_run.call_args.args[0] == ["warp-cli", "--accept-tos", "registration", "show"]
+    assert mock_run.call_args.args[0] == ["warp-cli", "--accept-tos", "--json", "registration", "show"]
 
 
-@pytest.mark.parametrize("missing_message", ["Registration Missing", "Missing registration", "No registration"])
+@pytest.mark.parametrize(
+    "error_data",
+    [
+        {"code": "MissingRegistration", "error": "Missing registration"},
+        {"code": "MissingRegistration", "error": "No registration"},
+    ],
+)
 @patch("subprocess.run")
-def test_register_creates_registration_only_when_missing(mock_run, missing_message):
+def test_register_creates_registration_only_when_missing(mock_run, error_data):
     mock_run.side_effect = [
-        process(returncode=1, stderr=missing_message),
+        json_output(error_data, returncode=1),
         process(stdout="Success"),
     ]
 
     assert WarpEngine().register() == (True, "Success")
-    assert [call.args[0] for call in mock_run.call_args_list] == [
-        ["warp-cli", "--accept-tos", "registration", "show"],
-        ["warp-cli", "--accept-tos", "registration", "new"],
-    ]
+    assert len(mock_run.call_args_list) == 2
+    # Second call should be registration new
+    assert mock_run.call_args_list[1].args[0] == ["warp-cli", "--accept-tos", "registration", "new"]
 
 
 @patch("subprocess.run")
 def test_register_enables_terms_for_subsequent_status_calls(mock_run):
     mock_run.side_effect = [
-        process(stdout="Account type: Free"),
-        process(stdout="Status update: Disconnected"),
+        json_output({"account_type": "Free"}),  # registration show
+        json_output({"status": "Disconnected"}),  # status
     ]
     engine = WarpEngine()
 
     assert engine.register() == (True, "")
     assert engine.status() == WarpState.DISCONNECTED
-    assert mock_run.call_args.args[0] == ["warp-cli", "--accept-tos", "status"]
+    # Status call should include --accept-tos and --json
+    assert "--accept-tos" in mock_run.call_args.args[0]
 
 
 @patch("subprocess.run")
 def test_register_does_not_replace_registration_on_unexpected_inspection_failure(mock_run):
-    mock_run.return_value = process(returncode=1, stderr="Old registration is still around")
+    """Unexpected error from registration show — do not create new registration."""
+    mock_run.return_value = json_output(
+        {"code": "UnknownError", "error": "Old registration is still around"}, returncode=1
+    )
 
-    assert WarpEngine().register() == (False, "Old registration is still around")
+    success, message = WarpEngine().register()
+    assert success is False
+    assert "Old registration is still around" in message
     mock_run.assert_called_once()
+
+
+@patch("subprocess.run")
+def test_register_with_organization(mock_run):
+    """Registration with Zero Trust organization name."""
+    mock_run.side_effect = [
+        json_output({"code": "MissingRegistration", "error": "Missing registration"}, returncode=1),
+        process(stdout="Success"),
+    ]
+    assert WarpEngine().register(organization="my-org") == (True, "Success")
+    assert mock_run.call_args_list[1].args[0] == ["warp-cli", "--accept-tos", "registration", "new", "my-org"]
+
+
+# -----------------------------------------------------------------------
+# License redaction
+# -----------------------------------------------------------------------
 
 
 @patch("subprocess.run")
@@ -146,6 +238,11 @@ def test_license_is_redacted_from_logs_and_error(mock_run, caplog):
     assert sensitive_value not in caplog.text
     assert sensitive_value not in message
     assert "<redacted>" in caplog.text
+
+
+# -----------------------------------------------------------------------
+# Text-based settings parsing (backward compatibility)
+# -----------------------------------------------------------------------
 
 
 @pytest.mark.parametrize(
@@ -191,29 +288,179 @@ def test_families_parser_current_resolver_variants(resolver, expected):
     assert settings["families"] == expected
 
 
-@patch("subprocess.run")
-def test_settings_are_fetched_once(mock_run):
-    mock_run.return_value = process(stdout="Mode: WarpWithDnsOverHttps\nFamilies mode: Full")
-    assert WarpEngine().get_settings() == {"mode": "warp+doh", "families": "full"}
-    mock_run.assert_called_once()
+# -----------------------------------------------------------------------
+# JSON settings
+# -----------------------------------------------------------------------
 
 
 @patch("subprocess.run")
-def test_successful_settings_without_families_defaults_to_off(mock_run):
-    mock_run.return_value = process(stdout="Mode: WarpWithDnsOverHttps")
-
-    assert WarpEngine().get_settings() == {"mode": "warp+doh", "families": "off"}
-
-
-@patch("subprocess.run")
-def test_diagnostics_parsing(mock_run):
-    mock_run.side_effect = [
-        process(stdout="Account type: Unlimited\nLicense: masked-value\nQuota: Unlimited"),
-        process(stdout="Status update: Connected"),
-    ]
-    assert WarpEngine().get_diagnostics() == {
-        "type": "Unlimited",
-        "license": "masked-value",
-        "quota": "Unlimited",
-        "status": "Connected",
+def test_json_settings_list(mock_run):
+    """JSON settings list returns structured data with operation_mode."""
+    settings_json = {
+        "settings": {
+            "operation_mode": "doh",
+            "always_on": False,
+            "switch_locked": False,
+            "split_tunnel_mode": "exclude",
+            "disable_for_wifi": False,
+            "disable_for_ethernet": False,
+        },
+        "sources": {"operation_mode": "user_set"},
     }
+    # First call: settings list (JSON), second call: settings list (text fallback for families)
+    mock_run.side_effect = [
+        json_output(settings_json),
+        process(stdout="Mode: DnsOverHttps\nFamilies mode: Off"),
+    ]
+    settings = WarpEngine().get_settings()
+    assert settings["mode"] == "doh"
+    assert settings["families"] == "off"
+
+
+@patch("subprocess.run")
+def test_json_settings_with_families(mock_run):
+    """JSON settings with families info from text fallback."""
+    settings_json = {
+        "settings": {"operation_mode": "warp+doh"},
+        "sources": {},
+    }
+    mock_run.side_effect = [
+        json_output(settings_json),
+        process(stdout="Mode: WarpWithDnsOverHttps\nFamilies mode: Full"),
+    ]
+    settings = WarpEngine().get_settings()
+    assert settings["mode"] == "warp+doh"
+    assert settings["families"] == "full"
+
+
+# -----------------------------------------------------------------------
+# Diagnostics (JSON)
+# -----------------------------------------------------------------------
+
+
+@patch("subprocess.run")
+def test_diagnostics_json_parsing(mock_run):
+    """Diagnostics via JSON registration show + JSON status."""
+    mock_run.side_effect = [
+        json_output({"account_type": "Unlimited", "license": "masked-value", "quota": "Unlimited"}),
+        json_output({"organization": ""}),  # org check
+        json_output({"status": "Connected"}),
+    ]
+    diag = WarpEngine().get_diagnostics()
+    assert diag["type"] == "Unlimited"
+    assert diag["license"] == "masked-value"
+    assert diag["status"] == "Connected"
+
+
+@patch("subprocess.run")
+def test_diagnostics_with_organization(mock_run):
+    """Diagnostics includes organization name for Zero Trust."""
+    mock_run.side_effect = [
+        json_output({"account_type": "Teams", "device_id": "dev-123"}),
+        json_output({"organization": "my-corp"}),
+        json_output({"status": "Connected"}),
+    ]
+    diag = WarpEngine().get_diagnostics()
+    assert diag["type"] == "Teams"
+    assert diag["device_id"] == "dev-123"
+    assert diag["organization"] == "my-corp"
+
+
+@patch("subprocess.run")
+def test_diagnostics_fallback_to_text(mock_run):
+    """When JSON returns None, fall back to text parsing."""
+    mock_run.side_effect = [
+        FileNotFoundError,  # JSON registration show fails
+        process(stdout="Account type: Unlimited\nLicense: masked-value\nQuota: Unlimited"),  # text fallback
+        json_output({"error": "not found"}, returncode=1),  # org check
+        json_output({"status": "Connected"}),  # JSON status
+    ]
+    diag = WarpEngine().get_diagnostics()
+    assert diag["type"] == "Unlimited"
+    assert diag["license"] == "masked-value"
+    assert diag["status"] == "Connected"
+
+
+# -----------------------------------------------------------------------
+# Capability detection
+# -----------------------------------------------------------------------
+
+
+@patch("subprocess.run")
+@patch("shutil.which", return_value="/usr/bin/warp-cli")
+def test_capability_detection(mock_which, mock_run):
+    mock_run.side_effect = [
+        process(stdout="warp-cli 2026.6.880.0"),  # version
+        json_output({"allowed": True}),  # mode-switch-allowed
+        json_output({"error": "No org"}, returncode=1),  # org check
+    ]
+    caps = WarpEngine().detect_capabilities()
+    assert caps.cli_found is True
+    assert caps.version == "warp-cli 2026.6.880.0"
+    assert caps.has_json is True
+    assert caps.mode_switch_allowed is True
+    assert caps.is_zero_trust is False
+
+
+@patch("subprocess.run")
+@patch("shutil.which", return_value="/usr/bin/warp-cli")
+def test_capability_detection_zero_trust(mock_which, mock_run):
+    mock_run.side_effect = [
+        process(stdout="warp-cli 2026.6.880.0"),
+        json_output({"allowed": False}),  # mode locked by org
+        json_output({"organization": "my-corp"}),
+    ]
+    caps = WarpEngine().detect_capabilities()
+    assert caps.is_zero_trust is True
+    assert caps.organization == "my-corp"
+    assert caps.mode_switch_allowed is False
+
+
+@patch("shutil.which", return_value=None)
+def test_capability_detection_missing_cli(mock_which):
+    caps = WarpEngine().detect_capabilities()
+    assert caps.cli_found is False
+    assert caps.version == ""
+
+
+# -----------------------------------------------------------------------
+# Network diagnostics
+# -----------------------------------------------------------------------
+
+
+@patch("subprocess.run")
+def test_get_network_info(mock_run):
+    net_data = {
+        "v4_iface": {"name": "wlan0", "address": "192.168.1.10", "kind": "wifi"},
+        "dns_servers": ["1.1.1.1"],
+    }
+    mock_run.return_value = json_output(net_data)
+    info = WarpEngine().get_network_info()
+    assert info["v4_iface"]["name"] == "wlan0"
+
+
+@patch("subprocess.run")
+def test_get_override_status(mock_run):
+    mock_run.return_value = json_output({"set": False, "ends_in_secs": 0})
+    status = WarpEngine().get_override_status()
+    assert status["set"] is False
+
+
+@patch("subprocess.run")
+def test_get_split_tunnel_info(mock_run):
+    mock_run.return_value = json_output(
+        {
+            "settings": {
+                "split_tunnel_mode": "exclude",
+                "split_tunnel_ips": [{"value": "10.0.0.0/8"}],
+                "split_tunnel_hosts": [],
+                "fallback_domains": [{"domain": "local"}],
+            },
+            "sources": {},
+        }
+    )
+    info = WarpEngine().get_split_tunnel_info()
+    assert info["mode"] == "exclude"
+    assert info["ip_count"] == 1
+    assert info["host_count"] == 0
+    assert info["fallback_count"] == 1

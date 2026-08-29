@@ -55,4 +55,21 @@ QLabel[styleClass="desc_default"] {
     color: #888888;
     font-size: 13px;
 }
+QLabel[styleClass="org_badge"] {
+    color: #5e9cff;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 2px 8px;
+    border: 1px solid #5e9cff;
+    border-radius: 8px;
+}
+QLabel[styleClass="section_header"] {
+    font-weight: bold;
+    font-size: 13px;
+    padding-top: 8px;
+}
+QLabel[styleClass="diag_value"] {
+    color: #888888;
+    font-size: 12px;
+}
 """

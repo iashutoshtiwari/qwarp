@@ -1,10 +1,9 @@
-from unittest.mock import patch
-
 import pytest
 from PyQt6.QtGui import QCloseEvent
-from PyQt6.QtWidgets import QDialog, QLabel, QMessageBox
+from PyQt6.QtWidgets import QDialog, QLabel, QMessageBox, QCheckBox
+from unittest.mock import patch
 
-from qwarp.core.engine import WarpState
+from qwarp.core.engine import CliCapabilities, WarpState
 from qwarp.core.state import WarpStateManager
 from qwarp.ui.tray import WarpTrayIcon
 from qwarp.ui.window import SettingsDialog, WarpWindow
@@ -100,3 +99,58 @@ def test_window_without_tray_quits_on_close(qapp, manager):
     assert event.isAccepted()
     assert quit_requests == [True]
     window.deleteLater()
+
+
+def test_missing_client_page_shown_when_cli_missing(qapp, manager):
+    window = WarpWindow(manager)
+    caps = CliCapabilities(cli_found=False)
+    manager.capabilities_detected.emit(caps)
+    # The missing client page should be index 1
+    assert window.stack.currentIndex() == 1
+    window.deleteLater()
+
+
+def test_zero_trust_shows_org_badge_and_disables_consumer_settings(qapp, manager):
+    window = WarpWindow(manager)
+    dialog = SettingsDialog(manager)
+    caps = CliCapabilities(cli_found=True, is_zero_trust=True, organization="My Corp", mode_switch_allowed=False)
+    manager.capabilities_detected.emit(caps)
+
+    assert not window.org_badge.isHidden()
+    assert window.org_badge.text() == "My Corp"
+
+    # Settings Dialog
+    assert not dialog.families_combo.isEnabled()
+    assert not dialog.protocol_combo.isEnabled()
+    assert not dialog.trust_eth_cb.isEnabled()
+    assert not dialog.trust_wifi_cb.isEnabled()
+    
+    window.deleteLater()
+    dialog.deleteLater()
+
+
+def test_autostart_toggle_interacts_with_platform_module(qapp, manager):
+    dialog = SettingsDialog(manager)
+    with patch("qwarp.platform.autostart.set_autostart_enabled", return_value=(True, "")) as mock_set:
+        new_state = not dialog.autostart_cb.isChecked()
+        dialog.autostart_cb.setChecked(new_state)
+        mock_set.assert_called_with(new_state, minimize=dialog.minimized_cb.isChecked())
+    dialog.deleteLater()
+
+
+def test_tray_suppression_toggle_interacts_with_platform_module(qapp, manager):
+    dialog = SettingsDialog(manager)
+    with patch("qwarp.platform.taskbar.suppress_taskbar", return_value=(True, "")) as mock_suppress:
+        with patch("qwarp.platform.taskbar.restore_taskbar", return_value=(True, "")) as mock_restore:
+            new_state = not dialog.suppress_taskbar_cb.isChecked()
+            dialog.suppress_taskbar_cb.setChecked(new_state)
+            if new_state:
+                mock_suppress.assert_called_once()
+            else:
+                mock_restore.assert_called_once()
+            dialog.suppress_taskbar_cb.setChecked(not new_state)
+            if not new_state:
+                mock_suppress.assert_called_once()
+            else:
+                mock_restore.assert_called_once()
+    dialog.deleteLater()

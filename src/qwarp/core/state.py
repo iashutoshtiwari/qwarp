@@ -5,7 +5,7 @@ from typing import Any, Optional
 
 from PyQt6.QtCore import QCoreApplication, QObject, QRunnable, QThread, QThreadPool, pyqtSignal, pyqtSlot
 
-from qwarp.core.engine import WarpEngine, WarpState
+from qwarp.core.engine import CliCapabilities, WarpEngine, WarpState
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,6 @@ class ActionWorker(QRunnable):
         no_argument_actions = {
             "connect": self.engine.connect,
             "disconnect": self.engine.disconnect,
-            "register": self.engine.register,
             "delete_registration": self.engine.delete_registration,
             "repair_service": self.engine.repair_service,
         }
@@ -85,15 +84,37 @@ class ActionWorker(QRunnable):
             "set_mode": (self.engine.set_mode, "mode"),
             "set_families_mode": (self.engine.set_families_mode, "mode"),
             "set_license": (self.engine.set_license, "key"),
+            "set_tunnel_protocol": (self.engine.set_tunnel_protocol, "protocol"),
+            "set_proxy_port": (self.engine.set_proxy_port, "port"),
+        }
+        bool_argument_actions = {
+            "set_trusted_ethernet": (self.engine.set_trusted_ethernet, "enable"),
+            "set_trusted_wifi": (self.engine.set_trusted_wifi, "enable"),
         }
 
         try:
-            if self.action in no_argument_actions:
+            if self.action == "register":
+                org = self.kwargs.get("organization", "")
+                success, message = self.engine.register(organization=org)
+            elif self.action in no_argument_actions:
                 success, message = no_argument_actions[self.action]()
             elif self.action in argument_actions:
                 callback, argument_name = argument_actions[self.action]
                 argument = self.kwargs.get(argument_name)
-                if not isinstance(argument, str) or not argument.strip():
+                if self.action == "set_proxy_port":
+                    if not isinstance(argument, int):
+                        success, message = False, f"Missing required argument: {argument_name}"
+                    else:
+                        success, message = callback(argument)
+                else:
+                    if not isinstance(argument, str) or not argument.strip():
+                        success, message = False, f"Missing required argument: {argument_name}"
+                    else:
+                        success, message = callback(argument)
+            elif self.action in bool_argument_actions:
+                callback, argument_name = bool_argument_actions[self.action]
+                argument = self.kwargs.get(argument_name)
+                if not isinstance(argument, bool):
                     success, message = False, f"Missing required argument: {argument_name}"
                 else:
                     success, message = callback(argument)
@@ -121,6 +142,7 @@ class WarpStateManager(QObject):
     state_refreshed = pyqtSignal(WarpState)
     diagnostics_updated = pyqtSignal(dict)
     settings_updated = pyqtSignal(dict)
+    capabilities_detected = pyqtSignal(object)
     action_started = pyqtSignal(str)
     action_finished = pyqtSignal(str, bool, str)
     busy_changed = pyqtSignal(bool)
@@ -142,6 +164,7 @@ class WarpStateManager(QObject):
         self.active_action: Optional[str] = None
         self._diagnostics_pending = False
         self._settings_pending = False
+        self._capabilities_pending = False
         self._shutting_down = False
 
         self.status_thread = StatusWorker(self.engine, interval_ms=poll_interval_ms)
@@ -179,6 +202,30 @@ class WarpStateManager(QObject):
             self.state_changed.emit(state)
         self.state_refreshed.emit(state)
 
+    # ------------------------------------------------------------------
+    # Capability detection
+    # ------------------------------------------------------------------
+
+    @pyqtSlot()
+    def request_capabilities(self) -> None:
+        """Detect CLI capabilities on a background thread."""
+        if self._shutting_down or self._capabilities_pending:
+            return
+        self._capabilities_pending = True
+        worker = QueryWorker(self.engine.detect_capabilities)
+        worker.signals.result_ready.connect(self._on_capabilities_result)
+        self.thread_pool.start(worker)
+
+    @pyqtSlot(object)
+    def _on_capabilities_result(self, result: object) -> None:
+        self._capabilities_pending = False
+        if isinstance(result, CliCapabilities):
+            self.capabilities_detected.emit(result)
+
+    # ------------------------------------------------------------------
+    # Connection actions
+    # ------------------------------------------------------------------
+
     @pyqtSlot()
     def request_connect(self) -> None:
         self._dispatch_action("connect")
@@ -190,6 +237,10 @@ class WarpStateManager(QObject):
     @pyqtSlot()
     def request_register(self) -> None:
         self._dispatch_action("register")
+
+    @pyqtSlot(str)
+    def request_register_with_org(self, organization: str) -> None:
+        self._dispatch_action("register", organization=organization)
 
     @pyqtSlot()
     def request_delete_registration(self) -> None:
@@ -210,6 +261,22 @@ class WarpStateManager(QObject):
     @pyqtSlot()
     def request_repair_service(self) -> None:
         self._dispatch_action("repair_service")
+
+    @pyqtSlot(str)
+    def request_set_tunnel_protocol(self, protocol: str) -> None:
+        self._dispatch_action("set_tunnel_protocol", protocol=protocol)
+
+    @pyqtSlot(int)
+    def request_set_proxy_port(self, port: int) -> None:
+        self._dispatch_action("set_proxy_port", port=port)
+
+    @pyqtSlot(bool)
+    def request_set_trusted_ethernet(self, enable: bool) -> None:
+        self._dispatch_action("set_trusted_ethernet", enable=enable)
+
+    @pyqtSlot(bool)
+    def request_set_trusted_wifi(self, enable: bool) -> None:
+        self._dispatch_action("set_trusted_wifi", enable=enable)
 
     def _dispatch_action(self, action: str, **kwargs: Any) -> bool:
         if self._shutting_down:
@@ -245,8 +312,19 @@ class WarpStateManager(QObject):
 
         if success and action in {"register", "delete_registration", "set_license"}:
             self.request_diagnostics()
-        if success and action in {"set_mode", "set_families_mode"}:
+        if success and action in {
+            "set_mode",
+            "set_families_mode",
+            "set_tunnel_protocol",
+            "set_proxy_port",
+            "set_trusted_ethernet",
+            "set_trusted_wifi",
+        }:
             self.request_settings()
+
+    # ------------------------------------------------------------------
+    # Queries
+    # ------------------------------------------------------------------
 
     @pyqtSlot()
     def request_diagnostics(self) -> None:

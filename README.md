@@ -43,6 +43,23 @@
 
 ## Installation
 
+
+### Debian/Ubuntu
+
+Download the `.deb` package from the [Releases](https://github.com/iashutoshtiwari/qwarp/releases) page and install it using `apt` (which will automatically resolve dependencies):
+
+```bash
+sudo apt install ./qwarp_0.9.0-1_all.deb
+```
+
+### Fedora/RHEL
+
+Download the `.rpm` package from the [Releases](https://github.com/iashutoshtiwari/qwarp/releases) page and install it:
+
+```bash
+sudo dnf install ./qwarp-0.9.0-1.noarch.rpm
+```
+
 ### Arch Linux (Recommended)
 
 You can install using the AUR using any AUR helper like `yay`:

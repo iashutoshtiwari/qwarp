@@ -116,6 +116,13 @@ class WarpTrayIcon(QSystemTrayIcon):
             self.action_disconnect.setEnabled(False)
 
         self.setIcon(icon)
+
+        # Check for Zero Trust organization
+        if getattr(self.manager.engine, "capabilities", None):
+            caps = self.manager.engine.capabilities
+            if getattr(caps, "is_zero_trust", False) and getattr(caps, "organization", ""):
+                tooltip += f" ({caps.organization})"
+
         self.setToolTip(tooltip)
 
         if self.manager.is_busy:

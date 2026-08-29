@@ -1,0 +1,17 @@
+#!/usr/bin/make -f
+export PYBUILD_NAME=qwarp
+
+%:
+	dh $@ --with python3 --buildsystem=pybuild
+
+override_dh_auto_build:
+	bash scripts/build_locales.sh
+	dh_auto_build
+
+override_dh_auto_test:
+	# Skip tests in packaging build
+
+override_dh_install:
+	dh_install
+	install -Dm644 qwarp.desktop debian/qwarp/usr/share/applications/qwarp.desktop
+	install -Dm644 src/qwarp/assets/app-icon.svg debian/qwarp/usr/share/icons/hicolor/scalable/apps/qwarp.svg

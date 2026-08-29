@@ -1,0 +1,16 @@
+Source: qwarp
+Section: net
+Priority: optional
+Maintainer: Ashutosh Tiwari <contact@ashutoshtiwari.dev>
+Build-Depends: debhelper-compat (= 13), dh-python, python3-all, python3-setuptools, python3-build, qt6-l10n-tools, qt6-tools-dev-tools
+Standards-Version: 4.6.2
+Homepage: https://github.com/iashutoshtiwari/qwarp
+Rules-Requires-Root: no
+
+Package: qwarp
+Architecture: all
+Depends: ${misc:Depends}, ${python3:Depends}, python3-pyqt6, cloudflare-warp
+Description: A lightweight, Wayland-native Qt6 wrapper for Cloudflare WARP
+ QWarp is an unofficial, Linux-only PyQt6 GUI for the Cloudflare WARP client.
+ It is intended to remain lightweight, Wayland-native, usable on X11, and suitable
+ for both Python package and frozen PyInstaller builds.
