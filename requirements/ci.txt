@@ -1,0 +1,13 @@
+build==1.6.0
+iniconfig==2.3.0
+packaging==26.3
+pluggy==1.6.0
+PyQt6==6.11.0
+PyQt6-Qt6==6.11.2
+PyQt6-sip==13.12.0
+Pygments==2.21.0
+pyproject-hooks==1.2.0
+pytest==9.1.1
+ruff==0.16.5
+setuptools==84.0.0
+wheel==0.48.0

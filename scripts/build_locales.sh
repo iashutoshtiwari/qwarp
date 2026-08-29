@@ -4,7 +4,7 @@
 # This scrapes the `.py` UI files and extracts all `self.tr("...")` or `QCoreApplication.translate(...)` wrappers.
 # It uses the native Qt6 translation utilities which have built-in support for parsing Python source files.
 
-set -e
+set -euo pipefail
 
 # Change to project root
 cd "$(dirname "$0")/.."

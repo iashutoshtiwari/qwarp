@@ -1,5 +1,4 @@
 import logging
-import os
 from typing import Callable
 
 from PyQt6.QtCore import QPoint
@@ -8,7 +7,7 @@ from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from qwarp.core.engine import WarpState
 from qwarp.core.state import WarpStateManager
-from qwarp.utils.system import get_asset_dir, load_tinted_icon
+from qwarp.utils.system import load_tinted_icon
 
 logger = logging.getLogger(__name__)
 
@@ -63,10 +62,18 @@ class WarpTrayIcon(QSystemTrayIcon):
     def _setup_signals(self):
         self.activated.connect(self._on_activated)
         self.manager.state_changed.connect(self._update_ui_state)
+        self.manager.busy_changed.connect(self._on_busy_changed)
 
     def _on_activated(self, reason: QSystemTrayIcon.ActivationReason):
         if reason == QSystemTrayIcon.ActivationReason.Trigger:
             self.toggle_callback(QCursor.pos())
+
+    def _on_busy_changed(self, busy: bool) -> None:
+        if busy:
+            self.action_connect.setEnabled(False)
+            self.action_disconnect.setEnabled(False)
+        else:
+            self._update_ui_state(self.manager.current_state)
 
     def _update_ui_state(self, state: WarpState, palette: QPalette = None):
         tooltip = self.tr("QWarp: Unknown")
@@ -110,3 +117,7 @@ class WarpTrayIcon(QSystemTrayIcon):
 
         self.setIcon(icon)
         self.setToolTip(tooltip)
+
+        if self.manager.is_busy:
+            self.action_connect.setEnabled(False)
+            self.action_disconnect.setEnabled(False)

@@ -1,3 +1,4 @@
+import argparse
 import os
 import sys
 
@@ -10,10 +11,11 @@ import signal
 import traceback
 
 from PyQt6.QtCore import QLocale, QPoint, QSettings, QTimer, QTranslator
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
 
+from qwarp import __version__
 from qwarp.core.engine import WarpEngine
-from qwarp.core.instance import SingleInstance
+from qwarp.core.instance import InstanceRole, SingleInstance
 from qwarp.core.state import WarpStateManager
 from qwarp.ui.styles import GLOBAL_QSS
 from qwarp.ui.tray import WarpTrayIcon, get_asset_icon
@@ -39,17 +41,24 @@ def setup_logging() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
 
 
+def parse_cli_args(arguments: list[str]) -> None:
+    """Handle side-effect-free CLI options before creating any Qt objects."""
+    parser = argparse.ArgumentParser(description="QWarp GUI for the official Cloudflare WARP client")
+    parser.add_argument("--version", action="version", version=f"QWarp {__version__}")
+    parser.parse_known_args(arguments)
+
+
 def setup_ipc_instance() -> SingleInstance:
     """
     Ensure only one instance of the application runs.
     """
     instance_manager = SingleInstance()
-    if instance_manager.is_running():
+    role = instance_manager.acquire()
+    if role == InstanceRole.SECONDARY:
         logger.info("Secondary instance detected. Exiting.")
         sys.exit(0)
-
-    # Start listening on the Unix socket for the primary instance.
-    instance_manager.start_server()
+    if role == InstanceRole.ERROR:
+        raise RuntimeError("Unable to acquire the QWarp single-instance socket")
     return instance_manager
 
 
@@ -57,6 +66,7 @@ def main() -> None:
     """
     Application entry point. Bootstraps Qt, IPC, background workers, and signals.
     """
+    parse_cli_args(sys.argv[1:])
     setup_logging()
 
     # Configure global exception trapping
@@ -94,8 +104,8 @@ def main() -> None:
     app.setDesktopFileName("qwarp")  # Wayland integration
     app.setWindowIcon(get_asset_icon("app-icon.svg"))
 
-    # Crucial mapping: prevent background daemon from closing when the UI is explicitly hidden
-    app.setQuitOnLastWindowClosed(False)
+    tray_available = QSystemTrayIcon.isSystemTrayAvailable()
+    app.setQuitOnLastWindowClosed(not tray_available)
 
     # Graceful exit hook on ^C
     signal.signal(signal.SIGINT, lambda sig, frame: app.quit())
@@ -107,7 +117,7 @@ def main() -> None:
 
     engine = WarpEngine()
     manager = WarpStateManager(engine)
-    window = WarpWindow(manager)
+    window = WarpWindow(manager, tray_available=tray_available)
 
     window.quit_requested.connect(app.quit)
 
@@ -132,25 +142,25 @@ def main() -> None:
     # Route wakeups via IPC strictly to force view elevation
     instance_manager.wakeup_requested.connect(force_show_window)
 
-    tray = WarpTrayIcon(manager, toggle_window)
-    tray.show()
+    tray = None
+    if tray_available:
+        tray = WarpTrayIcon(manager, toggle_window)
+        tray.show()
+    else:
+        logger.warning("No system tray is available; close-to-hide and start-minimized are disabled")
 
     settings = QSettings()
     start_minimized = settings.value("start_minimized", False, type=bool)
 
-    if not start_minimized:
+    if not start_minimized or not tray_available:
         force_show_window()
 
     def gracefully_shutdown() -> None:
         """Ensure threads and IPC listeners tear down properly."""
         logger.info("Initiating graceful teardown...")
-        if hasattr(manager, "stop_polling"):
-            manager.stop_polling()
-        tray.hide()
-        try:
-            manager.state_changed.disconnect()
-        except TypeError:
-            pass
+        manager.shutdown()
+        if tray is not None:
+            tray.hide()
 
     app.aboutToQuit.connect(gracefully_shutdown)
 

@@ -1,19 +1,5 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
-echo "Ensuring build requirements are installed..."
-pip install --user pyinstaller PyQt6 PyQt6-Qt6
-
-echo "Compiling i18n Qt translation binaries..."
-bash scripts/build_locales.sh
-
-echo "Generating PyInstaller standalone executable..."
-~/.local/bin/pyinstaller --noconfirm \
-    --onefile \
-    --noconsole \
-    --name "qwarp" \
-    --paths "src" \
-    --add-data "src/qwarp/assets:qwarp/assets" \
-    src/qwarp/main.py
-
-echo "Build complete. The executable artifact is located at ./dist/qwarp"
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec bash "$repo_root/scripts/build_artifacts.sh"

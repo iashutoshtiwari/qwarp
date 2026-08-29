@@ -1,7 +1,8 @@
 import logging
 import subprocess
+import threading
 from enum import Enum, auto
-from typing import Dict, Tuple
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -19,283 +20,223 @@ class WarpState(Enum):
 
 
 class WarpEngine:
-    """
-    Manages interactions with the Cloudflare WARP CLI (warp-cli) and the background service (warp-svc).
-    Executes commands, polls status, and fetches offline diagnostic data.
-    """
+    """Synchronous, serialized boundary around WARP and service commands."""
 
     CLI_PATH = "warp-cli"
     SYSTEMCTL_PATH = "systemctl"
     SVC_NAME = "warp-svc"
     PKEXEC_PATH = "pkexec"
 
+    MODE_ALIASES = {
+        "warp": "warp",
+        "dnsoverhttps": "doh",
+        "doh": "doh",
+        "warpwithdnsoverhttps": "warp+doh",
+        "warpdoh": "warp+doh",
+        "dnsovertls": "dot",
+        "dot": "dot",
+        "warpwithdnsovertls": "warp+dot",
+        "warpdot": "warp+dot",
+        "warpproxy": "proxy",
+        "proxy": "proxy",
+        "tunnelonly": "tunnel_only",
+    }
+
     def __init__(self, timeout: float = 2.0):
-        """
-        Initialize the WarpEngine.
-
-        Args:
-            timeout (float): The default timeout for subprocess executions in seconds.
-        """
         self.timeout = timeout
+        self._command_lock = threading.RLock()
 
-    def _run_command(self, *args: str) -> Tuple[bool, str]:
-        """
-        Internal method to execute warp-cli commands.
+    @staticmethod
+    def _redact(value: str, sensitive_values: tuple[str, ...]) -> str:
+        redacted = value
+        for secret in sensitive_values:
+            if secret:
+                redacted = redacted.replace(secret, "<redacted>")
+        return redacted
 
-        Args:
-            *args (str): Command line arguments to pass to warp-cli.
-
-        Returns:
-            Tuple[bool, str]: A tuple containing the success boolean and standard output/error string.
-        """
-        is_status = args and args[0] == "status"
-        if not is_status:
-            logger.info("Executing: %s %s", self.CLI_PATH, " ".join(args))
+    def _run_process(
+        self,
+        command: list[str],
+        *,
+        timeout: Optional[float] = None,
+        quiet: bool = False,
+        sensitive_values: tuple[str, ...] = (),
+    ) -> tuple[bool, str]:
+        safe_command = " ".join(self._redact(arg, sensitive_values) for arg in command)
+        if not quiet:
+            logger.info("Executing: %s", safe_command)
 
         try:
-            result = subprocess.run([self.CLI_PATH, *args], capture_output=True, text=True, timeout=self.timeout)
+            with self._command_lock:
+                result = subprocess.run(
+                    command,
+                    capture_output=True,
+                    text=True,
+                    timeout=self.timeout if timeout is None else timeout,
+                )
 
-            if not is_status:
-                logger.info("Command '%s %s' returned code %d", self.CLI_PATH, " ".join(args), result.returncode)
+            if not quiet:
+                logger.info("Command '%s' returned code %d", safe_command, result.returncode)
 
-            if result.returncode == 0:
-                stdout_val = result.stdout.strip()
-                if not is_status and stdout_val:
-                    logger.debug("warp-cli stdout: %s", stdout_val)
-                return True, stdout_val
-            else:
-                error_msg = result.stderr.strip() or result.stdout.strip()
-                if not is_status:
-                    logger.error("warp-cli error (Code %d): %s", result.returncode, error_msg)
-                    stderr_val = result.stderr.strip()
-                    if stderr_val:
-                        logger.debug("warp-cli stderr: %s", stderr_val)
-                return False, error_msg
-
+            output = result.stdout.strip() if result.returncode == 0 else result.stderr.strip() or result.stdout.strip()
+            output = self._redact(output, sensitive_values)
+            if result.returncode != 0 and not quiet:
+                logger.error("Command failed (code %d): %s", result.returncode, output or "No error output")
+            return result.returncode == 0, output
         except FileNotFoundError:
-            if not is_status:
-                logger.error("Executable '%s' not found.", self.CLI_PATH)
-            return False, "warp-cli not installed"
+            executable = command[0]
+            if not quiet:
+                logger.error("Executable '%s' not found", executable)
+            return False, f"{executable} not installed"
         except subprocess.TimeoutExpired:
-            if not is_status:
-                logger.error("Command '%s %s' timed out.", self.CLI_PATH, " ".join(args))
-            return False, "Daemon timeout"
-        except Exception as e:
-            if not is_status:
-                logger.error("Unexpected error executing %s: %s", self.CLI_PATH, e)
-            return False, str(e)
+            if not quiet:
+                logger.error("Command '%s' timed out", safe_command)
+            return False, "Command timeout"
+        except Exception as exc:
+            message = self._redact(str(exc), sensitive_values)
+            if not quiet:
+                logger.error("Unexpected command error for '%s': %s", safe_command, message)
+            return False, message
 
-    def is_service_active(self) -> bool:
-        """
-        Check if the warp-svc.service is currently active using systemctl.
+    def _run_command(
+        self,
+        *args: str,
+        sensitive_values: tuple[str, ...] = (),
+        quiet: Optional[bool] = None,
+    ) -> tuple[bool, str]:
+        if quiet is None:
+            quiet = bool(args and args[0] in {"status", "settings"})
+        return self._run_process(
+            [self.CLI_PATH, *args],
+            quiet=quiet,
+            sensitive_values=sensitive_values,
+        )
 
-        Returns:
-            bool: True if active, False otherwise.
-        """
-        try:
-            result = subprocess.run(
-                [self.SYSTEMCTL_PATH, "is-active", self.SVC_NAME], capture_output=True, text=True, timeout=self.timeout
-            )
-            return result.stdout.strip() == "active"
-        except Exception as e:
-            logger.error("systemctl is-active check failed: %s", e)
+    def is_service_active(self) -> Optional[bool]:
+        """Return True/False for a known service state, or None if inspection failed."""
+        success, output = self._run_process(
+            [self.SYSTEMCTL_PATH, "is-active", self.SVC_NAME],
+            quiet=True,
+        )
+        state = output.strip().lower()
+        if success and state == "active":
+            return True
+        if state in {"inactive", "failed", "dead", "deactivating"}:
             return False
+        return None
 
-    def is_service_enabled(self) -> bool:
-        """
-        Check if the warp-svc.service is enabled to start on boot.
-
-        Returns:
-            bool: True if enabled, False otherwise.
-        """
-        try:
-            result = subprocess.run(
-                [self.SYSTEMCTL_PATH, "is-enabled", self.SVC_NAME], capture_output=True, text=True, timeout=self.timeout
-            )
-            return result.stdout.strip() == "enabled"
-        except Exception as e:
-            logger.error("systemctl is-enabled check failed: %s", e)
+    def is_service_enabled(self) -> Optional[bool]:
+        success, output = self._run_process(
+            [self.SYSTEMCTL_PATH, "is-enabled", self.SVC_NAME],
+            quiet=True,
+        )
+        state = output.strip().lower()
+        if success and state == "enabled":
+            return True
+        if state in {"disabled", "masked", "static", "indirect"}:
             return False
+        return None
 
-    def repair_service(self) -> Tuple[bool, str]:
-        """
-        Attempt to enable and start warp-svc.service via pkexec to elevate privileges.
-        This prompts the user with an authentication dialog.
-
-        Returns:
-            Tuple[bool, str]: True if the service was successfully enabled and started.
-        """
-        cmd_args = [self.PKEXEC_PATH, self.SYSTEMCTL_PATH, "enable", "--now", self.SVC_NAME]
-        logger.info("Executing: %s", " ".join(cmd_args))
-
-        try:
-            result = subprocess.run(cmd_args, capture_output=True, text=True, timeout=30.0)
-
-            logger.info("Command '%s' returned code %d", " ".join(cmd_args), result.returncode)
-
-            if result.returncode == 0:
-                logger.info("Service repaired successfully.")
-                stdout_val = result.stdout.strip()
-                if stdout_val:
-                    logger.debug("pkexec stdout: %s", stdout_val)
-                return True, ""
-            else:
-                error_msg = result.stderr.strip() or result.stdout.strip()
-                logger.error("pkexec error (Code %d): %s", result.returncode, error_msg)
-                return False, error_msg
-
-        except FileNotFoundError:
-            logger.error("pkexec not found on system.")
-            return False, "pkexec not installed"
-        except subprocess.TimeoutExpired:
-            logger.error("Service repair timed out.")
-            return False, "Service repair timed out"
-        except Exception as e:
-            logger.error("Unexpected error repairing service: %s", e)
-            return False, str(e)
+    def repair_service(self) -> tuple[bool, str]:
+        return self._run_process(
+            [self.PKEXEC_PATH, self.SYSTEMCTL_PATH, "enable", "--now", self.SVC_NAME],
+            timeout=30.0,
+        )
 
     def status(self) -> WarpState:
-        """
-        Get the current running state of the WARP daemon.
-        Uses systemctl checks to delineate between stopped services and daemon failures.
-
-        Returns:
-            WarpState: The current enum state of WARP.
-        """
         success, output = self._run_command("status")
-
-        if not success:
-            if self.is_service_active():
-                return WarpState.DAEMON_ERROR
-            return WarpState.SERVICE_STOPPED
-
         output_lower = output.lower()
+        if not success:
+            if "accept the warp terms of service" in output_lower or "registration missing" in output_lower:
+                return WarpState.UNREGISTERED
+            if output == f"{self.CLI_PATH} not installed":
+                return WarpState.DAEMON_ERROR
+            service_active = self.is_service_active()
+            return WarpState.SERVICE_STOPPED if service_active is False else WarpState.DAEMON_ERROR
+
         if "registration missing" in output_lower:
             return WarpState.UNREGISTERED
-        elif "connected" in output_lower and "disconnected" not in output_lower:
-            return WarpState.CONNECTED
-        elif "disconnected" in output_lower:
+        if "disconnected" in output_lower:
             return WarpState.DISCONNECTED
-        elif "connecting" in output_lower:
+        if "connecting" in output_lower:
             return WarpState.CONNECTING
-        else:
-            return WarpState.UNKNOWN
+        if "connected" in output_lower:
+            return WarpState.CONNECTED
+        return WarpState.UNKNOWN
 
-    def connect(self) -> Tuple[bool, str]:
-        """Attempt to connect the WARP client."""
+    def connect(self) -> tuple[bool, str]:
         return self._run_command("connect")
 
-    def disconnect(self) -> Tuple[bool, str]:
-        """Attempt to disconnect the WARP client."""
+    def disconnect(self) -> tuple[bool, str]:
         return self._run_command("disconnect")
 
-    def register(self) -> Tuple[bool, str]:
-        """Registers the WARP client unconditionally accepting the ToS."""
+    def register(self) -> tuple[bool, str]:
         return self._run_command("--accept-tos", "registration", "new")
 
-    def delete_registration(self) -> Tuple[bool, str]:
-        """Deletes the current client registration."""
+    def delete_registration(self) -> tuple[bool, str]:
         return self._run_command("registration", "delete")
 
-    def set_license(self, key: str) -> Tuple[bool, str]:
-        """Applies a WARP+ license key to the current registration."""
-        return self._run_command("registration", "license", key)
+    def set_license(self, key: str) -> tuple[bool, str]:
+        return self._run_command("registration", "license", key, sensitive_values=(key,))
 
-    def set_mode(self, mode_str: str) -> Tuple[bool, str]:
-        """
-        Set the operational mode of the daemon.
+    def set_mode(self, mode: str) -> tuple[bool, str]:
+        return self._run_command("mode", mode)
 
-        Args:
-            mode_str (str): The desired routing mode (e.g., 'warp', 'doh').
-        """
-        return self._run_command("mode", mode_str)
-
-    def set_families_mode(self, mode: str) -> Tuple[bool, str]:
-        """
-        Set the Cloudflare WARP for Families DNS filtering mode.
-
-        Args:
-            mode (str): The desired filtering level. Valid values:
-                - 'off': No DNS filtering
-                - 'malware': Blocks malware domains
-                - 'full': Blocks malware and adult content
-        """
+    def set_families_mode(self, mode: str) -> tuple[bool, str]:
         return self._run_command("dns", "families", mode)
 
-    def get_families_mode(self) -> str:
-        """
-        Retrieve the current Families DNS filtering mode from daemon settings.
+    @staticmethod
+    def _normalize_setting(value: str) -> str:
+        return "".join(character for character in value.lower() if character.isalnum())
 
-        Returns:
-            str: The current families mode ('off', 'malware', or 'full'). Empty string on failure.
-        """
+    @classmethod
+    def parse_settings(cls, output: str) -> dict[str, str]:
+        settings = {"mode": "", "families": ""}
+        for line in output.splitlines():
+            key, separator, raw_value = line.partition(":")
+            if not separator:
+                continue
+            normalized_key = cls._normalize_setting(key)
+            normalized_value = cls._normalize_setting(raw_value)
+            if normalized_key.endswith("mode") and "families" not in normalized_key:
+                settings["mode"] = cls.MODE_ALIASES.get(normalized_value, "")
+            elif "families" in normalized_key:
+                if "full" in normalized_value or "adult" in normalized_value:
+                    settings["families"] = "full"
+                elif "malware" in normalized_value:
+                    settings["families"] = "malware"
+                elif "off" in normalized_value:
+                    settings["families"] = "off"
+        return settings
+
+    def get_settings(self) -> dict[str, str]:
         success, output = self._run_command("settings")
-        if success:
-            for line in output.split("\n"):
-                parts = line.split(":", 1)
-                if len(parts) == 2 and "families" in parts[0].strip().lower():
-                    val = parts[1].strip().lower()
-                    if "malware" in val:
-                        return "malware"
-                    elif "full" in val or "adult" in val:
-                        return "full"
-                    elif "off" in val:
-                        return "off"
-        return ""
+        return self.parse_settings(output) if success else {"mode": "", "families": ""}
 
     def get_current_mode(self) -> str:
-        """
-        Retrieve the current operational mode directly from the daemon's settings output.
+        return self.get_settings()["mode"]
 
-        Returns:
-            str: The mode value parsed from 'warp-cli settings'. Optional empty if failure.
-        """
-        success, output = self._run_command("settings")
-        if success:
-            for line in output.split("\n"):
-                parts = line.split(":", 1)
-                if len(parts) == 2 and parts[0].strip().endswith("Mode"):
-                    return parts[1].strip()
-        return ""
+    def get_families_mode(self) -> str:
+        return self.get_settings()["families"]
 
-    def get_diagnostics(self) -> Dict[str, str]:
-        """
-        Fetch offline telemetry and account information directly from warp-cli.
-
-        Returns:
-            Dict[str, str]: Map of structured diagnostic info (license, type, status, quota).
-        """
+    def get_diagnostics(self) -> dict[str, str]:
         data = {"license": "Not Registered", "type": "Unknown", "status": "Unknown", "quota": "N/A"}
 
-        try:
-            reg_result = subprocess.run(
-                [self.CLI_PATH, "--accept-tos", "registration", "show"],
-                capture_output=True,
-                text=True,
-                timeout=self.timeout,
-            )
-            if reg_result.returncode == 0:
-                for line in reg_result.stdout.splitlines():
-                    if "Account type:" in line:
-                        data["type"] = line.split(":", 1)[1].strip()
-                    elif "License:" in line:
-                        data["license"] = line.split(":", 1)[1].strip()
-                    elif "Quota:" in line:
-                        data["quota"] = line.split(":", 1)[1].strip()
-            else:
-                stderr_val = reg_result.stderr.strip()
-                logger.debug("Registration check failed or missing: %s", stderr_val)
-        except Exception as e:
-            logger.error("Error executing registration show: %s", e)
+        success, registration = self._run_command("--accept-tos", "registration", "show", quiet=True)
+        if success:
+            for line in registration.splitlines():
+                key, separator, value = line.partition(":")
+                if not separator:
+                    continue
+                normalized_key = key.strip().lower()
+                if normalized_key == "account type":
+                    data["type"] = value.strip()
+                elif normalized_key == "license":
+                    data["license"] = value.strip()
+                elif normalized_key == "quota":
+                    data["quota"] = value.strip()
 
-        try:
-            status_result = subprocess.run(
-                [self.CLI_PATH, "--accept-tos", "status"], capture_output=True, text=True, timeout=self.timeout
-            )
-            if status_result.returncode == 0:
-                clean_status = status_result.stdout.replace("Status update:", "").strip()
-                data["status"] = clean_status
-        except Exception as e:
-            logger.error("Error executing status check: %s", e)
-
+        success, status = self._run_command("status", quiet=True)
+        if success:
+            data["status"] = status.replace("Status update:", "").strip()
         return data

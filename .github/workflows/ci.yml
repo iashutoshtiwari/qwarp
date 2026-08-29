@@ -1,92 +1,117 @@
 name: CI
 
-# Lock down all permissions at the workflow level.
 permissions: {}
 
-# Run quality gates on every push to main and every pull request targeting main.
-# This ensures regressions are caught before they ever reach a tagged release.
 on:
   push:
-    branches:
-      - master
+    branches: [master]
   pull_request:
-    branches:
-      - master
+    branches: [master]
 
 jobs:
-  # ──────────────────────────────────────────────────────────────────────────────
-  # Job 1: Lint the codebase with ruff (fast, zero-config Rust linter).
-  # ──────────────────────────────────────────────────────────────────────────────
-  lint:
-    name: Lint (ruff)
-    runs-on: ubuntu-latest
+  quality:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-22.04
     permissions:
       contents: read
-
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.14"]
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
-          python-version: '3.12'
-          cache: 'pip'
-
-      - name: Install Ruff
-        run: pip install ruff
-
-      - name: Run Ruff Linter
-        run: ruff check src/ --output-format=github
-
-      - name: Run Ruff Formatter Check
-        run: ruff format src/ --check --diff
-
-  # ──────────────────────────────────────────────────────────────────────────────
-  # Job 2: Run smoke tests to catch import-time errors and core logic regressions.
-  # ──────────────────────────────────────────────────────────────────────────────
-  test:
-    name: Smoke Tests (pytest)
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
-    steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: 'pip'
-
-      - name: Install System Dependencies for PyQt6
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install Qt runtime libraries
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
-            libegl1 \
-            libgl1 \
-            libxkbcommon-x11-0 \
-            libdbus-1-3 \
-            libfontconfig1 \
-            libxrender1 \
-            libxcomposite1 \
-            libxcursor1 \
-            libxi6 \
-            libxtst6 \
-            libxrandr2 \
-            libasound2t64
-
-      - name: Install Package and Test Dependencies
+            libasound2 libdbus-1-3 libegl1 libfontconfig1 libgl1 \
+            libxcomposite1 libxcursor1 libxi6 libxkbcommon-x11-0 \
+            libxrandr2 libxrender1 libxtst6
+      - name: Install project
+        run: python -m pip install -c requirements/ci.txt -e '.[dev]'
+      - name: Ruff
         run: |
-          python -m pip install --upgrade pip
-          # Install the package itself + test extras
-          pip install ".[dev]"
-
-      - name: Run Tests
-        # QT_QPA_PLATFORM=offscreen lets PyQt6 run in a headless CI environment
-        # without requiring a display server (X11/Wayland).
+          ruff check src/ tests/ --output-format=github
+          ruff format src/ tests/ --check --diff
+      - name: Test
         env:
           QT_QPA_PLATFORM: offscreen
         run: pytest tests/ -v --tb=short
+
+  package:
+    name: Build and smoke-test release artifacts
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Set up Python 3.11
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            qt6-l10n-tools libasound2 libdbus-1-3 libegl1 libfontconfig1 \
+            libgl1 libxcomposite1 libxcursor1 libxi6 libxkbcommon-x11-0 \
+            libxrandr2 libxrender1 libxtst6
+          python -m pip install -c requirements/release.txt build pyinstaller PyQt6 setuptools wheel
+      - name: Build artifacts
+        run: bash scripts/build_artifacts.sh
+      - name: Verify locales and release metadata
+        run: |
+          git diff --exit-code -- 'src/qwarp/assets/locales/*.ts'
+          python scripts/check_release.py --version 0.8.3 --artifacts dist/release
+      - name: Verify standalone binary
+        run: bash scripts/smoke_frozen.sh dist/qwarp-build/qwarp 0.8.3
+      - name: Upload package inputs
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ci-release-artifacts
+          path: dist/release/
+          retention-days: 7
+
+  arch-package:
+    name: Validate Arch package ownership
+    needs: package
+    runs-on: ubuntu-22.04
+    container: archlinux:base-devel
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Download source artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: ci-release-artifacts
+          path: dist/release
+      - name: Build package without runtime dependency resolution
+        run: |
+          pacman -Syu --noconfirm --needed \
+            git python python-build python-installer python-pyqt6 \
+            python-setuptools python-wheel qt6-tools
+          useradd --create-home builder
+          chown -R builder:builder "$GITHUB_WORKSPACE"
+          cp dist/release/qwarp-0.8.3-source.tar.gz .
+          su builder -c "cd '$GITHUB_WORKSPACE' && makepkg --nodeps --cleanbuild --clean --noconfirm"
+      - name: Verify metadata and owned files
+        run: |
+          su builder -c "cd '$GITHUB_WORKSPACE' && makepkg --printsrcinfo" > /tmp/generated.SRCINFO
+          diff -u .SRCINFO /tmp/generated.SRCINFO
+          package_file=$(find . -maxdepth 1 -name 'qwarp-*.pkg.tar.zst' -print -quit)
+          test -n "$package_file"
+          bsdtar -tf "$package_file" > /tmp/package-files
+          ! grep -Eq '(^|/)(warp-cli|warp-svc|warp-svc\.service)$' /tmp/package-files
+          grep -q '^usr/bin/qwarp$' /tmp/package-files
+          grep -q 'cloudflare-warp-bin' .SRCINFO
+          ! grep -Eq '^\s*(conflicts|install)\s*=' .SRCINFO
