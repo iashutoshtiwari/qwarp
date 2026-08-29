@@ -51,7 +51,7 @@ def test_version_option_has_no_qt_or_daemon_side_effect(capsys):
             assert exc.code == 0
         else:
             raise AssertionError("--version did not exit")
-    assert "QWarp 0.8.3" in capsys.readouterr().out
+    assert "QWarp 0.9.0" in capsys.readouterr().out
 
 
 def test_terms_acceptance_is_persisted_only_after_success(qapp):

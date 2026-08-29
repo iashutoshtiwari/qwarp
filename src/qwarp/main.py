@@ -41,11 +41,17 @@ def setup_logging() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
 
 
-def parse_cli_args(arguments: list[str]) -> None:
+def parse_cli_args(arguments: list[str]) -> argparse.Namespace:
     """Handle side-effect-free CLI options before creating any Qt objects."""
     parser = argparse.ArgumentParser(description="QWarp GUI for the official Cloudflare WARP client")
     parser.add_argument("--version", action="version", version=f"QWarp {__version__}")
-    parser.parse_known_args(arguments)
+    parser.add_argument(
+        "--start-minimized",
+        action="store_true",
+        help="Start minimized in system tray",
+    )
+    args, _ = parser.parse_known_args(arguments)
+    return args
 
 
 def setup_ipc_instance() -> SingleInstance:
@@ -73,7 +79,7 @@ def main() -> None:
     """
     Application entry point. Bootstraps Qt, IPC, background workers, and signals.
     """
-    parse_cli_args(sys.argv[1:])
+    cli_args = parse_cli_args(sys.argv[1:])
     setup_logging()
 
     # Configure global exception trapping
@@ -126,6 +132,9 @@ def main() -> None:
     manager = WarpStateManager(engine)
     window = WarpWindow(manager, tray_available=tray_available)
 
+    # Detect CLI capabilities on startup
+    manager.request_capabilities()
+
     manager.action_finished.connect(
         lambda action, success, _message: remember_terms_acceptance(settings, action, success)
     )
@@ -160,7 +169,9 @@ def main() -> None:
     else:
         logger.warning("No system tray is available; close-to-hide and start-minimized are disabled")
 
-    start_minimized = settings.value("start_minimized", False, type=bool)
+    # Determine whether to start minimized.  The CLI flag overrides the
+    # saved setting to support the autostart --start-minimized use case.
+    start_minimized = cli_args.start_minimized or settings.value("start_minimized", False, type=bool)
 
     if not start_minimized or not tray_available:
         force_show_window()
