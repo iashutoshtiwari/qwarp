@@ -1,7 +1,7 @@
 import threading
 
 from qwarp.core.engine import CliCapabilities, WarpState
-from qwarp.core.state import ActionWorker, WarpStateManager
+from qwarp.core.state import ActionWorker, StatusWorker, WarpStateManager
 
 
 class FakeEngine:
@@ -9,6 +9,9 @@ class FakeEngine:
         self.state = WarpState.DISCONNECTED
         self.connect_result = (True, "")
         self.connect_gate = None
+        self.connect_started = threading.Event()
+        self.settings_gate = None
+        self.settings_started = threading.Event()
         self.settings_thread = None
         self.network_thread = None
 
@@ -16,6 +19,7 @@ class FakeEngine:
         return self.state
 
     def connect(self):
+        self.connect_started.set()
         if self.connect_gate:
             self.connect_gate.wait(2)
         return self.connect_result
@@ -65,6 +69,9 @@ class FakeEngine:
 
     def get_settings(self):
         self.settings_thread = threading.get_ident()
+        self.settings_started.set()
+        if self.settings_gate:
+            self.settings_gate.wait(2)
         return {"mode": "warp+doh", "families": "full"}
 
     def get_network_info(self):
@@ -184,6 +191,7 @@ def test_capabilities_query(qapp, wait_until):
     wait_until(lambda: bool(results))
     assert isinstance(results[0], CliCapabilities)
     assert results[0].cli_found is True
+    assert manager.current_capabilities is results[0]
     manager.shutdown()
 
 
@@ -215,3 +223,27 @@ def test_register_with_org(qapp, wait_until):
     wait_until(lambda: bool(results))
     assert results[-1] == ("register", True, "")
     manager.shutdown()
+
+
+def test_background_query_does_not_starve_mutation(qapp, wait_until):
+    engine = FakeEngine()
+    engine.settings_gate = threading.Event()
+    manager = WarpStateManager(engine, start_polling=False)
+
+    manager.request_settings()
+    wait_until(engine.settings_started.is_set)
+    manager.request_connect()
+    wait_until(engine.connect_started.is_set)
+
+    engine.settings_gate.set()
+    wait_until(lambda: not manager.is_busy)
+    manager.shutdown()
+
+
+def test_polling_budget_adapts_to_state_and_visibility(qapp):
+    worker = StatusWorker(FakeEngine(), interval_ms=10000)
+    assert worker.interval_for(WarpState.DISCONNECTED) == 10
+    assert worker.interval_for(WarpState.CONNECTING) == 1
+    worker.set_visible(False)
+    assert worker.interval_for(WarpState.DISCONNECTED) == 30
+    assert worker.interval_for(WarpState.CONNECTING) == 1

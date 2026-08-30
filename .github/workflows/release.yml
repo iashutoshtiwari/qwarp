@@ -136,13 +136,24 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             build-essential debhelper dh-python pybuild-plugin-pyproject \
             python3-all python3-setuptools python3-build qt6-l10n-tools \
-            qt6-tools-dev-tools dpkg-dev
+            qt6-tools-dev-tools dpkg-dev python3-pyqt6
       - name: Build .deb
         run: |
           tar xzf dist/release/qwarp-$RELEASE_VERSION-source.tar.gz
           cd qwarp-$RELEASE_VERSION
           cp -r ../packaging/debian debian
           dpkg-buildpackage -us -uc -b
+      - name: Inspect and smoke-test .deb
+        run: |
+          deb="qwarp_${RELEASE_VERSION}-1_all.deb"
+          dpkg-deb --contents "$deb" > /tmp/qwarp-deb-files
+          grep -q 'usr/bin/qwarp$' /tmp/qwarp-deb-files
+          ! grep -Eq '/(warp-cli|warp-svc|warp-svc\.service)$' /tmp/qwarp-deb-files
+          dpkg-deb --field "$deb" Depends | grep -q 'cloudflare-warp'
+          mkdir -p /tmp/qwarp-deb-root
+          dpkg-deb --extract "$deb" /tmp/qwarp-deb-root
+          PYTHONPATH=/tmp/qwarp-deb-root/usr/lib/python3/dist-packages \
+            python3 -m qwarp.main --version | grep -Fx "QWarp $RELEASE_VERSION"
       - name: Upload .deb
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
@@ -154,7 +165,7 @@ jobs:
     name: Build RPM package
     needs: validate-build
     runs-on: ubuntu-22.04
-    container: fedora:latest
+    container: fedora:44
     permissions:
       contents: read
     steps:
@@ -169,13 +180,21 @@ jobs:
         run: |
           dnf install -y rpm-build python3-devel python3-setuptools \
             python3-build python3-pip python3-wheel pyproject-rpm-macros \
-            qt6-linguist
+            qt6-linguist rpmdevtools
       - name: Build .rpm
         run: |
           mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
           cp dist/release/qwarp-$RELEASE_VERSION-source.tar.gz ~/rpmbuild/SOURCES/
           cp packaging/rpm/qwarp.spec ~/rpmbuild/SPECS/
           rpmbuild -bb ~/rpmbuild/SPECS/qwarp.spec
+      - name: Inspect RPM
+        run: |
+          rpm_file=$(find ~/rpmbuild/RPMS -name "qwarp-${RELEASE_VERSION}-1*.rpm" -print -quit)
+          test -n "$rpm_file"
+          rpm -qlp "$rpm_file" > /tmp/qwarp-rpm-files
+          grep -q '/usr/bin/qwarp$' /tmp/qwarp-rpm-files
+          ! grep -Eq '/(warp-cli|warp-svc|warp-svc\.service)$' /tmp/qwarp-rpm-files
+          rpm -qp --requires "$rpm_file" | grep -q 'cloudflare-warp'
       - name: Upload .rpm
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
@@ -214,17 +233,26 @@ jobs:
           name: qwarp-${{ inputs.version }}-rpm
           path: dist/release
 
-      - name: Revalidate commit and checksums
+      - name: Revalidate commit and checksum every public artifact
         run: |
           git fetch origin master --tags
           test "$(git rev-parse HEAD)" = "$(git rev-parse origin/master)"
           (cd dist/release && sha256sum --check SHA256SUMS)
-      - name: Attest release archives
+          deb="qwarp_${RELEASE_VERSION}-1_all.deb"
+          rpm=$(find dist/release -name "qwarp-${RELEASE_VERSION}-1*.rpm" -print -quit)
+          test -f "dist/release/$deb"
+          test -n "$rpm"
+          (cd dist/release && sha256sum "$deb" "$(basename "$rpm")" >> SHA256SUMS)
+          (cd dist/release && sha256sum --check SHA256SUMS)
+      - name: Attest every release artifact
         uses: actions/attest-build-provenance@43d14bc2b83dec42d39ecae14e916627a18bb661 # v3
         with:
           subject-path: |
             dist/release/qwarp-${{ inputs.version }}-linux-x86_64.tar.gz
             dist/release/qwarp-${{ inputs.version }}-source.tar.gz
+            dist/release/qwarp_${{ inputs.version }}-1_all.deb
+            dist/release/qwarp-${{ inputs.version }}-1*.rpm
+            dist/release/SHA256SUMS
       - name: Create or validate release tag
         env:
           TAG: v${{ inputs.version }}
@@ -238,30 +266,6 @@ jobs:
             git config user.email github-actions[bot]@users.noreply.github.com
             git tag --annotate "$TAG" --message "QWarp $TAG"
             git push origin "$TAG"
-          fi
-      - name: Create or update GitHub release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: v${{ inputs.version }}
-        run: |
-          files=(
-            "dist/release/qwarp-$RELEASE_VERSION-linux-x86_64.tar.gz"
-            "dist/release/qwarp-$RELEASE_VERSION-source.tar.gz"
-            "dist/release/SHA256SUMS"
-            "dist/release/qwarp_${RELEASE_VERSION}-1_all.deb"
-          )
-          rpm_file=$(find dist/release -name "qwarp-${RELEASE_VERSION}-1*.rpm" -print -quit)
-          if [ -n "$rpm_file" ]; then
-            files+=("$rpm_file")
-          fi
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" "${files[@]}" --clobber
-            gh release edit "$TAG" --notes-file dist/release/RELEASE_NOTES.md
-          else
-            gh release create "$TAG" "${files[@]}" \
-              --title "QWarp $TAG" \
-              --notes-file dist/release/RELEASE_NOTES.md \
-              --verify-tag
           fi
       - name: Publish synchronized AUR metadata
         env:
@@ -287,3 +291,26 @@ jobs:
           else
             echo 'AUR metadata is already current.'
           fi
+      - name: Create immutable GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v${{ inputs.version }}
+        run: |
+          files=(
+            "dist/release/qwarp-$RELEASE_VERSION-linux-x86_64.tar.gz"
+            "dist/release/qwarp-$RELEASE_VERSION-source.tar.gz"
+            "dist/release/SHA256SUMS"
+            "dist/release/qwarp_${RELEASE_VERSION}-1_all.deb"
+          )
+          rpm_file=$(find dist/release -name "qwarp-${RELEASE_VERSION}-1*.rpm" -print -quit)
+          if [ -n "$rpm_file" ]; then
+            files+=("$rpm_file")
+          fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; published releases are immutable." >&2
+            exit 1
+          fi
+          gh release create "$TAG" "${files[@]}" \
+            --title "QWarp $TAG" \
+            --notes-file dist/release/RELEASE_NOTES.md \
+            --verify-tag

@@ -32,8 +32,23 @@ def main() -> None:
     srcinfo = read(".SRCINFO")
     src_version = match(r"^\s*pkgver = (.+)$", srcinfo, ".SRCINFO pkgver")
     src_release = match(r"^\s*pkgrel = (.+)$", srcinfo, ".SRCINFO pkgrel")
+    debian_version = match(r"^qwarp \(([^-]+)-1\)", read("packaging/debian/changelog"), "Debian version")
+    rpm_version = match(r"^Version:\s+(.+)$", read("packaging/rpm/qwarp.spec"), "RPM version")
+    ci_version = match(
+        r"check_release\.py --version ([0-9]+\.[0-9]+\.[0-9]+)",
+        read(".github/workflows/ci.yml"),
+        "CI release version",
+    )
 
-    versions = {init_version, pkg_version, src_version, args.version}
+    versions = {
+        init_version,
+        pkg_version,
+        src_version,
+        debian_version,
+        rpm_version,
+        ci_version,
+        args.version,
+    }
     if len(versions) != 1:
         raise SystemExit(f"Release versions are not synchronized: {sorted(versions)}")
     if pkg_release != "1" or src_release != "1":

@@ -44,6 +44,33 @@ jobs:
           QT_QPA_PLATFORM: offscreen
         run: pytest tests/ -v --tb=short
 
+  minimum-qt:
+    name: Minimum supported Qt binding
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Set up Python 3.11
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install minimum Qt and test tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            libasound2 libdbus-1-3 libegl1 libfontconfig1 libgl1 \
+            libxcomposite1 libxcursor1 libxi6 libxkbcommon-x11-0 \
+            libxrandr2 libxrender1 libxtst6
+          python -m pip install 'PyQt6==6.6.0' 'PyQt6-Qt6==6.6.0' pytest
+          python -m pip install --no-deps -e .
+      - name: Test minimum Qt
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: pytest tests/ -v --tb=short
+
   package:
     name: Build and smoke-test release artifacts
     runs-on: ubuntu-22.04
@@ -70,9 +97,9 @@ jobs:
       - name: Verify locales and release metadata
         run: |
           git diff --exit-code -- 'src/qwarp/assets/locales/*.ts'
-          python scripts/check_release.py --version 0.9.0 --artifacts dist/release
+          python scripts/check_release.py --version 0.9.1 --artifacts dist/release
       - name: Verify standalone binary
-        run: bash scripts/smoke_frozen.sh dist/qwarp-build/qwarp 0.9.0
+        run: bash scripts/smoke_frozen.sh dist/qwarp-build/qwarp 0.9.1
       - name: Upload package inputs
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
@@ -102,7 +129,7 @@ jobs:
             python-setuptools python-wheel qt6-tools
           useradd --create-home builder
           chown -R builder:builder "$GITHUB_WORKSPACE"
-          cp dist/release/qwarp-0.9.0-source.tar.gz .
+          cp dist/release/qwarp-0.9.1-source.tar.gz .
           su builder -c "cd '$GITHUB_WORKSPACE' && makepkg --nodeps --cleanbuild --clean --noconfirm"
       - name: Verify metadata and owned files
         run: |
@@ -136,25 +163,35 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             build-essential debhelper dh-python pybuild-plugin-pyproject \
             python3-all python3-setuptools python3-build qt6-l10n-tools \
-            qt6-tools-dev-tools dpkg-dev
+            qt6-tools-dev-tools dpkg-dev python3-pyqt6
       - name: Build .deb
         run: |
-          tar xzf dist/release/qwarp-0.9.0-source.tar.gz
-          cd qwarp-0.9.0
+          tar xzf dist/release/qwarp-0.9.1-source.tar.gz
+          cd qwarp-0.9.1
           cp -r ../packaging/debian debian
           dpkg-buildpackage -us -uc -b
+      - name: Inspect and smoke-test .deb
+        run: |
+          dpkg-deb --contents qwarp_0.9.1-1_all.deb > /tmp/qwarp-deb-files
+          grep -q 'usr/bin/qwarp$' /tmp/qwarp-deb-files
+          ! grep -Eq '/(warp-cli|warp-svc|warp-svc\.service)$' /tmp/qwarp-deb-files
+          dpkg-deb --field qwarp_0.9.1-1_all.deb Depends | grep -q 'cloudflare-warp'
+          mkdir -p /tmp/qwarp-deb-root
+          dpkg-deb --extract qwarp_0.9.1-1_all.deb /tmp/qwarp-deb-root
+          PYTHONPATH=/tmp/qwarp-deb-root/usr/lib/python3/dist-packages \
+            python3 -m qwarp.main --version | grep -Fx 'QWarp 0.9.1'
       - name: Upload .deb
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: qwarp-deb
-          path: qwarp_0.9.0-1_all.deb
+          path: qwarp_0.9.1-1_all.deb
           retention-days: 7
 
   rpm-package:
     name: Build RPM package
     needs: package
     runs-on: ubuntu-22.04
-    container: fedora:latest
+    container: fedora:44
     permissions:
       contents: read
     steps:
@@ -169,16 +206,24 @@ jobs:
         run: |
           dnf install -y rpm-build python3-devel python3-setuptools \
             python3-build python3-pip python3-wheel pyproject-rpm-macros \
-            qt6-linguist
+            qt6-linguist rpmdevtools
       - name: Build .rpm
         run: |
           mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-          cp dist/release/qwarp-0.9.0-source.tar.gz ~/rpmbuild/SOURCES/
+          cp dist/release/qwarp-0.9.1-source.tar.gz ~/rpmbuild/SOURCES/
           cp packaging/rpm/qwarp.spec ~/rpmbuild/SPECS/
           rpmbuild -bb ~/rpmbuild/SPECS/qwarp.spec
+      - name: Inspect RPM
+        run: |
+          rpm_file=$(find ~/rpmbuild/RPMS -name 'qwarp-0.9.1-1*.rpm' -print -quit)
+          test -n "$rpm_file"
+          rpm -qlp "$rpm_file" > /tmp/qwarp-rpm-files
+          grep -q '/usr/bin/qwarp$' /tmp/qwarp-rpm-files
+          ! grep -Eq '/(warp-cli|warp-svc|warp-svc\.service)$' /tmp/qwarp-rpm-files
+          rpm -qp --requires "$rpm_file" | grep -q 'cloudflare-warp'
       - name: Upload .rpm
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: qwarp-rpm
-          path: /github/home/rpmbuild/RPMS/noarch/qwarp-0.9.0-1*.rpm
+          path: /github/home/rpmbuild/RPMS/noarch/qwarp-0.9.1-1*.rpm
           retention-days: 7

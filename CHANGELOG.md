@@ -5,6 +5,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.9.1] – 2026-08-30
+
+### Changed
+
+- Prioritize serialized user mutations over coalesced background queries and reconcile daemon state before re-enabling controls.
+- Load Settings data on demand and use adaptive visible, hidden, and transitional polling intervals.
+- Apply autostart and taskbar changes asynchronously and persist them only after the operating system confirms success.
+- Use canonical typed settings keys across current and legacy WARP CLI schemas.
+
+### Fixed
+
+- Populate current WARP 2026.7 diagnostics, registration, Device ID, network, override, and split-tunnel values.
+- Preserve Zero Trust policy restrictions across delayed capability discovery and busy-state transitions.
+- Delete closed Settings dialogs and prevent retained signal subscriptions.
+- Restore the official taskbar service to its previous running state and quote XDG autostart commands safely.
+- Prevent release workflow reruns from overwriting already-published assets.
+
 ## [v0.9.0] – 2026-08-29
 
 ### Added

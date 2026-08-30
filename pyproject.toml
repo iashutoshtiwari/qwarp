@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0.0", "wheel"]
+requires = ["setuptools>=77.0.3", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,10 +8,16 @@ dynamic = ["version"]
 description = "A lightweight, Wayland-native Qt6 wrapper for cloudflare-warp-bin"
 readme = "README.md"
 requires-python = ">=3.11"
-license = {text = "MIT"}
+license = "MIT"
+license-files = ["LICENSE"]
 dependencies = [
-    "PyQt6>=6.0.0",
+    "PyQt6>=6.6,<7",
 ]
+
+[project.urls]
+Homepage = "https://github.com/iashutoshtiwari/qwarp"
+Issues = "https://github.com/iashutoshtiwari/qwarp/issues"
+Changelog = "https://github.com/iashutoshtiwari/qwarp/blob/master/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [
@@ -38,9 +44,17 @@ line-length = 120
 target-version = "py311"
 
 [tool.ruff.lint]
-# E/W: pycodestyle, F: pyflakes, I: isort
-select = ["E", "W", "F", "I"]
+# Core correctness, security, complexity, and performance checks.
+select = ["E", "W", "F", "I", "B", "C4", "C90", "PERF", "RUF", "S"]
 ignore = [
     "E501",   # line-too-long — handled by line-length above
     "E402",   # main.py must set Qt environment variables before Qt imports
+    "S603",   # subprocess calls use explicit argv arrays and no shell
+    "S607",   # supported system commands intentionally resolve through PATH
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]  # pytest assertions are intentional
+
+[tool.ruff.lint.mccabe]
+max-complexity = 18

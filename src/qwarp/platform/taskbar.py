@@ -7,60 +7,51 @@ logger = logging.getLogger(__name__)
 
 SERVICE_NAME = "warp-taskbar.service"
 QWARP_MARKER_KEY = "qwarp_masked_taskbar"
+COMMAND_TIMEOUT_SECONDS = 2
+
+
+def get_taskbar_state() -> tuple[bool, bool]:
+    """Return masked and running state using one bounded systemd query."""
+    try:
+        result = subprocess.run(
+            [
+                "systemctl",
+                "--user",
+                "show",
+                SERVICE_NAME,
+                "--property=UnitFileState",
+                "--property=ActiveState",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=COMMAND_TIMEOUT_SECONDS,
+            check=False,
+        )
+        values = dict(line.partition("=")[::2] for line in result.stdout.splitlines() if "=" in line)
+        return values.get("UnitFileState") == "masked", values.get("ActiveState") == "active"
+    except (FileNotFoundError, subprocess.TimeoutExpired) as exc:
+        logger.error("Failed to inspect taskbar service: %s", exc)
+        return False, False
 
 
 def is_taskbar_masked() -> bool:
     """Check if the warp-taskbar service is masked."""
-    try:
-        result = subprocess.run(
-            ["systemctl", "--user", "is-enabled", SERVICE_NAME],
-            capture_output=True,
-            text=True,
-            timeout=10,
-            check=False,
-        )
-        return "masked" in result.stdout or "masked" in result.stderr
-    except (FileNotFoundError, subprocess.TimeoutExpired) as e:
-        logger.error(f"Failed to check if taskbar is masked: {e}")
-        return False
+    return get_taskbar_state()[0]
 
 
 def is_taskbar_running() -> bool:
     """Check if the warp-taskbar service is active."""
-    try:
-        result = subprocess.run(
-            ["systemctl", "--user", "is-active", SERVICE_NAME],
-            capture_output=True,
-            text=True,
-            timeout=10,
-            check=False,
-        )
-        return result.stdout.strip() == "active"
-    except (FileNotFoundError, subprocess.TimeoutExpired) as e:
-        logger.error(f"Failed to check if taskbar is running: {e}")
-        return False
+    return get_taskbar_state()[1]
 
 
 def suppress_taskbar() -> tuple[bool, str]:
     """Mask and stop the warp-taskbar service."""
     try:
-        if is_taskbar_masked():
-            if is_taskbar_running():
-                # Stop if it's running but already masked
-                subprocess.run(
-                    ["systemctl", "--user", "stop", SERVICE_NAME],
-                    capture_output=True,
-                    text=True,
-                    timeout=10,
-                    check=False,
-                )
-            return True, "Taskbar already masked."
-
         result = subprocess.run(
             ["systemctl", "--user", "mask", "--now", SERVICE_NAME],
             capture_output=True,
             text=True,
-            timeout=10,
+            timeout=COMMAND_TIMEOUT_SECONDS,
             check=False,
         )
         if result.returncode == 0:
@@ -74,24 +65,30 @@ def suppress_taskbar() -> tuple[bool, str]:
         return False, msg
 
 
-def restore_taskbar() -> tuple[bool, str]:
-    """Unmask the warp-taskbar service."""
+def restore_taskbar(*, start: bool = False) -> tuple[bool, str]:
+    """Unmask the taskbar service and restore its prior running state."""
     try:
-        if not is_taskbar_masked():
-            return True, "Taskbar is not masked."
-
         result = subprocess.run(
             ["systemctl", "--user", "unmask", SERVICE_NAME],
             capture_output=True,
             text=True,
-            timeout=10,
+            timeout=COMMAND_TIMEOUT_SECONDS,
             check=False,
         )
-        if result.returncode == 0:
-            return True, "Taskbar restored successfully."
-        else:
+        if result.returncode != 0:
             msg = f"Failed to unmask taskbar: {result.stderr.strip()}"
             return False, msg
+        if start:
+            start_result = subprocess.run(
+                ["systemctl", "--user", "start", SERVICE_NAME],
+                capture_output=True,
+                text=True,
+                timeout=COMMAND_TIMEOUT_SECONDS,
+                check=False,
+            )
+            if start_result.returncode != 0:
+                return False, f"Taskbar was unmasked but could not be started: {start_result.stderr.strip()}"
+        return True, "Taskbar restored successfully."
     except (FileNotFoundError, subprocess.TimeoutExpired) as e:
         msg = f"Exception while unmasking taskbar: {e}"
         logger.error(msg)
