@@ -42,6 +42,10 @@ def main() -> None:
 
     with tarfile.open(source, "r:gz") as archive:
         names = set(archive.getnames())
+        require(
+            f"qwarp-{version}/CONTRIBUTING.md" in names,
+            "Source archive does not contain contributor guidance",
+        )
         require(f"qwarp-{version}/PKGBUILD" not in names, "Source archive must not contain recursive PKGBUILD metadata")
         require(not any(".egg-info/" in name for name in names), "Source archive contains generated egg-info")
         require(not any(name.endswith((".pyc", ".qm")) for name in names), "Source archive contains generated files")

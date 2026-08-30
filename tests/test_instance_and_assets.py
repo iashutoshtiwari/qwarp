@@ -38,7 +38,17 @@ def test_single_instance_name_can_be_isolated(monkeypatch):
 
 def test_assets_and_translation_catalogs_exist():
     asset_dir = get_asset_dir()
-    assert os.path.isfile(os.path.join(asset_dir, "app-icon.svg"))
+    expected_icons = {
+        "app-icon.svg",
+        "gear.svg",
+        "tray-connected.svg",
+        "tray-connecting.svg",
+        "tray-disconnected.svg",
+        "tray-error.svg",
+        "tray-unregistered.svg",
+    }
+    actual_icons = {name for name in os.listdir(asset_dir) if name.endswith(".svg")}
+    assert actual_icons == expected_icons
     for language in ("en", "es", "pt", "de", "it", "zh", "ja", "hi"):
         assert os.path.isfile(os.path.join(asset_dir, "locales", f"qwarp_{language}.ts"))
 
@@ -51,7 +61,7 @@ def test_version_option_has_no_qt_or_daemon_side_effect(capsys):
             assert exc.code == 0
         else:
             raise AssertionError("--version did not exit")
-    assert "QWarp 0.9.1" in capsys.readouterr().out
+    assert "QWarp 0.9.2" in capsys.readouterr().out
 
 
 def test_terms_acceptance_is_persisted_only_after_success(qapp):

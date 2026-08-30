@@ -14,12 +14,12 @@ source_items=(
     .codex
     AGENTS.md
     CHANGELOG.md
+    CONTRIBUTING.md
     LICENSE
     MANIFEST.in
     README.md
     pyproject.toml
     qwarp.desktop
-    build_bin.sh
     requirements
     scripts
     src
