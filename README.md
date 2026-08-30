@@ -1,56 +1,76 @@
 <div align="center">
-  <img src="src/qwarp/assets/app-icon.svg" width="128" alt="QWarp Logo"/>
+  <img src="src/qwarp/assets/app-icon.svg" width="128" alt="QWarp logo">
 
   # QWarp
 
-  [![GitHub stars](https://img.shields.io/github/stars/iashutoshtiwari/qwarp?style=for-the-badge)](https://github.com/iashutoshtiwari/qwarp/stargazers)
-  [![GitHub forks](https://img.shields.io/github/forks/iashutoshtiwari/qwarp?style=for-the-badge)](https://github.com/iashutoshtiwari/qwarp/network/members)
-  [![GitHub issues](https://img.shields.io/github/issues/iashutoshtiwari/qwarp?style=for-the-badge)](https://github.com/iashutoshtiwari/qwarp/issues)
-  [![License](https://img.shields.io/github/license/iashutoshtiwari/qwarp?style=for-the-badge)](https://github.com/iashutoshtiwari/qwarp/blob/master/LICENSE)
+  A lightweight Qt 6 desktop interface for the official Cloudflare WARP client on Linux.
 
-  A lightweight, Wayland-native Qt6 GUI wrapper for the official Cloudflare WARP client on Linux.
+  [![CI](https://github.com/iashutoshtiwari/qwarp/actions/workflows/ci.yml/badge.svg)](https://github.com/iashutoshtiwari/qwarp/actions/workflows/ci.yml)
+  [![Latest release](https://img.shields.io/github/v/release/iashutoshtiwari/qwarp)](https://github.com/iashutoshtiwari/qwarp/releases/latest)
+  [![AUR version](https://img.shields.io/aur/version/qwarp)](https://aur.archlinux.org/packages/qwarp)
+  [![License: MIT](https://img.shields.io/github/license/iashutoshtiwari/qwarp)](LICENSE)
 </div>
 
-> [!WARNING]
-> **Early Development:** QWarp is currently in very early development. It is **not** a 1:1 replacement for the official Cloudflare WARP application and may lack certain advanced features or stability. Expect bugs and breaking changes as the project evolves.
-
 > [!IMPORTANT]
-> **Disclaimer:** This is an unofficial community project and is not affiliated with, authorized, maintained, sponsored, or endorsed by Cloudflare.
+> QWarp is an unofficial community project. It is not affiliated with or endorsed by Cloudflare. QWarp controls an
+> existing Cloudflare WARP installation; it does not bundle or replace `warp-cli`, `warp-svc`, or Cloudflare's packages.
+
+QWarp is pre-1.0 software. Features and interfaces may still change, and organization policy can restrict the actions
+available to Zero Trust users.
+
+## What QWarp provides
+
+- Consumer WARP registration and Cloudflare Zero Trust enrollment
+- Connect, disconnect, mode, protocol, proxy, DNS filtering, and trusted-network controls
+- Account, organization, daemon, network, override, and split-tunnel diagnostics
+- Safe background polling so WARP commands do not block the Qt interface
+- Wayland and X11 support, system tray operation, XDG autostart, and theme-aware icons
+- English, German, Spanish, Portuguese, Italian, Chinese, Japanese, and Hindi catalogs
 
 ## Screenshots
 
-<div align="center">
-
-| Main UI | System Tray Area |
+| Main window | System tray |
 |:---:|:---:|
-| <img src="screenshots/UI.png" width="400" alt="QWarp Main UI"/> | <img src="screenshots/Tray.png" width="400" alt="QWarp System Tray"/> |
+| <img src="screenshots/UI.png" width="400" alt="QWarp main window"> | <img src="screenshots/Tray.png" width="400" alt="QWarp system tray menu"> |
 
-<sub>*Screenshots captured on KDE Plasma 6 with the Darkly style.*</sub>
+<p align="center"><sub>Screenshots were captured on KDE Plasma 6 with the Darkly style.</sub></p>
 
-</div>
+## Requirements and platform support
 
+All installations require:
 
-## Features
+- Linux and the official Cloudflare WARP daemon and CLI
+- `warp-cli` available on `PATH` and the `warp-svc` daemon installed
+- A Wayland or X11 desktop session
 
-- **Official Cloudflare backend**: Controls the official `warp-cli` and `warp-svc`; QWarp does not bundle or replace Cloudflare's client.
-- **Consumer and Zero Trust onboarding**: Accept the WARP Terms, create a consumer registration, or enroll with a Cloudflare Zero Trust organization.
-- **Connection controls**: Connect or disconnect WARP and select supported WARP, DNS-over-HTTPS, DNS-over-TLS, and proxy modes.
-- **Account management**: View registration and organization details, apply a WARP+ license, and leave or replace a registration.
-- **Connection settings**: Configure tunnel protocol, proxy port, Families DNS filtering, and trusted-network behavior where allowed by the installed client and organization policy.
-- **Diagnostics and recovery**: Inspect daemon, network, override, and split-tunnel information, and repair a stopped WARP service through `pkexec`.
-- **Linux desktop integration**: Wayland-native Qt6 UI, X11 support, system tray operation, XDG autostart, theme-aware icons, and optional suppression of the official Cloudflare tray icon.
-- **Localized interface**: Includes English, German, Spanish, Portuguese, Italian, Chinese, Japanese, and Hindi catalogs.
+A system tray is optional; QWarp keeps its main window available when no tray is present. `systemd` and `pkexec` are
+needed only for QWarp's service status and repair integration. Python 3.11 or newer is required for source development,
+but not for the standalone binary.
+
+Cloudflare currently supports its Linux client on Ubuntu 22.04, 24.04, and 26.04; Debian 12 and 13; Fedora 43 and 44;
+and RHEL 9 and 10. Cloudflare can change this list, so check its
+[Linux requirements](https://developers.cloudflare.com/warp-client/get-started/#linux) and
+[package repository](https://pkg.cloudflareclient.com/) before installing.
+
+| Distribution | Recommended QWarp package | Support notes |
+|---|---|---|
+| Arch Linux, x86_64 | AUR `qwarp` | Community-supported; depends on AUR `cloudflare-warp-bin` |
+| Ubuntu / Debian | Release `.deb` | Built in CI on Ubuntu 24.04; depends on `cloudflare-warp` |
+| Fedora 44 | Release `.rpm` | Built in CI for Fedora 44; depends on `cloudflare-warp` |
+| Fedora 43, RHEL 9/10 | Standalone binary | Cloudflare-supported client; QWarp packaging is best effort |
+| Other x86_64 Linux | Standalone binary | Best effort; requires a compatible, separately installed official client |
+
+The standalone binary is built on Ubuntu 22.04 for x86_64 and includes Python and Qt. It still relies on compatible
+host libraries and the separately installed Cloudflare client. QWarp does not currently publish an ARM64 standalone
+binary.
 
 ## Installation
 
-QWarp is a frontend for Cloudflare's official Linux client. Install the official
-client for your distribution first, then install QWarp. The package is named
-`cloudflare-warp` on Debian, Ubuntu, and Fedora, and `cloudflare-warp-bin` on
-Arch Linux.
+Install the official Cloudflare client first, then install QWarp using the package for your distribution.
 
-### Debian/Ubuntu
+### 1. Install Cloudflare WARP
 
-Add Cloudflare's official APT repository and install the WARP client:
+#### Install WARP on Ubuntu and Debian
 
 ```bash
 sudo apt-get install curl gnupg lsb-release
@@ -63,140 +83,95 @@ sudo apt-get update
 sudo apt-get install cloudflare-warp
 ```
 
-Download `qwarp_0.9.0-1_all.deb` from the
-[v0.9.0 release](https://github.com/iashutoshtiwari/qwarp/releases/tag/v0.9.0),
-then install it with APT:
-
-```bash
-sudo apt install ./qwarp_0.9.0-1_all.deb
-```
-
-See [Cloudflare's package repository](https://pkg.cloudflareclient.com/) for
-the currently supported Debian and Ubuntu releases and key-rotation notices.
-
-### Fedora
-
-Add Cloudflare's official RPM repository and install the WARP client:
+#### Install WARP on Fedora
 
 ```bash
 sudo rpm --import https://pkg.cloudflareclient.com/pubkey.gpg
 curl -fsSL https://pkg.cloudflareclient.com/cloudflare-warp-ascii.repo \
   | sudo tee /etc/yum.repos.d/cloudflare-warp.repo
-sudo dnf update
 sudo dnf install cloudflare-warp
 ```
 
-Download `qwarp-0.9.0-1.fc44.noarch.rpm` from the
-[v0.9.0 release](https://github.com/iashutoshtiwari/qwarp/releases/tag/v0.9.0),
-then install it with DNF:
+RHEL 9 and 10 also require EPEL. Follow Cloudflare's current
+[RHEL installation instructions](https://pkg.cloudflareclient.com/) rather than using the Fedora QWarp RPM. If the
+Cloudflare repository key was installed before September 12, 2025, repeat Cloudflare's key-update instructions on the
+same page.
 
-```bash
-sudo dnf install ./qwarp-0.9.0-1.fc44.noarch.rpm
-```
+#### Install WARP on Arch Linux
 
-See [Cloudflare's package repository](https://pkg.cloudflareclient.com/) for
-the currently supported Fedora releases. Cloudflare documents RHEL and CentOS
-separately because their client packages may require EPEL.
-
-### Arch Linux
-
-Install QWarp from the AUR with an AUR helper such as `yay`:
+Cloudflare does not publish a native Arch package. QWarp therefore depends on the community-maintained
+`cloudflare-warp-bin` AUR package. Installing QWarp with an AUR helper installs both packages:
 
 ```bash
 yay -S qwarp
 ```
 
-The AUR package declares `cloudflare-warp-bin` as a required dependency, so an
-AUR helper installs both packages.
+If you use another AUR helper, substitute its equivalent command. Review AUR package files before building them.
 
-To build the repository `PKGBUILD` directly, install the AUR dependency first:
+### 2. Install QWarp
+
+Arch users who installed `qwarp` from the AUR can skip this step.
+
+#### Install QWarp on Ubuntu and Debian
+
+Download `qwarp_VERSION-1_all.deb` from the
+[latest release](https://github.com/iashutoshtiwari/qwarp/releases/latest), then run:
 
 ```bash
-yay -S cloudflare-warp-bin
-git clone https://github.com/iashutoshtiwari/qwarp.git
-cd qwarp
-makepkg -si
+sudo apt install ./qwarp_VERSION-1_all.deb
 ```
 
-### Generic Linux Binary
+Replace `VERSION` with the downloaded release version.
 
-Install the official Cloudflare client using the appropriate instructions
-above. Then download `qwarp-0.9.0-linux-x86_64.tar.gz` and `SHA256SUMS` from the
-[v0.9.0 release](https://github.com/iashutoshtiwari/qwarp/releases/tag/v0.9.0).
-Verify the downloaded archive, extract it, and run QWarp:
+#### Install QWarp on Fedora 44
+
+Download the `.fc44.noarch.rpm` file from the
+[latest release](https://github.com/iashutoshtiwari/qwarp/releases/latest), then run:
+
+```bash
+sudo dnf install ./qwarp-VERSION-1.fc44.noarch.rpm
+```
+
+#### Standalone x86_64 binary
+
+Download `qwarp-VERSION-linux-x86_64.tar.gz` and `SHA256SUMS` from the same release page, then run:
 
 ```bash
 sha256sum --ignore-missing --check SHA256SUMS
-tar -xzf qwarp-0.9.0-linux-x86_64.tar.gz
+mkdir qwarp-release
+tar -xzf qwarp-VERSION-linux-x86_64.tar.gz -C qwarp-release
+cd qwarp-release
 ./qwarp
 ```
 
-The generic binary is for x86_64 Linux and bundles its Python and Qt runtime,
-but it still requires the separately installed Cloudflare daemon and CLI.
-
-### Development
-
-Python 3.11 or newer is required. Install QWarp and its development tools in an
-isolated environment:
+### 3. Verify the installation
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -e ".[dev]"
-qwarp
+warp-cli --version
+qwarp --version
 ```
 
-### Agent-assisted maintenance
-
-Any LLM or coding agent working on this repository must read and follow
-[`AGENTS.md`](AGENTS.md) before changing code, packaging, CI, or release
-configuration. Agent tooling is optional maintainer infrastructure and is not
-required to build, install, use, or contribute to QWarp.
-
-## Requirements
-
-QWarp requires Linux, the official `warp-cli` and `warp-svc`, and a supported
-system tray for tray-resident operation. The main window remains usable when a
-system tray is unavailable.
-
-The official Cloudflare package must remain installed:
-
-- Debian, Ubuntu, Fedora, RHEL, and CentOS: `cloudflare-warp`
-- Arch Linux: `cloudflare-warp-bin`
-
-Cloudflare's package normally manages the daemon. If the service is not
-running, enable it manually:
+Launch QWarp from the application menu or run `qwarp`. If the WARP service is stopped, QWarp can request permission to
+enable it; the equivalent manual command is:
 
 ```bash
 sudo systemctl enable --now warp-svc
 ```
 
-> [!NOTE]
-> **Upgrading from the self-contained QWarp 0.8.2-1 package:** Prefer upgrading
-> with an AUR helper. If the old package conflict prevents dependency
-> installation, remove `qwarp`, install `cloudflare-warp-bin`, reinstall
-> `qwarp`, and enable `warp-svc` again. The legacy removal hook may stop and
-> disable the service during this transition.
+## Upgrading from QWarp 0.8.2-1 on Arch
 
-QWarp supports both consumer WARP registrations and Cloudflare Zero Trust
-organization enrollment. Available modes and settings can still be restricted
-by the installed Cloudflare client version or an organization's device policy.
+Prefer upgrading with an AUR helper. If the legacy package conflict blocks the upgrade, remove `qwarp`, install
+`cloudflare-warp-bin`, reinstall `qwarp`, and enable `warp-svc` again. The old removal hook may stop and disable the
+service during this one-time transition.
 
-## Release process
+## Development and contributing
 
-Releases are prepared from `master` through the manually dispatched Release
-workflow. It validates tests, translations, generic archives, Arch packages,
-Debian packages, RPM packages, version metadata, source checksums, and a
-maintainer-completed live QA checklist before the protected `release`
-environment can publish GitHub and AUR updates. The workflow never rewrites
-`master` or generates changelog commits after tagging. Published tags and
-release assets are immutable; fixes must target a later version instead of
-replacing an existing release.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for environment setup, tests, architecture rules, translations, issue reports,
+and pull requests. Please use [GitHub Issues](https://github.com/iashutoshtiwari/qwarp/issues) for reproducible bugs and
+feature proposals.
 
-## Contribution
+## License
 
-Any kind of contribution is highly welcome! Whether it's reporting bugs, suggesting new features, or submitting pull requests, I appreciate community input to help build out the application.
+QWarp is available under the [MIT License](LICENSE).
 
-## Authors
-
-- [@iashutoshtiwari](https://www.github.com/iashutoshtiwari)
+Maintained by [Ashutosh Tiwari](https://github.com/iashutoshtiwari).
