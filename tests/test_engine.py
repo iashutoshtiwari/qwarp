@@ -367,6 +367,34 @@ def test_diagnostics_with_organization(mock_run):
 
 
 @patch("subprocess.run")
+def test_diagnostics_current_registration_shape_and_single_accept_tos(mock_run):
+    mock_run.side_effect = [
+        json_output(
+            {
+                "id": "registration-id",
+                "device_id": "device-id",
+                "account": {"type": "Free", "license": "masked-value"},
+            }
+        ),
+        json_output({"organization": ""}),
+        json_output({"status": "Connected"}),
+    ]
+
+    diag = WarpEngine(accept_tos=True).get_diagnostics()
+
+    assert diag["type"] == "Free"
+    assert diag["device_id"] == "device-id"
+    assert diag["license"] == "masked-value"
+    assert mock_run.call_args_list[0].args[0] == [
+        "warp-cli",
+        "--accept-tos",
+        "--json",
+        "registration",
+        "show",
+    ]
+
+
+@patch("subprocess.run")
 def test_diagnostics_fallback_to_text(mock_run):
     """When JSON returns None, fall back to text parsing."""
     mock_run.side_effect = [
@@ -437,6 +465,9 @@ def test_get_network_info(mock_run):
     mock_run.return_value = json_output(net_data)
     info = WarpEngine().get_network_info()
     assert info["v4_iface"]["name"] == "wlan0"
+    assert info["interface"] == "wlan0"
+    assert info["gateway"] == ""
+    assert info["dns"] == ["1.1.1.1"]
 
 
 @patch("subprocess.run")
@@ -444,6 +475,7 @@ def test_get_override_status(mock_run):
     mock_run.return_value = json_output({"set": False, "ends_in_secs": 0})
     status = WarpEngine().get_override_status()
     assert status["set"] is False
+    assert status["status"] == "Inactive"
 
 
 @patch("subprocess.run")

@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 import pytest
+from PyQt6.QtCore import QThread
 from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import QDialog, QLabel, QMessageBox
 
@@ -20,6 +21,7 @@ def manager():
 
 def test_settings_loads_mode_asynchronously_and_masks_license(qapp, wait_until, manager):
     dialog = SettingsDialog(manager)
+    assert dialog.findChildren(QThread) == []
     wait_until(lambda: not manager._diagnostics_pending and dialog.mode_combo.currentData() == "warp+doh")
     manager.diagnostics_updated.emit(
         {"type": "Unlimited", "license": "synthetic-display-value", "quota": "N/A", "status": "Connected"}
@@ -32,6 +34,32 @@ def test_settings_loads_mode_asynchronously_and_masks_license(qapp, wait_until, 
     dialog.done(QDialog.DialogCode.Rejected)
     assert dialog._license_value == ""
     assert dialog.license_input.text() == ""
+
+
+def test_current_network_diagnostics_shape_is_rendered(qapp, manager):
+    dialog = SettingsDialog(manager)
+    manager._on_status_result(WarpState.CONNECTED)
+
+    manager.network_diagnostics_updated.emit(
+        {
+            "interface": "wlan0",
+            "gateway": "192.0.2.1",
+            "dns": ["1.1.1.1", "1.0.0.1"],
+        },
+        {"set": False, "ends_in_secs": 0, "status": "Inactive"},
+        {"mode": "exclude", "ip_count": 7, "host_count": 2, "fallback_count": 3},
+    )
+
+    assert dialog.lbl_iface.text() == "wlan0"
+    assert dialog.lbl_gateway.text() == "192.0.2.1"
+    assert dialog.lbl_dns.text() == "1.1.1.1, 1.0.0.1"
+    assert dialog.lbl_tun_status.text() == "Connected"
+    assert dialog.lbl_override.text() == "Inactive"
+    assert dialog.lbl_split_mode.text() == "exclude"
+    assert dialog.lbl_ip_rules.text() == "7 rules"
+    assert dialog.lbl_host_rules.text() == "2 rules"
+    assert dialog.lbl_fallback.text() == "3 domains"
+    dialog.reject()
 
 
 def test_delete_registration_requires_confirmation(qapp, manager):

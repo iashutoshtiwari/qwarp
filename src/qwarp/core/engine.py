@@ -570,19 +570,22 @@ class WarpEngine:
         }
 
         # Registration info via JSON
-        result = self._run_json_command("--accept-tos", "registration", "show", quiet=True)
+        result = self._run_json_command("registration", "show", quiet=True)
         if result is not None and "error" not in result:
             # JSON registration output — extract fields
-            data["type"] = result.get("account_type", result.get("type", "Unknown"))
+            account = result.get("account", {})
+            account = account if isinstance(account, dict) else {}
+            data["type"] = result.get(
+                "account_type",
+                result.get("type", account.get("type", "Unknown")),
+            )
             if isinstance(data["type"], dict):
                 data["type"] = str(data["type"])
             data["device_id"] = result.get("device_id", result.get("id", ""))
 
             # License and quota may be in various locations
-            account = result.get("account", {})
-            if isinstance(account, dict):
-                data["license"] = account.get("license", data["license"])
-                data["quota"] = account.get("quota", account.get("premium_data", data["quota"]))
+            data["license"] = account.get("license", data["license"])
+            data["quota"] = account.get("quota", account.get("premium_data", data["quota"]))
 
             # Direct fields
             if "license" in result:
@@ -591,7 +594,7 @@ class WarpEngine:
                 data["quota"] = result["quota"]
         elif result is None:
             # Fallback to text parsing
-            success, registration = self._run_command("--accept-tos", "registration", "show", quiet=True)
+            success, registration = self._run_command("registration", "show", quiet=True)
             if success:
                 for line in registration.splitlines():
                     key, separator, value = line.partition(":")
@@ -627,9 +630,21 @@ class WarpEngine:
     def get_network_info(self) -> dict[str, Any]:
         """Get network diagnostics via ``debug network``."""
         result = self._run_json_command("debug", "network", quiet=True, timeout=5)
-        if result is None:
+        if result is None or "error" in result:
             return {}
-        return result
+
+        # Cloudflare WARP 2026.7 reports separate IPv4/IPv6 interface
+        # objects.  Preserve the raw fields while providing the stable,
+        # display-oriented keys consumed by the UI.
+        interfaces = [value for key in ("v4_iface", "v6_iface") if isinstance((value := result.get(key)), dict)]
+        names = list(dict.fromkeys(iface.get("name", "") for iface in interfaces if iface.get("name")))
+        gateways = [iface.get("gateway", "") for iface in interfaces if iface.get("gateway")]
+
+        info = dict(result)
+        info["interface"] = ", ".join(names)
+        info["gateway"] = gateways[0] if gateways else ""
+        info["dns"] = result.get("dns_servers", [])
+        return info
 
     def get_tunnel_stats(self) -> dict[str, Any]:
         """Get tunnel connection statistics."""
@@ -648,9 +663,12 @@ class WarpEngine:
     def get_override_status(self) -> dict[str, Any]:
         """Get current admin override status."""
         result = self._run_json_command("override", "show", quiet=True, timeout=5)
-        if result is None:
+        if result is None or "error" in result:
             return {}
-        return result
+        info = dict(result)
+        if "status" not in info and isinstance(info.get("set"), bool):
+            info["status"] = "Active" if info["set"] else "Inactive"
+        return info
 
     def get_split_tunnel_info(self) -> dict[str, Any]:
         """Get split tunnel routing summary."""

@@ -141,6 +141,7 @@ class WarpStateManager(QObject):
     state_changed = pyqtSignal(WarpState)
     state_refreshed = pyqtSignal(WarpState)
     diagnostics_updated = pyqtSignal(dict)
+    network_diagnostics_updated = pyqtSignal(dict, dict, dict)
     settings_updated = pyqtSignal(dict)
     capabilities_detected = pyqtSignal(object)
     action_started = pyqtSignal(str)
@@ -163,6 +164,7 @@ class WarpStateManager(QObject):
         self.thread_pool.setMaxThreadCount(3)
         self.active_action: Optional[str] = None
         self._diagnostics_pending = False
+        self._network_diagnostics_pending = False
         self._settings_pending = False
         self._capabilities_pending = False
         self._shutting_down = False
@@ -340,6 +342,36 @@ class WarpStateManager(QObject):
         self._diagnostics_pending = False
         if isinstance(result, dict):
             self.diagnostics_updated.emit(result)
+
+    @pyqtSlot()
+    def request_network_diagnostics(self) -> None:
+        if self._shutting_down or self._network_diagnostics_pending:
+            return
+        self._network_diagnostics_pending = True
+        worker = QueryWorker(self._query_network_diagnostics)
+        worker.signals.result_ready.connect(self._on_network_diagnostics_result)
+        self.thread_pool.start(worker)
+
+    def _query_network_diagnostics(self) -> tuple[dict, dict, dict]:
+        results = []
+        for query in (
+            self.engine.get_network_info,
+            self.engine.get_override_status,
+            self.engine.get_split_tunnel_info,
+        ):
+            try:
+                result = query()
+            except Exception:
+                logger.exception("Background network diagnostics query failed")
+                result = {}
+            results.append(result if isinstance(result, dict) else {})
+        return results[0], results[1], results[2]
+
+    @pyqtSlot(object)
+    def _on_network_diagnostics_result(self, result: object) -> None:
+        self._network_diagnostics_pending = False
+        if isinstance(result, tuple) and len(result) == 3:
+            self.network_diagnostics_updated.emit(*result)
 
     @pyqtSlot()
     def request_settings(self) -> None:

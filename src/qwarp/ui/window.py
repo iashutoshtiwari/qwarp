@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from PyQt6.QtCore import QEvent, QPoint, QSettings, QSize, Qt, QThread, pyqtSignal
+from PyQt6.QtCore import QEvent, QPoint, QSettings, QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QCloseEvent, QIcon, QPalette
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -31,29 +31,6 @@ from qwarp.ui.tray import get_asset_icon
 from qwarp.utils.system import is_x11, load_tinted_icon
 
 logger = logging.getLogger(__name__)
-
-
-class QueryWorker(QThread):
-    finished_query = pyqtSignal(dict, dict, dict)
-
-    def __init__(self, engine, parent=None):
-        super().__init__(parent)
-        self.engine = engine
-
-    def run(self):
-        try:
-            net_info = self.engine.get_network_info()
-        except Exception:
-            net_info = {}
-        try:
-            over_info = self.engine.get_override_status()
-        except Exception:
-            over_info = {}
-        try:
-            split_info = self.engine.get_split_tunnel_info()
-        except Exception:
-            split_info = {}
-        self.finished_query.emit(net_info, over_info, split_info)
 
 
 class SettingsDialog(QDialog):
@@ -93,10 +70,10 @@ class SettingsDialog(QDialog):
         self.manager.busy_changed.connect(self._on_busy_changed)
         self.manager.settings_updated.connect(self._on_settings_updated)
         self.manager.capabilities_detected.connect(self._on_capabilities_updated)
+        self.manager.network_diagnostics_updated.connect(self._on_query_worker_finished)
         self.manager.request_diagnostics()
         self.manager.request_settings()
 
-        self.worker = None
         self._refresh_diagnostics_tab()
 
     def _build_general_tab(self) -> None:
@@ -416,26 +393,33 @@ class SettingsDialog(QDialog):
         self.tabs.addTab(diag_tab, self.tr("Diagnostics"))
 
     def _refresh_diagnostics_tab(self) -> None:
-        if self.worker and self.worker.isRunning():
-            return
-        if not hasattr(self.manager, "engine"):
-            return
-        self.worker = QueryWorker(self.manager.engine, self)
-        self.worker.finished_query.connect(self._on_query_worker_finished)
-        self.worker.start()
+        self.manager.request_network_diagnostics()
 
     def _on_query_worker_finished(self, net_info: dict, over_info: dict, split_info: dict) -> None:
-        self.lbl_iface.setText(self.tr(net_info.get("interface", "Unknown")))
-        self.lbl_gateway.setText(self.tr(net_info.get("gateway", "Unknown")))
+        self.lbl_iface.setText(self.tr(net_info.get("interface") or "Unknown"))
+        self.lbl_gateway.setText(self.tr(net_info.get("gateway") or "Unknown"))
         self.lbl_dns.setText(self.tr(", ".join(net_info.get("dns", [])) or "Unknown"))
 
-        self.lbl_tun_status.setText(self.tr(str(net_info.get("tunnel_status", "Unknown"))))
-        self.lbl_override.setText(self.tr(str(over_info.get("status", "Unknown"))))
+        tunnel_status = net_info.get("tunnel_status")
+        if not tunnel_status and self.manager.current_state != WarpState.UNKNOWN:
+            tunnel_status = self.manager.current_state.name.replace("_", " ").title()
+        self.lbl_tun_status.setText(self.tr(str(tunnel_status or "Unknown")))
+        override_status = over_info.get("status")
+        if override_status == "Active":
+            override_text = self.tr("Active")
+        elif override_status == "Inactive":
+            override_text = self.tr("Inactive")
+        else:
+            override_text = self.tr(str(override_status or "Unknown"))
+        self.lbl_override.setText(override_text)
 
-        self.lbl_split_mode.setText(self.tr(split_info.get("mode", "Unknown")))
-        self.lbl_ip_rules.setText(self.tr(str(len(split_info.get("ip_rules", []))) + " rules"))
-        self.lbl_host_rules.setText(self.tr(str(len(split_info.get("host_rules", []))) + " rules"))
-        self.lbl_fallback.setText(self.tr(str(len(split_info.get("fallback_domains", []))) + " domains"))
+        self.lbl_split_mode.setText(self.tr(split_info.get("mode") or "Unknown"))
+        ip_count = split_info.get("ip_count", len(split_info.get("ip_rules", [])))
+        host_count = split_info.get("host_count", len(split_info.get("host_rules", [])))
+        fallback_count = split_info.get("fallback_count", len(split_info.get("fallback_domains", [])))
+        self.lbl_ip_rules.setText(self.tr(str(ip_count) + " rules"))
+        self.lbl_host_rules.setText(self.tr(str(host_count) + " rules"))
+        self.lbl_fallback.setText(self.tr(str(fallback_count) + " domains"))
 
     def _build_about_tab(self) -> None:
         """Constructs application metadata and disclaimers tab."""

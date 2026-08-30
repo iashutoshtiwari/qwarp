@@ -10,6 +10,7 @@ class FakeEngine:
         self.connect_result = (True, "")
         self.connect_gate = None
         self.settings_thread = None
+        self.network_thread = None
 
     def status(self):
         return self.state
@@ -65,6 +66,16 @@ class FakeEngine:
     def get_settings(self):
         self.settings_thread = threading.get_ident()
         return {"mode": "warp+doh", "families": "full"}
+
+    def get_network_info(self):
+        self.network_thread = threading.get_ident()
+        return {"interface": "CloudflareWARP"}
+
+    def get_override_status(self):
+        return {"status": "None"}
+
+    def get_split_tunnel_info(self):
+        return {"mode": "exclude"}
 
     def detect_capabilities(self):
         return CliCapabilities(
@@ -128,6 +139,25 @@ def test_settings_query_runs_off_main_thread(qapp, wait_until):
     wait_until(lambda: bool(results))
     assert engine.settings_thread != main_thread
     assert results == [{"mode": "warp+doh", "families": "full"}]
+    manager.shutdown()
+
+
+def test_network_diagnostics_run_in_manager_pool(qapp, wait_until):
+    engine = FakeEngine()
+    manager = WarpStateManager(engine, start_polling=False)
+    results = []
+    manager.network_diagnostics_updated.connect(lambda *items: results.append(items))
+    main_thread = threading.get_ident()
+    manager.request_network_diagnostics()
+    wait_until(lambda: bool(results))
+    assert engine.network_thread != main_thread
+    assert results == [
+        (
+            {"interface": "CloudflareWARP"},
+            {"status": "None"},
+            {"mode": "exclude"},
+        )
+    ]
     manager.shutdown()
 
 
