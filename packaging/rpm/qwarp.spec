@@ -1,5 +1,5 @@
 Name:           qwarp
-Version:        0.9.0
+Version:        0.9.1
 Release:        1%{?dist}
 Summary:        A lightweight, Wayland-native Qt6 wrapper for Cloudflare WARP
 License:        MIT
@@ -45,5 +45,8 @@ install -Dm644 src/qwarp/assets/app-icon.svg %{buildroot}%{_datadir}/icons/hicol
 %{_datadir}/icons/hicolor/scalable/apps/qwarp.svg
 
 %changelog
+* Sun Aug 30 2026 Ashutosh Tiwari <contact@ashutoshtiwari.dev> - 0.9.1-1
+- Harden asynchronous state, settings, lifecycle, and release handling
+
 * Sat Aug 29 2026 Ashutosh Tiwari <contact@ashutoshtiwari.dev> - 0.9.0-1
 - Initial RPM release for 0.9.0

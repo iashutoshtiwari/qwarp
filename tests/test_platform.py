@@ -10,12 +10,12 @@ class TestAutostart:
 
         monkeypatch.setattr("qwarp.platform.autostart.AUTOSTART_DIR", tmp_path)
         with patch("shutil.which", return_value="/usr/bin/qwarp"):
-            success, msg = set_autostart_enabled(True)
+            success, _msg = set_autostart_enabled(True)
         assert success
         desktop_file = tmp_path / DESKTOP_FILENAME
         assert desktop_file.exists()
         content = desktop_file.read_text()
-        assert "Exec=/usr/bin/qwarp" in content
+        assert 'Exec="/usr/bin/qwarp"' in content
         assert "Type=Application" in content
         assert "Name=QWarp" in content
 
@@ -77,10 +77,10 @@ class TestAutostart:
 
         monkeypatch.setattr("qwarp.platform.autostart.AUTOSTART_DIR", tmp_path)
         with patch("shutil.which", return_value=None):
-            success, msg = set_autostart_enabled(True)
+            success, _msg = set_autostart_enabled(True)
         assert success is True
         content = (tmp_path / DESKTOP_FILENAME).read_text()
-        assert "Exec=qwarp" in content
+        assert 'Exec="qwarp"' in content
 
     def test_autostart_idempotent_enable(self, tmp_path, monkeypatch):
         from qwarp.platform.autostart import DESKTOP_FILENAME, set_autostart_enabled
@@ -100,36 +100,38 @@ class TestTaskbar:
     def test_is_taskbar_masked_true(self, mock_run):
         from qwarp.platform.taskbar import is_taskbar_masked
 
-        mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=1, stdout="masked\n", stderr="")
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="UnitFileState=masked\nActiveState=inactive\n", stderr=""
+        )
         assert is_taskbar_masked() is True
 
     @patch("subprocess.run")
     def test_is_taskbar_masked_false(self, mock_run):
         from qwarp.platform.taskbar import is_taskbar_masked
 
-        mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="enabled\n", stderr="")
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="UnitFileState=enabled\nActiveState=inactive\n", stderr=""
+        )
         assert is_taskbar_masked() is False
 
     @patch("subprocess.run")
     def test_is_taskbar_running(self, mock_run):
         from qwarp.platform.taskbar import is_taskbar_running
 
-        mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="active\n", stderr="")
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="UnitFileState=enabled\nActiveState=active\n", stderr=""
+        )
         assert is_taskbar_running() is True
 
     @patch("subprocess.run")
     def test_suppress_when_not_masked(self, mock_run):
         from qwarp.platform.taskbar import suppress_taskbar
 
-        mock_run.side_effect = [
-            subprocess.CompletedProcess(args=[], returncode=0, stdout="enabled\n", stderr=""),  # is-enabled
-            subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr=""),  # mask --now
-        ]
+        mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
         success, msg = suppress_taskbar()
         assert success
         assert "suppressed" in msg.lower()
-        # Verify mask --now was called
-        assert mock_run.call_args_list[1].kwargs.get("args", mock_run.call_args_list[1].args[0]) == [
+        assert mock_run.call_args.args[0] == [
             "systemctl",
             "--user",
             "mask",
@@ -141,25 +143,37 @@ class TestTaskbar:
     def test_suppress_idempotent_when_already_masked(self, mock_run):
         from qwarp.platform.taskbar import suppress_taskbar
 
-        mock_run.side_effect = [
-            subprocess.CompletedProcess(args=[], returncode=1, stdout="masked\n", stderr=""),  # is-enabled
-            subprocess.CompletedProcess(args=[], returncode=3, stdout="inactive\n", stderr=""),  # is-active
-        ]
+        mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
         success, msg = suppress_taskbar()
         assert success
-        assert "already masked" in msg.lower()
+        assert "suppressed" in msg.lower()
+        assert mock_run.call_count == 1
 
     @patch("subprocess.run")
     def test_restore_when_masked(self, mock_run):
         from qwarp.platform.taskbar import restore_taskbar
 
-        mock_run.side_effect = [
-            subprocess.CompletedProcess(args=[], returncode=1, stdout="masked\n", stderr=""),  # is-enabled
-            subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr=""),  # unmask
-        ]
+        mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
         success, msg = restore_taskbar()
         assert success
         assert "restored" in msg.lower()
+
+    @patch("subprocess.run")
+    def test_restore_restarts_previously_running_taskbar(self, mock_run):
+        from qwarp.platform.taskbar import restore_taskbar
+
+        mock_run.side_effect = [
+            subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr=""),
+            subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr=""),
+        ]
+        success, _message = restore_taskbar(start=True)
+        assert success
+        assert mock_run.call_args_list[-1].args[0] == [
+            "systemctl",
+            "--user",
+            "start",
+            "warp-taskbar.service",
+        ]
 
     @patch("subprocess.run")
     def test_restore_idempotent_when_not_masked(self, mock_run):
@@ -168,7 +182,8 @@ class TestTaskbar:
         mock_run.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="enabled\n", stderr="")
         success, msg = restore_taskbar()
         assert success
-        assert "not masked" in msg.lower()
+        assert "restored" in msg.lower()
+        assert mock_run.call_count == 1
 
     @patch("subprocess.run", side_effect=FileNotFoundError)
     def test_taskbar_operations_handle_missing_systemctl(self, _mock_run):

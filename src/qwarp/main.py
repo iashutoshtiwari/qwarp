@@ -172,6 +172,7 @@ def main() -> None:
     # Determine whether to start minimized.  The CLI flag overrides the
     # saved setting to support the autostart --start-minimized use case.
     start_minimized = cli_args.start_minimized or settings.value("start_minimized", False, type=bool)
+    manager.set_ui_visible(not start_minimized or not tray_available)
 
     if not start_minimized or not tray_available:
         force_show_window()

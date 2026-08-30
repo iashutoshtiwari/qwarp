@@ -17,6 +17,13 @@ else:
 DESKTOP_FILENAME = "qwarp-autostart.desktop"
 
 
+def _quote_exec_argument(value: str) -> str:
+    """Quote one Desktop Entry Exec argument without invoking a shell."""
+    escaped = value.replace("%", "%%")
+    escaped = escaped.replace("\\", "\\\\").replace('"', '\\"').replace("`", "\\`").replace("$", "\\$")
+    return f'"{escaped}"'
+
+
 def is_autostart_enabled() -> bool:
     """Check if QWarp autostart is enabled."""
     desktop_file = AUTOSTART_DIR / DESKTOP_FILENAME
@@ -55,7 +62,7 @@ def set_autostart_enabled(enabled: bool, minimize: bool = False) -> tuple[bool, 
         # Fallback to just the command name if not in PATH
         executable = "qwarp"
 
-    exec_cmd = executable
+    exec_cmd = _quote_exec_argument(executable)
     if minimize:
         exec_cmd += " --start-minimized"
 
@@ -66,7 +73,7 @@ Comment=Unofficial Cloudflare WARP GUI
 Exec={exec_cmd}
 Icon=qwarp
 Terminal=false
-Categories=Network;Utility;
+Categories=Network;
 """
     try:
         AUTOSTART_DIR.mkdir(parents=True, exist_ok=True)

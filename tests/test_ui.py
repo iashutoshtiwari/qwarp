@@ -1,6 +1,9 @@
+import threading
 from unittest.mock import patch
 
 import pytest
+from PyQt6 import sip
+from PyQt6.QtCore import QCoreApplication, QThread
 from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import QDialog, QLabel, QMessageBox
 
@@ -18,9 +21,20 @@ def manager():
     value.shutdown()
 
 
+@pytest.fixture(autouse=True)
+def isolate_platform_queries():
+    with (
+        patch("qwarp.platform.autostart.is_autostart_enabled", return_value=False),
+        patch("qwarp.platform.taskbar.get_taskbar_state", return_value=(False, False)),
+    ):
+        yield
+
+
 def test_settings_loads_mode_asynchronously_and_masks_license(qapp, wait_until, manager):
     dialog = SettingsDialog(manager)
-    wait_until(lambda: not manager._diagnostics_pending and dialog.mode_combo.currentData() == "warp+doh")
+    assert dialog.findChildren(QThread) == []
+    dialog.tabs.setCurrentIndex(3)
+    wait_until(lambda: not manager._settings_pending and dialog.mode_combo.currentData() == "warp+doh")
     manager.diagnostics_updated.emit(
         {"type": "Unlimited", "license": "synthetic-display-value", "quota": "N/A", "status": "Connected"}
     )
@@ -32,6 +46,33 @@ def test_settings_loads_mode_asynchronously_and_masks_license(qapp, wait_until, 
     dialog.done(QDialog.DialogCode.Rejected)
     assert dialog._license_value == ""
     assert dialog.license_input.text() == ""
+
+
+def test_current_network_diagnostics_shape_is_rendered(qapp, manager):
+    dialog = SettingsDialog(manager)
+    dialog.tabs.setCurrentIndex(4)
+    manager._on_status_result(WarpState.CONNECTED)
+
+    manager.network_diagnostics_updated.emit(
+        {
+            "interface": "wlan0",
+            "gateway": "192.0.2.1",
+            "dns": ["1.1.1.1", "1.0.0.1"],
+        },
+        {"set": False, "ends_in_secs": 0, "status": "Inactive"},
+        {"mode": "exclude", "ip_count": 7, "host_count": 2, "fallback_count": 3},
+    )
+
+    assert dialog.lbl_iface.text() == "wlan0"
+    assert dialog.lbl_gateway.text() == "192.0.2.1"
+    assert dialog.lbl_dns.text() == "1.1.1.1, 1.0.0.1"
+    assert dialog.lbl_tun_status.text() == "Connected"
+    assert dialog.lbl_override.text() == "Inactive"
+    assert dialog.lbl_split_mode.text() == "exclude"
+    assert dialog.lbl_ip_rules.text() == "7 rules"
+    assert dialog.lbl_host_rules.text() == "2 rules"
+    assert dialog.lbl_fallback.text() == "3 domains"
+    dialog.reject()
 
 
 def test_delete_registration_requires_confirmation(qapp, manager):
@@ -126,32 +167,87 @@ def test_zero_trust_shows_org_badge_and_disables_consumer_settings(qapp, manager
     assert not dialog.trust_eth_cb.isEnabled()
     assert not dialog.trust_wifi_cb.isEnabled()
 
+    manager.busy_changed.emit(True)
+    manager.busy_changed.emit(False)
+    assert not dialog.mode_combo.isEnabled()
+    assert not dialog.families_combo.isEnabled()
+    assert not dialog.protocol_combo.isEnabled()
+
     window.deleteLater()
     dialog.deleteLater()
 
 
-def test_autostart_toggle_interacts_with_platform_module(qapp, manager):
+def test_autostart_toggle_interacts_with_platform_module(qapp, wait_until, manager):
     dialog = SettingsDialog(manager)
     with patch("qwarp.platform.autostart.set_autostart_enabled", return_value=(True, "")) as mock_set:
         new_state = not dialog.autostart_cb.isChecked()
         dialog.autostart_cb.setChecked(new_state)
+        wait_until(lambda: mock_set.called)
         mock_set.assert_called_with(new_state, minimize=dialog.minimized_cb.isChecked())
+        wait_until(lambda: not manager.is_busy)
     dialog.deleteLater()
 
 
-def test_tray_suppression_toggle_interacts_with_platform_module(qapp, manager):
+def test_failed_platform_change_rolls_back_and_shows_error(qapp, wait_until, manager):
+    dialog = SettingsDialog(manager)
+    wait_until(lambda: not manager._platform_settings_pending)
+    with patch("qwarp.platform.autostart.set_autostart_enabled", return_value=(False, "read-only filesystem")):
+        dialog.autostart_cb.setChecked(True)
+        wait_until(lambda: not manager.is_busy and not manager._platform_settings_pending)
+    assert dialog.autostart_cb.isChecked() is False
+    assert not dialog.action_error_lbl.isHidden()
+    assert dialog.action_error_lbl.text() == "read-only filesystem"
+    dialog.deleteLater()
+
+
+def test_tray_suppression_toggle_interacts_with_platform_module(qapp, wait_until, manager):
     dialog = SettingsDialog(manager)
     with patch("qwarp.platform.taskbar.suppress_taskbar", return_value=(True, "")) as mock_suppress:
         with patch("qwarp.platform.taskbar.restore_taskbar", return_value=(True, "")) as mock_restore:
             new_state = not dialog.suppress_taskbar_cb.isChecked()
-            dialog.suppress_taskbar_cb.setChecked(new_state)
+            dialog._on_suppress_taskbar_toggled(new_state)
+            wait_until(lambda: mock_suppress.called or mock_restore.called)
             if new_state:
                 mock_suppress.assert_called_once()
             else:
                 mock_restore.assert_called_once()
-            dialog.suppress_taskbar_cb.setChecked(not new_state)
+            wait_until(lambda: not manager.is_busy)
+            dialog._on_suppress_taskbar_toggled(not new_state)
+            wait_until(lambda: mock_suppress.called and mock_restore.called)
             if not new_state:
                 mock_suppress.assert_called_once()
             else:
                 mock_restore.assert_called_once()
     dialog.deleteLater()
+
+
+def test_closed_settings_dialog_is_deleted(qapp, manager):
+    window = WarpWindow(manager)
+    dialog = SettingsDialog(manager, window)
+    dialog.show()
+    dialog.reject()
+    QCoreApplication.sendPostedEvents(None, 0)
+    QCoreApplication.processEvents()
+    assert sip.isdeleted(dialog)
+    window.deleteLater()
+
+
+def test_dialog_destruction_during_query_is_safe(qapp, wait_until):
+    engine = FakeEngine()
+    engine.settings_gate = threading.Event()
+    manager = WarpStateManager(engine, start_polling=False)
+    dialog = SettingsDialog(manager)
+    dialog.tabs.setCurrentIndex(3)
+    wait_until(engine.settings_started.is_set)
+    dialog.close()
+    QCoreApplication.sendPostedEvents(None, 0)
+    engine.settings_gate.set()
+    wait_until(lambda: not manager._settings_pending)
+    manager.shutdown()
+
+
+def test_accessible_names_exist_for_icon_and_custom_controls(qapp, manager):
+    window = WarpWindow(manager)
+    assert window.settings_btn.accessibleName()
+    assert window.toggle.accessibleName()
+    window.deleteLater()

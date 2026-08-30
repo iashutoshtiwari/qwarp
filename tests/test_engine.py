@@ -1,6 +1,9 @@
 import json
 import logging
 import subprocess
+import sys
+import threading
+import time
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -103,6 +106,41 @@ def test_missing_cli_maps_to_daemon_error(_mock_run):
 @patch("subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="warp-cli", timeout=2))
 def test_timeout_is_reported(_mock_run):
     assert WarpEngine().connect() == (False, "Command timeout")
+
+
+@patch("subprocess.run")
+def test_malformed_json_falls_back_without_crashing(mock_run):
+    mock_run.side_effect = [
+        process(stdout="{not-json"),
+        process(returncode=3, stdout="inactive"),
+    ]
+    assert WarpEngine().status() == WarpState.SERVICE_STOPPED
+
+
+def test_interruptible_command_is_cancelled_promptly():
+    engine = WarpEngine()
+    result = []
+    worker = threading.Thread(
+        target=lambda: result.append(
+            engine._run_interruptible_process(
+                [sys.executable, "-c", "import time; time.sleep(30)"],
+                timeout=30,
+            )
+        )
+    )
+    worker.start()
+    deadline = time.monotonic() + 2
+    while engine._active_process is None and time.monotonic() < deadline:
+        time.sleep(0.01)
+    engine.cancel_pending_commands()
+    worker.join(2)
+    assert not worker.is_alive()
+    assert result == [(False, "Command cancelled")]
+
+
+@patch.object(WarpEngine, "_trusted_executable", return_value=None)
+def test_service_repair_requires_trusted_executables(_mock_resolve):
+    assert WarpEngine().repair_service() == (False, "pkexec not installed")
 
 
 # -----------------------------------------------------------------------
@@ -299,11 +337,13 @@ def test_json_settings_list(mock_run):
     settings_json = {
         "settings": {
             "operation_mode": "doh",
+            "warp_tunnel_protocol": "MASQUE",
+            "proxy_port": 41000,
             "always_on": False,
             "switch_locked": False,
             "split_tunnel_mode": "exclude",
-            "disable_for_wifi": False,
-            "disable_for_ethernet": False,
+            "disable_for_wifi": True,
+            "disable_for_ethernet": "false",
         },
         "sources": {"operation_mode": "user_set"},
     }
@@ -315,6 +355,10 @@ def test_json_settings_list(mock_run):
     settings = WarpEngine().get_settings()
     assert settings["mode"] == "doh"
     assert settings["families"] == "off"
+    assert settings["tunnel_protocol"] == "MASQUE"
+    assert settings["proxy_port"] == 41000
+    assert settings["trust_wifi"] is True
+    assert settings["trust_ethernet"] is False
 
 
 @patch("subprocess.run")
@@ -364,6 +408,34 @@ def test_diagnostics_with_organization(mock_run):
     assert diag["type"] == "Teams"
     assert diag["device_id"] == "dev-123"
     assert diag["organization"] == "my-corp"
+
+
+@patch("subprocess.run")
+def test_diagnostics_current_registration_shape_and_single_accept_tos(mock_run):
+    mock_run.side_effect = [
+        json_output(
+            {
+                "id": "registration-id",
+                "device_id": "device-id",
+                "account": {"type": "Free", "license": "masked-value"},
+            }
+        ),
+        json_output({"organization": ""}),
+        json_output({"status": "Connected"}),
+    ]
+
+    diag = WarpEngine(accept_tos=True).get_diagnostics()
+
+    assert diag["type"] == "Free"
+    assert diag["device_id"] == "device-id"
+    assert diag["license"] == "masked-value"
+    assert mock_run.call_args_list[0].args[0] == [
+        "warp-cli",
+        "--accept-tos",
+        "--json",
+        "registration",
+        "show",
+    ]
 
 
 @patch("subprocess.run")
@@ -437,6 +509,9 @@ def test_get_network_info(mock_run):
     mock_run.return_value = json_output(net_data)
     info = WarpEngine().get_network_info()
     assert info["v4_iface"]["name"] == "wlan0"
+    assert info["interface"] == "wlan0"
+    assert info["gateway"] == ""
+    assert info["dns"] == ["1.1.1.1"]
 
 
 @patch("subprocess.run")
@@ -444,6 +519,7 @@ def test_get_override_status(mock_run):
     mock_run.return_value = json_output({"set": False, "ends_in_secs": 0})
     status = WarpEngine().get_override_status()
     assert status["set"] is False
+    assert status["status"] == "Inactive"
 
 
 @patch("subprocess.run")

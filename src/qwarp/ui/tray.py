@@ -5,7 +5,7 @@ from PyQt6.QtCore import QPoint
 from PyQt6.QtGui import QAction, QCursor, QIcon, QPalette
 from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
-from qwarp.core.engine import WarpState
+from qwarp.core.engine import CliCapabilities, WarpState
 from qwarp.core.state import WarpStateManager
 from qwarp.utils.system import load_tinted_icon
 
@@ -22,6 +22,7 @@ class WarpTrayIcon(QSystemTrayIcon):
         super().__init__(parent)
         self.manager = manager
         self.toggle_callback = toggle_callback
+        self._capabilities = manager.current_capabilities
 
         self._setup_menu()
         self._setup_signals()
@@ -63,6 +64,11 @@ class WarpTrayIcon(QSystemTrayIcon):
         self.activated.connect(self._on_activated)
         self.manager.state_changed.connect(self._update_ui_state)
         self.manager.busy_changed.connect(self._on_busy_changed)
+        self.manager.capabilities_detected.connect(self._on_capabilities_detected)
+
+    def _on_capabilities_detected(self, capabilities: CliCapabilities) -> None:
+        self._capabilities = capabilities
+        self._update_ui_state(self.manager.current_state)
 
     def _on_activated(self, reason: QSystemTrayIcon.ActivationReason):
         if reason == QSystemTrayIcon.ActivationReason.Trigger:
@@ -117,11 +123,8 @@ class WarpTrayIcon(QSystemTrayIcon):
 
         self.setIcon(icon)
 
-        # Check for Zero Trust organization
-        if getattr(self.manager.engine, "capabilities", None):
-            caps = self.manager.engine.capabilities
-            if getattr(caps, "is_zero_trust", False) and getattr(caps, "organization", ""):
-                tooltip += f" ({caps.organization})"
+        if self._capabilities and self._capabilities.is_zero_trust and self._capabilities.organization:
+            tooltip += f" ({self._capabilities.organization})"
 
         self.setToolTip(tooltip)
 
