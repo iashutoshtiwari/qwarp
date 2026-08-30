@@ -16,6 +16,5 @@ pkg/
 
 # Ignore compiled Qt translation binaries
 *.qm
-/.agents
 skills-lock.json
 uv.lock

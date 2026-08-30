@@ -16,26 +16,26 @@ commit.
 
 The handoff baseline is:
 
-- `v0.8.3` / Arch `0.8.3-1` is already published from merge commit
-  `fdc3afd5b2a7d5516a3aab1a2535482e7a141335`. Do not recreate, move, or
-  overwrite that tag or its release assets.
+- `v0.9.1` / Arch `0.9.1-1` is already published from merge commit
+  `06ad02ead0543b709eba4feed8111aefb4b0f3ec`. Published tags and release
+  assets are immutable.
 - The AUR `qwarp` package depends on the separately installed
   `cloudflare-warp-bin` package and owns no Cloudflare binaries or services.
-- The 0.8.3 verification baseline is 58 offscreen tests plus Ruff, locale,
-  wheel/sdist, PyInstaller, checksum, Arch ownership, Wayland, X11/XWayland,
-  registration, routing, Families, service-repair, and uninstall-retention
-  checks.
-- Cloudflare WARP 2026.6 CLI compatibility includes `Missing registration`,
-  `WarpProxy on port ...`, resolver-based Families values, and per-command
-  `--accept-tos` handling. Preserve these parser variants and the existing
-  registration during Terms acceptance.
+- Cloudflare WARP 2026.6 and 2026.7 compatibility includes `Missing
+  registration`, `WarpProxy on port ...`, resolver-based Families values,
+  typed current and legacy settings keys, and per-command `--accept-tos`
+  handling. Preserve these variants and the existing registration during
+  Terms acceptance.
 - GitHub release and AUR credentials live only in the protected GitHub
   `release` environment. Never copy them into the checkout, print them, or use
   them outside an explicitly authorized release.
 
-Future feature and release work begins after 0.8.3. Treat a published release
-as immutable and prepare subsequent changes through a branch and reviewed CI
-before merging to `master`.
+Use the repository `qwarp` skill for features, fixes, GitHub issues, and
+releases intended for the next release. Work with one main agent by default;
+do not create permanent role agents. A temporary read-only subagent is allowed
+only for genuinely independent investigations that would otherwise add
+substantial noisy context, never for routine planning, coding, testing,
+documentation, or release work.
 
 ## Project priorities
 
@@ -96,18 +96,9 @@ From the repository root, install the editable package and development tools:
 python -m pip install -e ".[dev]"
 ```
 
-Run the full local quality checks with:
-
-```bash
-ruff check src/ tests/
-ruff format src/ tests/ --check --diff
-QT_QPA_PLATFORM=offscreen pytest tests/ -v --tb=short
-```
-
-CI performs Ruff checks and headless pytest. `scripts/format.sh` is a mutating
-helper (`ruff check --fix` followed by `ruff format`); use the non-mutating
-commands above for inspection and run the helper only when formatting changes
-are intended.
+The `qwarp` skill defines the pre-review quality gates. `scripts/format.sh` is
+a mutating helper (`ruff check --fix` followed by `ruff format`); run it only
+when formatting changes are intended.
 
 When reproducing CI dependency resolution, use the tracked constraints:
 
@@ -165,13 +156,8 @@ files. Review catalog diffs, preserve existing translations, and do not invent
 translations for languages you do not know. Release and Arch builds compile the
 `.qm` files before packaging.
 
-## Packaging and releases
+## Packaging invariants
 
-- `src/qwarp/__init__.py` is the Python version source used by `pyproject.toml`.
-  Release version changes must also update `pkgver` in `PKGBUILD` and the
-  generated values in `.SRCINFO`.
-- After editing Arch package metadata, regenerate `.SRCINFO` from the repository
-  root with `makepkg --printsrcinfo > .SRCINFO` and review the diff.
 - `PKGBUILD` packages only the QWarp GUI and declares `cloudflare-warp-bin` as a
   hard runtime dependency. The dependency owns `warp-cli`, `warp-svc`, its
   systemd units, capabilities, and other official client files. QWarp packaging
@@ -179,43 +165,12 @@ translations for languages you do not know. Release and Arch builds compile the
 - The former self-contained packaging path is intentionally gone:
   `qwarp.install`, `scripts/update_warp.sh`, and `PKGBUILD.local` are not part of
   the supported build. Do not recreate them or assume a local PKGBUILD exists.
-- `scripts/build_artifacts.sh` is the shared local/CI release builder. It
-  compiles locales, validates Python distributions, creates the PyInstaller
-  binary, and writes normalized source/binary archives plus checksums under
-  `dist/release/`. Install the pinned requirements first; the script does not
-  mutate the Python environment. The generic artifact still requires
-  `cloudflare-warp-bin` on the target system.
 - `scripts/build_source_archive.sh` uses an explicit source allowlist and
   deterministic tar metadata. Keep new required source files in that allowlist.
   `PKGBUILD` and `.SRCINFO` intentionally stay outside the source archive so
   the archive checksum can be recorded in them without a circular input.
-- Build and validate a candidate from the repository root with:
-
-  ```bash
-  bash scripts/build_artifacts.sh
-  python scripts/check_release.py --version X.Y.Z --artifacts dist/release
-  bash scripts/smoke_frozen.sh dist/qwarp-build/qwarp X.Y.Z
-  (cd dist/release && sha256sum --check SHA256SUMS)
-  ```
-
-  The public archive names are `qwarp-X.Y.Z-source.tar.gz`,
-  `qwarp-X.Y.Z-linux-x86_64.tar.gz`, and `SHA256SUMS`. The generic binary is
-  built on pinned Ubuntu 22.04 with Python 3.11 to retain a stable glibc floor.
-- `.github/workflows/release.yml` is manually dispatched from `master`. It
-  requires live-QA attestation and approval through the protected `release`
-  environment, creates the tag only after validation, and publishes the exact
-  tested artifacts to GitHub and AUR. It must never push changelog or packaging
-  commits back to `master`.
-- AUR publishing requires the `AUR_SSH_PRIVATE_KEY` and `AUR_KNOWN_HOSTS`
-  environment secrets. Never expose them in logs or bypass non-fast-forward
-  failures with a force push.
-- Release notes are curated in `CHANGELOG.md` before workflow dispatch. Keep
-  the release section, Python version, `PKGBUILD`, `.SRCINFO`, archive names,
-  and checksums synchronized.
-- GitHub Actions must remain pinned to audited commit SHAs. The release must
-  reuse the already tested bytes, reject a moved `master` or mismatched tag,
-  attach provenance for both archives, and publish AUR metadata without force
-  pushing. Do not add tag-triggered publishing or post-tag content generation.
+- Keep GitHub Actions pinned to audited commit SHAs. Do not add tag-triggered
+  publishing or post-tag content generation.
 
 CI's Arch job builds from the generated source archive and asserts that the
 result owns QWarp files only. Any package containing `warp-cli`, `warp-svc`, a
