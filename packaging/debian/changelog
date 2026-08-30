@@ -1,3 +1,9 @@
+qwarp (0.9.2-1) unstable; urgency=medium
+
+  * Improve installation and contributor documentation and remove unused files.
+
+ -- Ashutosh Tiwari <contact@ashutoshtiwari.dev>  Mon, 31 Aug 2026 12:00:00 +0000
+
 qwarp (0.9.1-1) unstable; urgency=medium
 
   * Harden asynchronous state, settings, lifecycle, and release handling.

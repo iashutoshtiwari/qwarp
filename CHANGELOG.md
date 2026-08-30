@@ -5,6 +5,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.9.2] – 2026-08-31
+
+### Added
+
+- Add a contributor guide covering setup, architecture, testing, translations, and pull-request safety.
+
+### Changed
+
+- Reorganize the README around current distribution support, requirements, and version-neutral installation paths.
+- Verify contributor guidance in source releases and enforce the minimal runtime icon inventory in tests.
+
+### Removed
+
+- Remove unused UI artwork, a redundant build wrapper, and an undocumented standalone benchmark.
+
 ## [v0.9.1] – 2026-08-30
 
 ### Changed
