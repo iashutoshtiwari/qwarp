@@ -1,5 +1,5 @@
 Name:           qwarp
-Version:        0.9.2
+Version:        0.9.3
 Release:        1%{?dist}
 Summary:        Qt6-based alternative desktop client for Cloudflare WARP
 License:        MIT AND Apache-2.0
@@ -46,6 +46,9 @@ install -Dm644 src/qwarp/assets/app-icon.svg %{buildroot}%{_datadir}/icons/hicol
 %{_datadir}/icons/hicolor/scalable/apps/qwarp.svg
 
 %changelog
+* Mon Aug 31 2026 Ashutosh Tiwari <contact@ashutoshtiwari.dev> - 0.9.3-1
+- Remediate branding and legal text and improve connection feedback
+
 * Mon Aug 31 2026 Ashutosh Tiwari <contact@ashutoshtiwari.dev> - 0.9.2-1
 - Improve installation and contributor documentation and remove unused files
 

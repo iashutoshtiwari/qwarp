@@ -7,7 +7,7 @@ smoke_dir="$(mktemp -d)"
 trap 'rm -rf "$smoke_dir"' EXIT
 
 test "$("$binary" --version)" = "QWarp $version"
-"$binary" --help | grep -q 'QWarp GUI'
+"$binary" --help | grep -q 'Qt6-based alternative desktop client'
 
 mkdir -p "$smoke_dir/bin" "$smoke_dir/config" "$smoke_dir/runtime"
 chmod 700 "$smoke_dir/runtime"

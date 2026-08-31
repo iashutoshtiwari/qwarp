@@ -97,9 +97,9 @@ jobs:
       - name: Verify locales and release metadata
         run: |
           git diff --exit-code -- 'src/qwarp/assets/locales/*.ts'
-          python scripts/check_release.py --version 0.9.2 --artifacts dist/release
+          python scripts/check_release.py --version 0.9.3 --artifacts dist/release
       - name: Verify standalone binary
-        run: bash scripts/smoke_frozen.sh dist/qwarp-build/qwarp 0.9.2
+        run: bash scripts/smoke_frozen.sh dist/qwarp-build/qwarp 0.9.3
       - name: Upload package inputs
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
@@ -129,7 +129,7 @@ jobs:
             python-setuptools python-wheel qt6-tools
           useradd --create-home builder
           chown -R builder:builder "$GITHUB_WORKSPACE"
-          cp dist/release/qwarp-0.9.2-source.tar.gz .
+          cp dist/release/qwarp-0.9.3-source.tar.gz .
           su builder -c "cd '$GITHUB_WORKSPACE' && makepkg --nodeps --cleanbuild --clean --noconfirm"
       - name: Verify metadata and owned files
         run: |
@@ -169,28 +169,28 @@ jobs:
             qt6-tools-dev-tools dpkg-dev python3-pyqt6
       - name: Build .deb
         run: |
-          tar xzf dist/release/qwarp-0.9.2-source.tar.gz
-          cd qwarp-0.9.2
+          tar xzf dist/release/qwarp-0.9.3-source.tar.gz
+          cd qwarp-0.9.3
           cp -r ../packaging/debian debian
           dpkg-buildpackage -us -uc -b
       - name: Inspect and smoke-test .deb
         run: |
-          dpkg-deb --contents qwarp_0.9.2-1_all.deb > /tmp/qwarp-deb-files
+          dpkg-deb --contents qwarp_0.9.3-1_all.deb > /tmp/qwarp-deb-files
           grep -q 'usr/bin/qwarp$' /tmp/qwarp-deb-files
           grep -q 'usr/share/doc/qwarp/TRADEMARKS.md$' /tmp/qwarp-deb-files
           grep -q 'usr/share/doc/qwarp/Apache-2.0.txt$' /tmp/qwarp-deb-files
           grep -q 'usr/share/doc/qwarp/Glyphs-Poly-MIT.txt$' /tmp/qwarp-deb-files
           ! grep -Eq '/(warp-cli|warp-svc|warp-svc\.service)$' /tmp/qwarp-deb-files
-          dpkg-deb --field qwarp_0.9.2-1_all.deb Depends | grep -q 'cloudflare-warp'
+          dpkg-deb --field qwarp_0.9.3-1_all.deb Depends | grep -q 'cloudflare-warp'
           mkdir -p /tmp/qwarp-deb-root
-          dpkg-deb --extract qwarp_0.9.2-1_all.deb /tmp/qwarp-deb-root
+          dpkg-deb --extract qwarp_0.9.3-1_all.deb /tmp/qwarp-deb-root
           PYTHONPATH=/tmp/qwarp-deb-root/usr/lib/python3/dist-packages \
-            python3 -m qwarp.main --version | grep -Fx 'QWarp 0.9.2'
+            python3 -m qwarp.main --version | grep -Fx 'QWarp 0.9.3'
       - name: Upload .deb
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: qwarp-deb
-          path: qwarp_0.9.2-1_all.deb
+          path: qwarp_0.9.3-1_all.deb
           retention-days: 7
 
   rpm-package:
@@ -216,12 +216,12 @@ jobs:
       - name: Build .rpm
         run: |
           mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-          cp dist/release/qwarp-0.9.2-source.tar.gz ~/rpmbuild/SOURCES/
+          cp dist/release/qwarp-0.9.3-source.tar.gz ~/rpmbuild/SOURCES/
           cp packaging/rpm/qwarp.spec ~/rpmbuild/SPECS/
           rpmbuild -bb ~/rpmbuild/SPECS/qwarp.spec
       - name: Inspect RPM
         run: |
-          rpm_file=$(find ~/rpmbuild/RPMS -name 'qwarp-0.9.2-1*.rpm' -print -quit)
+          rpm_file=$(find ~/rpmbuild/RPMS -name 'qwarp-0.9.3-1*.rpm' -print -quit)
           test -n "$rpm_file"
           rpm -qlp "$rpm_file" > /tmp/qwarp-rpm-files
           grep -q '/usr/bin/qwarp$' /tmp/qwarp-rpm-files
@@ -234,5 +234,5 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: qwarp-rpm
-          path: /github/home/rpmbuild/RPMS/noarch/qwarp-0.9.2-1*.rpm
+          path: /github/home/rpmbuild/RPMS/noarch/qwarp-0.9.3-1*.rpm
           retention-days: 7
