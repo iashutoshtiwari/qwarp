@@ -15,6 +15,6 @@ pkgbase = qwarp
 	depends = python-pyqt6
 	depends = cloudflare-warp-bin
 	source = qwarp-0.9.3-source.tar.gz::https://github.com/iashutoshtiwari/qwarp/releases/download/v0.9.3/qwarp-0.9.3-source.tar.gz
-	sha256sums = 042cc51e3c75b3470a64e188b37fab599466c9ff0a11ea82e7d01af2b2fbdc33
+	sha256sums = 2925d8f0e64a43d24e8dad08ddb26752db004e2959518a86a5862584408bc7d5
 
 pkgname = qwarp
