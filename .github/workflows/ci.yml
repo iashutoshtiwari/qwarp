@@ -176,10 +176,10 @@ jobs:
       - name: Inspect and smoke-test .deb
         run: |
           dpkg-deb --contents qwarp_0.9.3-1_all.deb > /tmp/qwarp-deb-files
-          grep -q 'usr/bin/qwarp$' /tmp/qwarp-deb-files
-          grep -q 'usr/share/doc/qwarp/TRADEMARKS.md$' /tmp/qwarp-deb-files
-          grep -q 'usr/share/doc/qwarp/Apache-2.0.txt$' /tmp/qwarp-deb-files
-          grep -q 'usr/share/doc/qwarp/Glyphs-Poly-MIT.txt$' /tmp/qwarp-deb-files
+          grep -Eq 'usr/bin/qwarp$' /tmp/qwarp-deb-files
+          grep -Eq 'usr/share/doc/qwarp/TRADEMARKS.md(\.gz)?$' /tmp/qwarp-deb-files
+          grep -Eq 'usr/share/doc/qwarp/Apache-2.0.txt(\.gz)?$' /tmp/qwarp-deb-files
+          grep -Eq 'usr/share/doc/qwarp/Glyphs-Poly-MIT.txt(\.gz)?$' /tmp/qwarp-deb-files
           ! grep -Eq '/(warp-cli|warp-svc|warp-svc\.service)$' /tmp/qwarp-deb-files
           dpkg-deb --field qwarp_0.9.3-1_all.deb Depends | grep -q 'cloudflare-warp'
           mkdir -p /tmp/qwarp-deb-root
