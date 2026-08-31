@@ -34,11 +34,25 @@ def main() -> None:
             ),
             "Wheel does not contain every compiled locale",
         )
+        license_names = {name.rsplit("/", 1)[-1] for name in names if ".dist-info/licenses/" in name}
+        require(
+            {"LICENSE", "Apache-2.0.txt", "Glyphs-Poly-MIT.txt", "TRADEMARKS.md"}.issubset(license_names),
+            "Wheel does not contain every legal notice",
+        )
 
     with tarfile.open(sdist, "r:gz") as archive:
         names = set(archive.getnames())
         require(f"qwarp-{version}/pyproject.toml" in names, "sdist does not contain pyproject.toml")
         require(f"qwarp-{version}/src/qwarp/main.py" in names, "sdist does not contain application source")
+        require(f"qwarp-{version}/TRADEMARKS.md" in names, "sdist does not contain the trademark notice")
+        require(
+            f"qwarp-{version}/LICENSES/Apache-2.0.txt" in names,
+            "sdist does not contain the Material Symbols license",
+        )
+        require(
+            f"qwarp-{version}/LICENSES/Glyphs-Poly-MIT.txt" in names,
+            "sdist does not contain the Glyphs Poly license",
+        )
 
     with tarfile.open(source, "r:gz") as archive:
         names = set(archive.getnames())
@@ -46,13 +60,30 @@ def main() -> None:
             f"qwarp-{version}/CONTRIBUTING.md" in names,
             "Source archive does not contain contributor guidance",
         )
+        require(
+            f"qwarp-{version}/TRADEMARKS.md" in names,
+            "Source archive does not contain the trademark notice",
+        )
+        require(
+            f"qwarp-{version}/LICENSES/Apache-2.0.txt" in names,
+            "Source archive does not contain the Material Symbols license",
+        )
+        require(
+            f"qwarp-{version}/LICENSES/Glyphs-Poly-MIT.txt" in names,
+            "Source archive does not contain the Glyphs Poly license",
+        )
         require(f"qwarp-{version}/PKGBUILD" not in names, "Source archive must not contain recursive PKGBUILD metadata")
         require(not any(".egg-info/" in name for name in names), "Source archive contains generated egg-info")
         require(not any(name.endswith((".pyc", ".qm")) for name in names), "Source archive contains generated files")
 
     with tarfile.open(binary, "r:gz") as archive:
         names = {name.removeprefix("./") for name in archive.getnames()}
-        require({"qwarp", "qwarp.desktop", "LICENSE", "README.md"}.issubset(names), "Binary archive is incomplete")
+        require(
+            {"qwarp", "qwarp.desktop", "LICENSE", "README.md", "TRADEMARKS.md"}.issubset(names),
+            "Binary archive is incomplete",
+        )
+        require("LICENSES/Apache-2.0.txt" in names, "Binary archive is missing the Material Symbols license")
+        require("LICENSES/Glyphs-Poly-MIT.txt" in names, "Binary archive is missing the Glyphs Poly license")
 
     print(f"QWarp {version} build artifacts are complete")
 

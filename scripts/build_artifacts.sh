@@ -33,6 +33,9 @@ install -Dm755 dist/qwarp-build/qwarp "$binary_stage/qwarp"
 install -Dm644 qwarp.desktop "$binary_stage/qwarp.desktop"
 install -Dm644 LICENSE "$binary_stage/LICENSE"
 install -Dm644 README.md "$binary_stage/README.md"
+install -Dm644 TRADEMARKS.md "$binary_stage/TRADEMARKS.md"
+install -Dm644 LICENSES/Apache-2.0.txt "$binary_stage/LICENSES/Apache-2.0.txt"
+install -Dm644 LICENSES/Glyphs-Poly-MIT.txt "$binary_stage/LICENSES/Glyphs-Poly-MIT.txt"
 
 tar \
     --sort=name \

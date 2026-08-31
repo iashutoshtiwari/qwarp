@@ -1,4 +1,5 @@
 import threading
+from unittest.mock import patch
 
 from qwarp.core.engine import CliCapabilities, WarpState
 from qwarp.core.state import ActionWorker, StatusWorker, WarpStateManager
@@ -8,6 +9,7 @@ class FakeEngine:
     def __init__(self):
         self.state = WarpState.DISCONNECTED
         self.connect_result = (True, "")
+        self.connect_calls = 0
         self.connect_gate = None
         self.connect_started = threading.Event()
         self.settings_gate = None
@@ -19,6 +21,7 @@ class FakeEngine:
         return self.state
 
     def connect(self):
+        self.connect_calls += 1
         self.connect_started.set()
         if self.connect_gate:
             self.connect_gate.wait(2)
@@ -111,12 +114,46 @@ def test_failed_action_clears_busy_and_emits_completion(qapp, wait_until):
     engine = FakeEngine()
     engine.connect_result = (False, "simulated failure")
     manager = WarpStateManager(engine, start_polling=False)
+    manager._on_status_result(WarpState.DISCONNECTED)
     results = []
     manager.action_finished.connect(lambda *args: results.append(args))
     manager.request_connect()
     wait_until(lambda: bool(results))
     assert results[-1] == ("connect", False, "simulated failure")
     assert manager.is_busy is False
+    assert manager.current_state == WarpState.DISCONNECTED
+    manager.shutdown()
+
+
+def test_connect_transition_survives_stale_reconciliation(qapp, wait_until):
+    engine = FakeEngine()
+    manager = WarpStateManager(engine, start_polling=False)
+    manager._on_status_result(WarpState.DISCONNECTED)
+
+    manager.request_connect()
+    assert manager.current_state == WarpState.CONNECTING
+    wait_until(lambda: manager.is_busy is False)
+
+    assert engine.connect_calls == 1
+    assert manager.current_state == WarpState.CONNECTING
+    manager._on_status_result(WarpState.DISCONNECTED)
+    assert manager.current_state == WarpState.CONNECTING
+
+    manager._on_status_result(WarpState.CONNECTED)
+    assert manager.current_state == WarpState.CONNECTED
+    manager.shutdown()
+
+
+def test_connect_transition_grace_period_expires(qapp):
+    manager = WarpStateManager(FakeEngine(), start_polling=False)
+    manager._connect_transition_deadline = 99.0
+    manager._on_status_result(WarpState.CONNECTING)
+
+    with patch("qwarp.core.state.time.monotonic", return_value=100.0):
+        manager._on_status_result(WarpState.DISCONNECTED)
+
+    assert manager.current_state == WarpState.DISCONNECTED
+    assert manager._connect_transition_deadline is None
     manager.shutdown()
 
 

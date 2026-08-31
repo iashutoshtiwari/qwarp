@@ -53,7 +53,8 @@ LANGUAGES=("en" "es" "pt" "de" "it" "zh" "ja" "hi")
 
 for lang in "${LANGUAGES[@]}"; do
     echo "  -> Scraping translations for: $lang"
-    "$LUPDATE" src/qwarp/ui/*.py src/qwarp/core/*.py src/qwarp/main.py -ts "$LOCALES_DIR/qwarp_$lang.ts" >/dev/null
+    "$LUPDATE" -no-obsolete src/qwarp/ui/*.py src/qwarp/core/*.py src/qwarp/main.py \
+        -ts "$LOCALES_DIR/qwarp_$lang.ts" >/dev/null
 done
 
 # Step 2: Compile `.ts` files into binary `.qm` files for the application to read

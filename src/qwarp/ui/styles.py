@@ -39,11 +39,11 @@ QToolButton[styleClass="icon"]:hover {
 }
 
 QLabel[styleClass="header"] {
-    color: #F46654;
+    color: palette(highlight);
     letter-spacing: 2px;
 }
 QLabel[styleClass="title_connected"] {
-    color: #F46654;
+    color: palette(highlight);
 }
 QLabel[styleClass="title_disconnected"] {
     color: #888888;

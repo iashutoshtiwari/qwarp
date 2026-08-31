@@ -36,18 +36,19 @@ def get_asset_dir() -> str:
     return os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets")
 
 
-def get_tinted_icon(filename: str, fallback_theme_name: str = "network-wired", palette=None):
-    """
-    Loads an SVG from the assets folder and applies dynamic tinting based on the system theme.
-    """
-    return load_tinted_icon(filename, palette)
+def load_asset_icon(icon_name: str):
+    """Load an application asset without changing its authored colors."""
+    from PyQt6.QtGui import QIcon
+
+    if not icon_name.endswith(".svg"):
+        icon_name += ".svg"
+
+    asset_path = os.path.join(get_asset_dir(), icon_name)
+    return QIcon(asset_path) if os.path.exists(asset_path) else QIcon()
 
 
-def load_tinted_icon(icon_name: str, palette=None):
-    """
-    Loads an SVG file and dynamically tints it by replacing color values in the XML.
-    This maintains multi-color icons while ensuring contrast for white/black elements.
-    """
+def load_symbolic_icon(icon_name: str, palette=None):
+    """Load a currentColor SVG using a palette-aware monochrome tint."""
     from PyQt6.QtCore import QByteArray
     from PyQt6.QtGui import QIcon, QPixmap
 
@@ -66,14 +67,13 @@ def load_tinted_icon(icon_name: str, palette=None):
         # In Dark Mode, we want white/light icons. In Light Mode, we want dark gray.
         tint_color = "#FFFFFF" if is_dark else "#444444"
 
-        # Robust string replacement for common SVG color indicators
+        # Symbolic assets use currentColor so their authored geometry remains
+        # independent from the active desktop theme.
         svg_data = svg_data.replace("currentColor", tint_color)
-        svg_data = svg_data.replace("#FFFFFF", tint_color)
-        svg_data = svg_data.replace("#ffffff", tint_color)
 
         pixmap = QPixmap()
         pixmap.loadFromData(QByteArray(svg_data.encode("utf-8")))
         return QIcon(pixmap)
     except Exception as e:
-        print(f"Error loading tinted icon {icon_name}: {e}")
+        print(f"Error loading symbolic icon {icon_name}: {e}")
         return QIcon(asset_path)

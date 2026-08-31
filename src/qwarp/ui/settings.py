@@ -23,7 +23,7 @@ from PyQt6.QtWidgets import (
 from qwarp import __version__
 from qwarp.core.engine import CliCapabilities, WarpState
 from qwarp.core.state import WarpStateManager
-from qwarp.ui.tray import get_asset_icon
+from qwarp.utils.system import load_asset_icon
 
 logger = logging.getLogger(__name__)
 
@@ -448,7 +448,7 @@ class SettingsDialog(QDialog):
         about_layout = QVBoxLayout(about_tab)
 
         icon_label = QLabel()
-        icon_pixmap = get_asset_icon("app-icon.svg").pixmap(QSize(64, 64))
+        icon_pixmap = load_asset_icon("app-icon.svg").pixmap(QSize(64, 64))
         icon_label.setPixmap(icon_pixmap)
         icon_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         about_layout.addWidget(icon_label)
@@ -465,7 +465,7 @@ class SettingsDialog(QDialog):
         self.cli_version_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         about_layout.addWidget(self.cli_version_label)
 
-        desc_label = QLabel(self.tr("A Wayland-native Qt6 wrapper for Cloudflare WARP."))
+        desc_label = QLabel(self.tr("A Qt6-based alternative desktop client for Cloudflare® WARP®."))
         desc_label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         about_layout.addWidget(desc_label)
         about_layout.addSpacing(10)
@@ -484,12 +484,13 @@ class SettingsDialog(QDialog):
         about_layout.addWidget(separator)
 
         legal_text = self.tr(
-            "Disclaimer: QWarp is an unofficial community project and is not affiliated with, "
-            "authorized, maintained, sponsored, or endorsed by Cloudflare, Inc.<br><br>"
-            "Cloudflare, the Cloudflare logo, and Cloudflare Workers are trademarks and/or "
-            "registered trademarks of Cloudflare, Inc. in the United States and other jurisdictions.<br><br>"
-            "<a href='https://www.cloudflare.com/website-terms/'>Terms and Conditions</a> | "
-            "<a href='https://www.cloudflare.com/privacypolicy/'>Privacy Policy</a>"
+            "QWarp is independently developed and is not affiliated with, authorized, sponsored, or endorsed by "
+            "Cloudflare, Inc. It requires a separately installed official client and does not distribute Cloudflare "
+            "software.<br><br>Cloudflare, 1.1.1.1, WARP, and WARP+ are trademarks and/or registered trademarks of "
+            "Cloudflare, Inc. in the United States and other jurisdictions.<br><br>"
+            "<a href='https://www.cloudflare.com/trademark/'>Trademark Guidelines</a> | "
+            "<a href='https://www.cloudflare.com/application/terms/'>Application Terms</a> | "
+            "<a href='https://www.cloudflare.com/application/privacypolicy/'>Application Privacy Policy</a>"
         )
         legal_label = QLabel(legal_text)
         legal_font = legal_label.font()
@@ -589,7 +590,7 @@ class SettingsDialog(QDialog):
     def _on_capabilities_updated(self, caps: CliCapabilities) -> None:
         self._capabilities = caps
         version_text = caps.version.replace("warp-cli ", "") if caps.version else "Unknown"
-        self.cli_version_label.setText(self.tr("cloudflare-warp version: %s") % version_text)
+        self.cli_version_label.setText(self.tr("Installed client version: %s") % version_text)
         self._apply_control_state()
 
     def _on_leave_org_clicked(self) -> None:

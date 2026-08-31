@@ -16,8 +16,10 @@ source_items=(
     CHANGELOG.md
     CONTRIBUTING.md
     LICENSE
+    LICENSES
     MANIFEST.in
     README.md
+    TRADEMARKS.md
     pyproject.toml
     qwarp.desktop
     requirements

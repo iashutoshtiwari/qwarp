@@ -1,5 +1,5 @@
 from PyQt6.QtCore import QEasingCurve, QPropertyAnimation, QRectF, Qt, pyqtProperty
-from PyQt6.QtGui import QBrush, QColor, QPainter, QPainterPath
+from PyQt6.QtGui import QBrush, QColor, QPainter, QPainterPath, QPalette
 from PyQt6.QtWidgets import QCheckBox
 
 
@@ -14,7 +14,6 @@ class AnimatedToggle(QCheckBox):
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
         # Colors
-        self._bg_color_checked = QColor("#F46654")  # Cloudflare Orange
         self._bg_color_unchecked = QColor("#D3D3D3")  # Inactive Gray
         self._thumb_color = QColor("#FFFFFF")
 
@@ -60,7 +59,7 @@ class AnimatedToggle(QCheckBox):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        bg_color = self._bg_color_checked if self.isChecked() else self._bg_color_unchecked
+        bg_color = self.palette().color(QPalette.ColorRole.Highlight) if self.isChecked() else self._bg_color_unchecked
 
         # Draw the Track (The Pill) using QRectF for floating-point precision
         track_rect = QRectF(0.0, 0.0, float(self.width()), float(self.height()))

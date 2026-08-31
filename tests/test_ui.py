@@ -3,8 +3,9 @@ from unittest.mock import patch
 
 import pytest
 from PyQt6 import sip
-from PyQt6.QtCore import QCoreApplication, QThread
-from PyQt6.QtGui import QCloseEvent
+from PyQt6.QtCore import QCoreApplication, Qt, QThread
+from PyQt6.QtGui import QCloseEvent, QIcon
+from PyQt6.QtTest import QTest
 from PyQt6.QtWidgets import QDialog, QLabel, QMessageBox
 
 from qwarp.core.engine import CliCapabilities, WarpState
@@ -103,12 +104,61 @@ def test_failed_connect_restores_toggle_and_shows_contextual_error(qapp, wait_un
     manager.shutdown()
 
 
+def test_single_toggle_click_stays_connecting_until_daemon_catches_up(qapp, wait_until):
+    engine = FakeEngine()
+    manager = WarpStateManager(engine, start_polling=False)
+    manager._on_status_result(WarpState.DISCONNECTED)
+    window = WarpWindow(manager)
+
+    QTest.mouseClick(window.toggle, Qt.MouseButton.LeftButton)
+    wait_until(lambda: manager.is_busy is False)
+
+    assert engine.connect_calls == 1
+    assert window.toggle.isChecked()
+    assert not window.toggle.isEnabled()
+    assert window.status_title.text() == "CONNECTING"
+
+    manager._on_status_result(WarpState.CONNECTED)
+    assert window.toggle.isEnabled()
+    assert window.status_title.text() == "CONNECTED"
+    window.deleteLater()
+    manager.shutdown()
+
+
 def test_onboarding_copy_does_not_claim_existing_registration_is_missing(qapp, manager):
     window = WarpWindow(manager)
     manager._on_status_result(WarpState.UNREGISTERED)
 
-    assert window.register_btn.text() == "Accept and continue"
+    assert window.register_btn.text() == "Continue"
+    assert not window.register_btn.isEnabled()
     assert "Setup required" in {label.text() for label in window.page0.findChildren(QLabel)}
+    window.deleteLater()
+
+
+def test_onboarding_requires_linked_terms_consent_for_every_registration_path(qapp, manager):
+    window = WarpWindow(manager)
+    labels = {label.text() for label in window.page0.findChildren(QLabel)}
+    legal_copy = next(text for text in labels if "Application Terms" in text)
+    assert "https://www.cloudflare.com/application/terms/" in legal_copy
+    assert "https://www.cloudflare.com/application/privacypolicy/" in legal_copy
+
+    assert not window.register_btn.isEnabled()
+    window.terms_checkbox.setChecked(True)
+    assert window.register_btn.isEnabled()
+
+    window._toggle_org_input()
+    assert window.register_btn.text() == "Join organization"
+    assert window.register_btn.isEnabled()
+
+    manager.active_action = "register"
+    manager.busy_changed.emit(True)
+    assert not window.register_btn.isEnabled()
+    manager.active_action = None
+    manager.busy_changed.emit(False)
+    assert window.register_btn.isEnabled()
+
+    window.terms_checkbox.setChecked(False)
+    assert not window.register_btn.isEnabled()
     window.deleteLater()
 
 
@@ -130,6 +180,27 @@ def test_tray_actions_match_every_state(qapp, manager, state, connect_enabled, d
     assert tray.action_connect.isEnabled() is connect_enabled
     assert tray.action_disconnect.isEnabled() is disconnect_enabled
     tray.deleteLater()
+
+
+@pytest.mark.parametrize(
+    ("state", "icon_name"),
+    [
+        (WarpState.CONNECTED, "tray-connected.svg"),
+        (WarpState.DISCONNECTED, "tray-disconnected.svg"),
+        (WarpState.CONNECTING, "tray-connecting.svg"),
+        (WarpState.UNREGISTERED, "tray-unregistered.svg"),
+        (WarpState.SERVICE_STOPPED, "tray-error.svg"),
+        (WarpState.DAEMON_ERROR, "tray-error.svg"),
+        (WarpState.UNKNOWN, "tray-connecting.svg"),
+    ],
+)
+def test_tray_uses_the_symbolic_icon_for_each_state(qapp, manager, state, icon_name):
+    with patch("qwarp.ui.tray.load_symbolic_icon", return_value=QIcon()) as load_icon:
+        tray = WarpTrayIcon(manager, lambda _position: None)
+        load_icon.reset_mock()
+        tray._update_ui_state(state)
+        assert load_icon.call_args.args[0] == icon_name
+        tray.deleteLater()
 
 
 def test_window_without_tray_quits_on_close(qapp, manager):
@@ -248,6 +319,8 @@ def test_dialog_destruction_during_query_is_safe(qapp, wait_until):
 
 def test_accessible_names_exist_for_icon_and_custom_controls(qapp, manager):
     window = WarpWindow(manager)
+    assert not window.settings_btn.icon().isNull()
     assert window.settings_btn.accessibleName()
     assert window.toggle.accessibleName()
+    assert window.terms_checkbox.accessibleName()
     window.deleteLater()

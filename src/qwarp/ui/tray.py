@@ -2,19 +2,14 @@ import logging
 from typing import Callable
 
 from PyQt6.QtCore import QPoint
-from PyQt6.QtGui import QAction, QCursor, QIcon, QPalette
+from PyQt6.QtGui import QAction, QCursor, QPalette
 from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from qwarp.core.engine import CliCapabilities, WarpState
 from qwarp.core.state import WarpStateManager
-from qwarp.utils.system import load_tinted_icon
+from qwarp.utils.system import load_symbolic_icon
 
 logger = logging.getLogger(__name__)
-
-
-def get_asset_icon(filename: str, fallback_theme_name: str = "network-wired", palette: QPalette = None) -> QIcon:
-    """Loads a tinted SVG from the assets folder."""
-    return load_tinted_icon(filename, palette)
 
 
 class WarpTrayIcon(QSystemTrayIcon):
@@ -83,40 +78,40 @@ class WarpTrayIcon(QSystemTrayIcon):
 
     def _update_ui_state(self, state: WarpState, palette: QPalette = None):
         tooltip = self.tr("QWarp: Unknown")
-        icon = get_asset_icon("app-icon.svg", palette=palette)
+        icon = load_symbolic_icon("tray-connecting.svg", palette)
 
         if state == WarpState.CONNECTED:
-            icon = get_asset_icon("tray-connected.svg", "network-vpn-active", palette=palette)
+            icon = load_symbolic_icon("tray-connected.svg", palette)
             tooltip = self.tr("QWarp: Connected")
             self.action_connect.setEnabled(False)
             self.action_disconnect.setEnabled(True)
         elif state == WarpState.DISCONNECTED:
-            icon = get_asset_icon("tray-disconnected.svg", "network-vpn", palette=palette)
+            icon = load_symbolic_icon("tray-disconnected.svg", palette)
             tooltip = self.tr("QWarp: Disconnected")
             self.action_connect.setEnabled(True)
             self.action_disconnect.setEnabled(False)
         elif state == WarpState.CONNECTING:
-            icon = get_asset_icon("tray-connecting.svg", "network-vpn-acquiring", palette=palette)
+            icon = load_symbolic_icon("tray-connecting.svg", palette)
             tooltip = self.tr("QWarp: Connecting...")
             self.action_connect.setEnabled(False)
             self.action_disconnect.setEnabled(False)
         elif state == WarpState.UNREGISTERED:
-            icon = get_asset_icon("tray-unregistered.svg", "dialog-warning", palette=palette)
+            icon = load_symbolic_icon("tray-unregistered.svg", palette)
             tooltip = self.tr("QWarp: Registration Missing")
             self.action_connect.setEnabled(False)
             self.action_disconnect.setEnabled(False)
         elif state == WarpState.DAEMON_ERROR:
-            icon = get_asset_icon("tray-error.svg", "dialog-error", palette=palette)
+            icon = load_symbolic_icon("tray-error.svg", palette)
             tooltip = self.tr("QWarp: Daemon Error")
             self.action_connect.setEnabled(False)
             self.action_disconnect.setEnabled(False)
         elif state == WarpState.SERVICE_STOPPED:
-            icon = get_asset_icon("tray-error.svg", "dialog-error", palette=palette)
+            icon = load_symbolic_icon("tray-error.svg", palette)
             tooltip = self.tr("QWarp: Service Stopped")
             self.action_connect.setEnabled(False)
             self.action_disconnect.setEnabled(False)
         else:
-            icon = get_asset_icon("app-icon.svg", "network-wired", palette=palette)
+            icon = load_symbolic_icon("tray-connecting.svg", palette)
             tooltip = self.tr("QWarp: ") + state.name
             self.action_connect.setEnabled(False)
             self.action_disconnect.setEnabled(False)

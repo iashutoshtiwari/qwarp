@@ -2,8 +2,9 @@ import logging
 from typing import Optional
 
 from PyQt6.QtCore import QEvent, QPoint, QSize, Qt, pyqtSignal
-from PyQt6.QtGui import QCloseEvent, QIcon, QPalette
+from PyQt6.QtGui import QCloseEvent, QIcon
 from PyQt6.QtWidgets import (
+    QCheckBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -19,7 +20,7 @@ from qwarp.core.engine import CliCapabilities, WarpState
 from qwarp.core.state import WarpStateManager
 from qwarp.ui.settings import SettingsDialog
 from qwarp.ui.toggle import AnimatedToggle
-from qwarp.utils.system import is_x11, load_tinted_icon
+from qwarp.utils.system import is_x11, load_asset_icon, load_symbolic_icon
 
 logger = logging.getLogger(__name__)
 
@@ -57,12 +58,17 @@ class WarpWindow(QWidget):
         """Intercepts system theme changes and forces an icon redraw."""
         super().changeEvent(event)
         if event.type() in (QEvent.Type.PaletteChange, QEvent.Type.ApplicationPaletteChange):
-            self._update_icons(self.palette())
+            if hasattr(self, "settings_btn"):
+                self._update_icons()
+            else:
+                self.setWindowIcon(load_asset_icon("app-icon.svg"))
 
-    def _update_icons(self, palette: QPalette = None) -> None:
-        """Reloads all dynamic icons to match the current theme contrast."""
-        self.settings_btn.setIcon(load_tinted_icon("gear.svg", palette))
-        self.setWindowIcon(load_tinted_icon("app-icon.svg", palette))
+    def _update_icons(self) -> None:
+        """Reload the desktop settings icon and unmodified application artwork."""
+        settings_icon = load_symbolic_icon("gear.svg", self.palette())
+        self.settings_btn.setIcon(settings_icon)
+        self.settings_btn.setText("⋮" if settings_icon.isNull() else "")
+        self.setWindowIcon(load_asset_icon("app-icon.svg"))
 
     def _setup_ui(self) -> None:
         """Fully boots the visual DOM equivalent of the application."""
@@ -110,18 +116,37 @@ class WarpWindow(QWidget):
         not_reg_label.setFont(font)
         not_reg_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        info_label = QLabel(self.tr("You must accept the Cloudflare Terms of Service to continue."))
+        info_label = QLabel(self.tr("Review the official client's terms before continuing."))
         info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         info_label.setWordWrap(True)
 
-        self.register_btn = QPushButton(self.tr("Accept and continue"))
+        consent_layout = QHBoxLayout()
+        self.terms_checkbox = QCheckBox()
+        self.terms_checkbox.setAccessibleName(
+            self.tr("Agree to the Cloudflare Application Terms and acknowledge the Application Privacy Policy")
+        )
+        terms_label = QLabel(
+            self.tr(
+                "I agree to the <a href='https://www.cloudflare.com/application/terms/'>Cloudflare Application "
+                "Terms</a> and acknowledge the <a href='https://www.cloudflare.com/application/privacypolicy/'>"
+                "Application Privacy Policy</a>."
+            )
+        )
+        terms_label.setWordWrap(True)
+        terms_label.setOpenExternalLinks(True)
+        terms_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+        consent_layout.addWidget(self.terms_checkbox, alignment=Qt.AlignmentFlag.AlignTop)
+        consent_layout.addWidget(terms_label, stretch=1)
+
+        self.register_btn = QPushButton(self.tr("Continue"))
         self.register_btn.setFixedSize(160, 40)
         self.register_btn.setProperty("styleClass", "primary")
+        self.register_btn.setEnabled(False)
 
         self.org_toggle_btn = QPushButton(self.tr("Have an organization?"))
         self.org_toggle_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.org_toggle_btn.setStyleSheet(
-            "color: #0066cc; text-decoration: underline; border: none; background: transparent;"
+            "color: palette(link); text-decoration: underline; border: none; background: transparent;"
         )
         self.org_toggle_btn.clicked.connect(self._toggle_org_input)
 
@@ -133,6 +158,7 @@ class WarpWindow(QWidget):
         p0_layout.addWidget(not_reg_label)
         p0_layout.addWidget(info_label)
         p0_layout.addSpacing(15)
+        p0_layout.addLayout(consent_layout)
         p0_layout.addWidget(self.org_input)
         p0_layout.addWidget(self.register_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
         self.registration_error = QLabel("")
@@ -217,12 +243,12 @@ class WarpWindow(QWidget):
         if self.org_input.isHidden():
             self.org_input.show()
             self.org_toggle_btn.setText(self.tr("Use personal account instead"))
-            self.register_btn.setText(self.tr("Join Organization"))
+            self.register_btn.setText(self.tr("Join organization"))
             self.registration_error.hide()
         else:
             self.org_input.hide()
             self.org_toggle_btn.setText(self.tr("Have an organization?"))
-            self.register_btn.setText(self.tr("Accept and continue"))
+            self.register_btn.setText(self.tr("Continue"))
             self.registration_error.hide()
 
     def _build_footer(self) -> None:
@@ -231,12 +257,12 @@ class WarpWindow(QWidget):
         footer_layout.setContentsMargins(10, 0, 10, 0)
 
         self.settings_btn = QToolButton()
-        self.settings_btn.setIcon(load_tinted_icon("gear.svg"))
         self.settings_btn.setIconSize(QSize(22, 22))
         self.settings_btn.setProperty("styleClass", "icon")
         self.settings_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.settings_btn.setAccessibleName(self.tr("Application menu"))
         self.settings_btn.setToolTip(self.tr("Application menu"))
+        self._update_icons()
 
         self.settings_menu = QMenu(self)
         self.pref_action = self.settings_menu.addAction(self.tr("Preferences"))
@@ -274,6 +300,7 @@ class WarpWindow(QWidget):
         self.manager.busy_changed.connect(self._on_busy_changed)
         self.manager.capabilities_detected.connect(self._on_capabilities_detected)
         self.toggle.clicked.connect(self._on_toggle_clicked)
+        self.terms_checkbox.toggled.connect(self._update_registration_controls)
         self.register_btn.clicked.connect(self._on_register_clicked)
         self.repair_btn.clicked.connect(self._on_repair_clicked)
 
@@ -290,6 +317,10 @@ class WarpWindow(QWidget):
 
     def _on_register_clicked(self) -> None:
         logger.info("User requested daemon registration")
+        if not self.terms_checkbox.isChecked():
+            self.registration_error.setText(self.tr("Accept the terms before continuing."))
+            self.registration_error.show()
+            return
         if not self.org_input.isHidden():
             org = self.org_input.text().strip()
             if not org:
@@ -328,13 +359,17 @@ class WarpWindow(QWidget):
             self._update_status_style("title_error")
 
     def _on_busy_changed(self, busy: bool) -> None:
-        self.register_btn.setEnabled(not busy)
+        self._update_registration_controls()
         self.repair_btn.setEnabled(not busy)
         self.pref_action.setEnabled(not busy)
         if busy:
             self.toggle.setEnabled(False)
         else:
             self._update_ui_state(self.manager.current_state)
+
+    def _update_registration_controls(self, _checked: bool = False) -> None:
+        """Require affirmative Terms consent and no active mutation."""
+        self.register_btn.setEnabled(self.terms_checkbox.isChecked() and not self.manager.is_busy)
 
     def _update_status_style(self, style_class: str) -> None:
         """Updates the status title's style class and forces a style refresh."""

@@ -5,6 +5,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.9.3] – 2026-08-31
+
+### Added
+
+- Add versioned consent for Cloudflare's Application Terms and Application Privacy Policy to personal and organization enrollment.
+- Add packaged trademark and third-party icon notices.
+
+### Changed
+
+- Replace Cloudflare-derived artwork and branded colors with independently licensed icons and system palette colors.
+- Describe QWarp consistently as an independent, Qt6-based alternative desktop client for Cloudflare WARP.
+- Load application artwork without recoloring while retaining palette-aware symbolic settings and tray icons.
+
+### Fixed
+
+- Show the connecting state immediately after one connect action and tolerate a bounded stale daemon status response.
+- Correct Cloudflare legal-document links, product attribution, and consent persistence.
+
+### Removed
+
+- Remove obsolete branded screenshots and their README gallery.
+
 ## [v0.9.2] – 2026-08-31
 
 ### Added
