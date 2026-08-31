@@ -1,19 +1,24 @@
 <div align="center">
   <img src="src/qwarp/assets/app-icon.svg" width="128" alt="QWarp logo">
 
-  # QWarp
+# QWarp
 
-  A lightweight Qt 6 desktop interface for the official Cloudflare WARP client on Linux.
+A Qt6-based alternative desktop client for Cloudflare® WARP® on Linux.
 
-  [![CI](https://github.com/iashutoshtiwari/qwarp/actions/workflows/ci.yml/badge.svg)](https://github.com/iashutoshtiwari/qwarp/actions/workflows/ci.yml)
-  [![Latest release](https://img.shields.io/github/v/release/iashutoshtiwari/qwarp)](https://github.com/iashutoshtiwari/qwarp/releases/latest)
-  [![AUR version](https://img.shields.io/aur/version/qwarp)](https://aur.archlinux.org/packages/qwarp)
-  [![License: MIT](https://img.shields.io/github/license/iashutoshtiwari/qwarp)](LICENSE)
+[![CI](https://github.com/iashutoshtiwari/qwarp/actions/workflows/ci.yml/badge.svg)](https://github.com/iashutoshtiwari/qwarp/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/iashutoshtiwari/qwarp)](https://github.com/iashutoshtiwari/qwarp/releases/latest)
+[![AUR version](https://img.shields.io/aur/version/qwarp)](https://aur.archlinux.org/packages/qwarp)
+[![License: MIT](https://img.shields.io/github/license/iashutoshtiwari/qwarp)](LICENSE)
+
 </div>
 
 > [!IMPORTANT]
-> QWarp is an unofficial community project. It is not affiliated with or endorsed by Cloudflare. QWarp controls an
-> existing Cloudflare WARP installation; it does not bundle or replace `warp-cli`, `warp-svc`, or Cloudflare's packages.
+> QWarp is independently developed and is not affiliated with, authorized, sponsored, or endorsed by Cloudflare, Inc.
+> It controls a separately installed official client and does not distribute or replace `warp-cli`, `warp-svc`, or
+> software published by Cloudflare, Inc. See the project [trademark notice](TRADEMARKS.md).
+
+Cloudflare, 1.1.1.1, WARP, and WARP+ are trademarks and/or registered trademarks of Cloudflare, Inc. in the United
+States and other jurisdictions.
 
 QWarp is pre-1.0 software. Features and interfaces may still change, and organization policy can restrict the actions
 available to Zero Trust users.
@@ -26,14 +31,6 @@ available to Zero Trust users.
 - Safe background polling so WARP commands do not block the Qt interface
 - Wayland and X11 support, system tray operation, XDG autostart, and theme-aware icons
 - English, German, Spanish, Portuguese, Italian, Chinese, Japanese, and Hindi catalogs
-
-## Screenshots
-
-| Main window | System tray |
-|:---:|:---:|
-| <img src="screenshots/UI.png" width="400" alt="QWarp main window"> | <img src="screenshots/Tray.png" width="400" alt="QWarp system tray menu"> |
-
-<p align="center"><sub>Screenshots were captured on KDE Plasma 6 with the Darkly style.</sub></p>
 
 ## Requirements and platform support
 
@@ -52,13 +49,13 @@ and RHEL 9 and 10. Cloudflare can change this list, so check its
 [Linux requirements](https://developers.cloudflare.com/warp-client/get-started/#linux) and
 [package repository](https://pkg.cloudflareclient.com/) before installing.
 
-| Distribution | Recommended QWarp package | Support notes |
-|---|---|---|
-| Arch Linux, x86_64 | AUR `qwarp` | Community-supported; depends on AUR `cloudflare-warp-bin` |
-| Ubuntu / Debian | Release `.deb` | Built in CI on Ubuntu 24.04; depends on `cloudflare-warp` |
-| Fedora 44 | Release `.rpm` | Built in CI for Fedora 44; depends on `cloudflare-warp` |
-| Fedora 43, RHEL 9/10 | Standalone binary | Cloudflare-supported client; QWarp packaging is best effort |
-| Other x86_64 Linux | Standalone binary | Best effort; requires a compatible, separately installed official client |
+| Distribution         | Recommended QWarp package | Support notes                                                            |
+| -------------------- | ------------------------- | ------------------------------------------------------------------------ |
+| Arch Linux, x86_64   | AUR `qwarp`               | Community-supported; depends on AUR `cloudflare-warp-bin`                |
+| Ubuntu / Debian      | Release `.deb`            | Built in CI on Ubuntu 24.04; depends on `cloudflare-warp`                |
+| Fedora 44            | Release `.rpm`            | Built in CI for Fedora 44; depends on `cloudflare-warp`                  |
+| Fedora 43, RHEL 9/10 | Standalone binary         | Cloudflare-supported client; QWarp packaging is best effort              |
+| Other x86_64 Linux   | Standalone binary         | Best effort; requires a compatible, separately installed official client |
 
 The standalone binary is built on Ubuntu 22.04 for x86_64 and includes Python and Qt. It still relies on compatible
 host libraries and the separately installed Cloudflare client. QWarp does not currently publish an ARM64 standalone
@@ -92,10 +89,10 @@ curl -fsSL https://pkg.cloudflareclient.com/cloudflare-warp-ascii.repo \
 sudo dnf install cloudflare-warp
 ```
 
-RHEL 9 and 10 also require EPEL. Follow Cloudflare's current
+RHEL 9 and 10 also require EPEL. Follow the current instructions published by Cloudflare, Inc. for
 [RHEL installation instructions](https://pkg.cloudflareclient.com/) rather than using the Fedora QWarp RPM. If the
-Cloudflare repository key was installed before September 12, 2025, repeat Cloudflare's key-update instructions on the
-same page.
+repository key was installed before September 12, 2025, repeat the key-update instructions published by Cloudflare,
+Inc. on the same page.
 
 #### Install WARP on Arch Linux
 
@@ -172,6 +169,9 @@ feature proposals.
 
 ## License
 
-QWarp is available under the [MIT License](LICENSE).
+QWarp's original code is available under the [MIT License](LICENSE).
+
+Bundled artwork licenses and third-party names and marks are documented in [TRADEMARKS.md](TRADEMARKS.md). QWarp's
+license does not grant rights to third-party software or trademarks.
 
 Maintained by [Ashutosh Tiwari](https://github.com/iashutoshtiwari).

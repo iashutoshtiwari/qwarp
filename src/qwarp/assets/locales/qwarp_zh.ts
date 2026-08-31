@@ -73,8 +73,8 @@
         <translation>账户类型:</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="769" />
-        <location filename="../../ui/settings.py" line="763" />
+        <location filename="../../ui/settings.py" line="770" />
+        <location filename="../../ui/settings.py" line="764" />
         <location filename="../../ui/settings.py" line="196" />
         <location filename="../../ui/settings.py" line="179" />
         <source>Show</source>
@@ -111,7 +111,7 @@
         <translation>刷新数据</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="611" />
+        <location filename="../../ui/settings.py" line="612" />
         <location filename="../../ui/settings.py" line="216" />
         <source>Delete Registration</source>
         <translation>删除注册</translation>
@@ -143,7 +143,7 @@
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="598" />
+        <location filename="../../ui/settings.py" line="599" />
         <location filename="../../ui/settings.py" line="255" />
         <source>Leave Organization</source>
         <translation type="unfinished" />
@@ -340,330 +340,333 @@
     </message>
     <message>
         <location filename="../../ui/settings.py" line="468" />
-        <source>A Wayland-native Qt6 wrapper for Cloudflare WARP.</source>
-        <translation>适用于 Cloudflare WARP 的 Wayland 原生 Qt6 包装器。</translation>
+        <source>A Qt6-based alternative desktop client for Cloudflare® WARP®.</source>
+        <translation type="unfinished" />
     </message>
     <message>
         <location filename="../../ui/settings.py" line="486" />
-        <source>Disclaimer: QWarp is an unofficial community project and is not affiliated with, authorized, maintained, sponsored, or endorsed by Cloudflare, Inc.&lt;br&gt;&lt;br&gt;Cloudflare, the Cloudflare logo, and Cloudflare Workers are trademarks and/or registered trademarks of Cloudflare, Inc. in the United States and other jurisdictions.&lt;br&gt;&lt;br&gt;&lt;a href='https://www.cloudflare.com/website-terms/'&gt;Terms and Conditions&lt;/a&gt; | &lt;a href='https://www.cloudflare.com/privacypolicy/'&gt;Privacy Policy&lt;/a&gt;</source>
-        <translation>免责声明：QWarp 是一个非官方社区项目，与 Cloudflare, Inc. 没有任何关联、授权、维护、赞助或认可。&lt;br&gt;&lt;br&gt;Cloudflare、Cloudflare 徽标以及 Cloudflare Workers 是 Cloudflare, Inc. 在美国及其他司法管辖区的商标和/或注册商标。&lt;br&gt;&lt;br&gt;&lt;a href='https://www.cloudflare.com/website-terms/'&gt;条款和条件&lt;/a&gt; | &lt;a href='https://www.cloudflare.com/privacypolicy/'&gt;隐私政策&lt;/a&gt;</translation>
+        <source>QWarp is independently developed and is not affiliated with, authorized, sponsored, or endorsed by Cloudflare, Inc. It requires a separately installed official client and does not distribute Cloudflare software.&lt;br&gt;&lt;br&gt;Cloudflare, 1.1.1.1, WARP, and WARP+ are trademarks and/or registered trademarks of Cloudflare, Inc. in the United States and other jurisdictions.&lt;br&gt;&lt;br&gt;&lt;a href='https://www.cloudflare.com/trademark/'&gt;Trademark Guidelines&lt;/a&gt; | &lt;a href='https://www.cloudflare.com/application/terms/'&gt;Application Terms&lt;/a&gt; | &lt;a href='https://www.cloudflare.com/application/privacypolicy/'&gt;Application Privacy Policy&lt;/a&gt;</source>
+        <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="504" />
+        <location filename="../../ui/settings.py" line="505" />
         <source>About</source>
         <translation>关于</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="571" />
+        <location filename="../../ui/settings.py" line="572" />
         <source>Registered</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="571" />
+        <location filename="../../ui/settings.py" line="572" />
         <source>Not registered</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="572" />
+        <location filename="../../ui/settings.py" line="573" />
         <source>Unavailable</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="592" />
-        <source>cloudflare-warp version: %s</source>
+        <location filename="../../ui/settings.py" line="593" />
+        <source>Installed client version: %s</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="599" />
+        <location filename="../../ui/settings.py" line="600" />
         <source>Are you sure you want to leave this organization?</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="612" />
+        <location filename="../../ui/settings.py" line="613" />
         <source>Delete this WARP registration? You will need to register again before reconnecting.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="661" />
+        <location filename="../../ui/settings.py" line="662" />
         <source>Connection settings are unavailable.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="746" />
-        <location filename="../../ui/settings.py" line="727" />
+        <location filename="../../ui/settings.py" line="747" />
+        <location filename="../../ui/settings.py" line="728" />
         <source>The requested action failed.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="769" />
-        <location filename="../../ui/settings.py" line="763" />
+        <location filename="../../ui/settings.py" line="770" />
+        <location filename="../../ui/settings.py" line="764" />
         <source>Hide</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="774" />
+        <location filename="../../ui/settings.py" line="775" />
         <source>Unknown</source>
         <translation type="unfinished" />
     </message>
 </context><context>
     <name>WarpStateManager</name>
     <message>
-        <location filename="../../core/state.py" line="430" />
-        <location filename="../../core/state.py" line="368" />
+        <location filename="../../core/state.py" line="480" />
+        <location filename="../../core/state.py" line="402" />
         <source>Another WARP action is already in progress.</source>
         <translation type="unfinished" />
     </message>
 </context><context>
     <name>WarpTrayIcon</name>
     <message>
-        <location filename="../../ui/tray.py" line="43" />
+        <location filename="../../ui/tray.py" line="38" />
         <source>Connect</source>
         <translation>连接</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="47" />
+        <location filename="../../ui/tray.py" line="42" />
         <source>Disconnect</source>
         <translation>断开连接</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="53" />
+        <location filename="../../ui/tray.py" line="48" />
         <source>Show/Hide Window</source>
         <translation>显示/隐藏窗口</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="57" />
+        <location filename="../../ui/tray.py" line="52" />
         <source>Quit</source>
         <translation>退出</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="85" />
+        <location filename="../../ui/tray.py" line="80" />
         <source>QWarp: Unknown</source>
         <translation>QWarp: 未知</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="90" />
+        <location filename="../../ui/tray.py" line="85" />
         <source>QWarp: Connected</source>
         <translation>QWarp: 已连接</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="95" />
+        <location filename="../../ui/tray.py" line="90" />
         <source>QWarp: Disconnected</source>
         <translation>QWarp: 已断开</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="100" />
+        <location filename="../../ui/tray.py" line="95" />
         <source>QWarp: Connecting...</source>
         <translation>QWarp: 连接中...</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="105" />
+        <location filename="../../ui/tray.py" line="100" />
         <source>QWarp: Registration Missing</source>
         <translation>QWarp: 缺少注册信息</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="110" />
+        <location filename="../../ui/tray.py" line="105" />
         <source>QWarp: Daemon Error</source>
         <translation>QWarp: Daemon 错误</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="115" />
+        <location filename="../../ui/tray.py" line="110" />
         <source>QWarp: Service Stopped</source>
         <translation>QWarp: 服务已停止</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="120" />
+        <location filename="../../ui/tray.py" line="115" />
         <source>QWarp: </source>
         <translation>QWarp: </translation>
     </message>
 </context><context>
     <name>WarpWindow</name>
     <message>
-        <location filename="../../ui/window.py" line="106" />
+        <location filename="../../ui/window.py" line="112" />
         <source>Setup required</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="113" />
-        <source>You must accept the Cloudflare Terms of Service to continue.</source>
-        <translation>您必须接受 Cloudflare 服务条款才能继续。</translation>
-    </message>
-    <message>
-        <location filename="../../ui/window.py" line="225" />
-        <location filename="../../ui/window.py" line="117" />
-        <source>Accept and continue</source>
+        <location filename="../../ui/window.py" line="119" />
+        <source>Review the official client's terms before continuing.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="224" />
-        <location filename="../../ui/window.py" line="121" />
-        <source>Have an organization?</source>
+        <location filename="../../ui/window.py" line="126" />
+        <source>Agree to the Cloudflare Application Terms and acknowledge the Application Privacy Policy</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="../../ui/window.py" line="129" />
-        <source>Organization name</source>
+        <source>I agree to the &lt;a href='https://www.cloudflare.com/application/terms/'&gt;Cloudflare Application Terms&lt;/a&gt; and acknowledge the &lt;a href='https://www.cloudflare.com/application/privacypolicy/'&gt;Application Privacy Policy&lt;/a&gt;.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../../ui/window.py" line="251" />
+        <location filename="../../ui/window.py" line="141" />
+        <source>Continue</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../../ui/window.py" line="250" />
+        <location filename="../../ui/window.py" line="146" />
+        <source>Have an organization?</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="../../ui/window.py" line="154" />
+        <source>Organization name</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../../ui/window.py" line="180" />
         <source>Official Cloudflare client not found</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="163" />
+        <location filename="../../ui/window.py" line="189" />
         <source>QWarp requires the official warp-cli to be installed to function properly. Please install it and restart QWarp.&lt;br&gt;&lt;br&gt;&lt;a href='https://pkg.cloudflareclient.com/'&gt;Installation Instructions&lt;/a&gt;</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="185" />
+        <location filename="../../ui/window.py" line="211" />
         <source>Cloudflare WARP connection</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="186" />
+        <location filename="../../ui/window.py" line="212" />
         <source>Connect or disconnect Cloudflare WARP</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="188" />
+        <location filename="../../ui/window.py" line="214" />
         <source>Enable service</source>
         <translation>启用服务</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="194" />
+        <location filename="../../ui/window.py" line="220" />
         <source>UNKNOWN</source>
         <translation>未知</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="201" />
+        <location filename="../../ui/window.py" line="227" />
         <source>Connecting to daemon...</source>
         <translation>正在连接到 daemon...</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="219" />
+        <location filename="../../ui/window.py" line="245" />
         <source>Use personal account instead</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="220" />
-        <source>Join Organization</source>
+        <location filename="../../ui/window.py" line="246" />
+        <source>Join organization</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="239" />
-        <location filename="../../ui/window.py" line="238" />
+        <location filename="../../ui/window.py" line="264" />
+        <location filename="../../ui/window.py" line="263" />
         <source>Application menu</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="242" />
+        <location filename="../../ui/window.py" line="268" />
         <source>Preferences</source>
         <translation>偏好设置</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="245" />
+        <location filename="../../ui/window.py" line="271" />
         <source>Exit</source>
         <translation>退出</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="296" />
-        <source>Please enter an organization name.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="../../ui/window.py" line="412" />
-        <location filename="../../ui/window.py" line="383" />
-        <location filename="../../ui/window.py" line="312" />
-        <source>CONNECTING</source>
-        <translation>连接中</translation>
-    </message>
-    <message>
-        <location filename="../../ui/window.py" line="412" />
-        <location filename="../../ui/window.py" line="312" />
-        <source>DISCONNECTING</source>
-        <translation>正在断开连接</translation>
-    </message>
-    <message>
-        <location filename="../../ui/window.py" line="414" />
-        <location filename="../../ui/window.py" line="313" />
-        <source>Please wait...</source>
-        <translation>请稍候...</translation>
-    </message>
-    <message>
-        <location filename="../../ui/window.py" line="324" />
-        <source>Registration failed.</source>
+        <location filename="../../ui/window.py" line="321" />
+        <source>Accept the terms before continuing.</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="../../ui/window.py" line="327" />
+        <source>Please enter an organization name.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../../ui/window.py" line="447" />
+        <location filename="../../ui/window.py" line="418" />
+        <location filename="../../ui/window.py" line="343" />
+        <source>CONNECTING</source>
+        <translation>连接中</translation>
+    </message>
+    <message>
+        <location filename="../../ui/window.py" line="447" />
+        <location filename="../../ui/window.py" line="343" />
+        <source>DISCONNECTING</source>
+        <translation>正在断开连接</translation>
+    </message>
+    <message>
+        <location filename="../../ui/window.py" line="449" />
+        <location filename="../../ui/window.py" line="344" />
+        <source>Please wait...</source>
+        <translation>请稍候...</translation>
+    </message>
+    <message>
+        <location filename="../../ui/window.py" line="355" />
+        <source>Registration failed.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../../ui/window.py" line="358" />
         <source>The requested action failed.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="370" />
+        <location filename="../../ui/window.py" line="405" />
         <source>CONNECTED</source>
         <translation>已连接</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="372" />
+        <location filename="../../ui/window.py" line="407" />
         <source>Your Internet is private.</source>
         <translation>您的互联网是私密的。</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="377" />
+        <location filename="../../ui/window.py" line="412" />
         <source>DISCONNECTED</source>
         <translation>已断开</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="379" />
+        <location filename="../../ui/window.py" line="414" />
         <source>Your Internet is not private.</source>
         <translation>您的互联网不是私密的。</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="385" />
+        <location filename="../../ui/window.py" line="420" />
         <source>Securing connection...</source>
         <translation>正在保护连接...</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="390" />
+        <location filename="../../ui/window.py" line="425" />
         <source>ERROR</source>
         <translation>错误</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="392" />
+        <location filename="../../ui/window.py" line="427" />
         <source>Unable to communicate with Cloudflare WARP.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="397" />
+        <location filename="../../ui/window.py" line="432" />
         <source>SERVICE OFF</source>
         <translation>服务已关闭</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="399" />
+        <location filename="../../ui/window.py" line="434" />
         <source>Cloudflare WARP service is not running.</source>
         <translation>Cloudflare WARP 服务未运行。</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="403" />
+        <location filename="../../ui/window.py" line="438" />
         <source>WAIT</source>
         <translation>等待</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="404" />
+        <location filename="../../ui/window.py" line="439" />
         <source>Checking status...</source>
         <translation>正在检查状态...</translation>
-    </message>
-    <message>
-        <source>Not Registered</source>
-        <translation type="vanished">未注册</translation>
-    </message>
-    <message>
-        <source>Accept &amp;&amp; register</source>
-        <translation type="vanished">接受 &amp;&amp; 注册</translation>
-    </message>
-    <message>
-        <source>WARP daemon is not running.</source>
-        <translation type="vanished">WARP daemon 未运行。</translation>
     </message>
 </context></TS>

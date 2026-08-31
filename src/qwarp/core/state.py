@@ -1,14 +1,18 @@
 import logging
 import threading
+import time
 from collections.abc import Callable
 from enum import StrEnum
 from typing import Any, Optional
 
-from PyQt6.QtCore import QCoreApplication, QObject, QRunnable, QThread, QThreadPool, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import QCoreApplication, QObject, QRunnable, QThread, QThreadPool, QTimer, pyqtSignal, pyqtSlot
 
 from qwarp.core.engine import CliCapabilities, WarpEngine, WarpState
 
 logger = logging.getLogger(__name__)
+
+CONNECT_TRANSITION_GRACE_SECONDS = 10.0
+CONNECT_TRANSITION_REFRESH_MS = 1000
 
 
 class ActionId(StrEnum):
@@ -235,6 +239,9 @@ class WarpStateManager(QObject):
         self._settings_pending = False
         self._capabilities_pending = False
         self._platform_settings_pending = False
+        self._connect_transition_deadline: Optional[float] = None
+        self._connect_previous_state: Optional[WarpState] = None
+        self._connect_refresh_pending = False
         self._shutting_down = False
 
         self.status_thread = StatusWorker(self.engine, interval_ms=poll_interval_ms)
@@ -278,11 +285,38 @@ class WarpStateManager(QObject):
 
     @pyqtSlot(WarpState)
     def _on_status_result(self, state: WarpState) -> None:
+        deadline = self._connect_transition_deadline
+        if deadline is not None:
+            if state == WarpState.CONNECTED:
+                self._connect_transition_deadline = None
+                self._connect_previous_state = None
+            elif state == WarpState.DISCONNECTED:
+                if deadline == float("inf") or time.monotonic() < deadline:
+                    state = WarpState.CONNECTING
+                    self._schedule_connect_transition_refresh()
+                else:
+                    self._connect_transition_deadline = None
+                    self._connect_previous_state = None
+            elif state != WarpState.CONNECTING:
+                self._connect_transition_deadline = None
+                self._connect_previous_state = None
+
         if self.current_state != state:
             logger.info("State transition: %s -> %s", self.current_state.name, state.name)
             self.current_state = state
             self.state_changed.emit(state)
         self.state_refreshed.emit(state)
+
+    def _schedule_connect_transition_refresh(self) -> None:
+        if self._connect_refresh_pending or not self.status_thread.isRunning():
+            return
+        self._connect_refresh_pending = True
+        QTimer.singleShot(CONNECT_TRANSITION_REFRESH_MS, self._refresh_connect_transition)
+
+    def _refresh_connect_transition(self) -> None:
+        self._connect_refresh_pending = False
+        if self._connect_transition_deadline is not None and not self._shutting_down:
+            self.request_status_refresh()
 
     # ------------------------------------------------------------------
     # Capability detection
@@ -375,6 +409,10 @@ class WarpStateManager(QObject):
 
         logger.info("Explicit request: %s", action.value)
         self.active_action = action.value
+        if action == ActionId.CONNECT:
+            self._connect_previous_state = self.current_state
+            self._connect_transition_deadline = float("inf")
+            self._on_status_result(WarpState.CONNECTING)
         self.busy_changed.emit(True)
         self.action_started.emit(action.value)
         worker = ActionWorker(self.engine, action.value, **kwargs)
@@ -393,14 +431,26 @@ class WarpStateManager(QObject):
 
     @pyqtSlot(object)
     def _on_reconciliation_completed(self, result: object) -> None:
+        pending = self._pending_action_result
+        if pending is not None and pending[0] == ActionId.CONNECT and not pending[1]:
+            self._connect_transition_deadline = None
         if isinstance(result, WarpState):
             self._on_status_result(result)
-        pending = self._pending_action_result
         self._pending_action_result = None
         if pending is not None:
             self._finish_action(*pending)
 
     def _finish_action(self, action: str, success: bool, message: str) -> None:
+        if action == ActionId.CONNECT:
+            if success and self._connect_transition_deadline is not None:
+                self._connect_transition_deadline = time.monotonic() + CONNECT_TRANSITION_GRACE_SECONDS
+            elif not success:
+                self._connect_transition_deadline = None
+                if self.current_state == WarpState.CONNECTING:
+                    fallback_state = self._connect_previous_state or WarpState.DISCONNECTED
+                    self._on_status_result(fallback_state)
+                self._connect_previous_state = None
+
         if self.active_action == action:
             self.active_action = None
             self.busy_changed.emit(False)

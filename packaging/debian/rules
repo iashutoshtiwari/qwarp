@@ -15,3 +15,6 @@ override_dh_install:
 	dh_install
 	install -Dm644 qwarp.desktop debian/qwarp/usr/share/applications/qwarp.desktop
 	install -Dm644 src/qwarp/assets/app-icon.svg debian/qwarp/usr/share/icons/hicolor/scalable/apps/qwarp.svg
+	install -Dm644 TRADEMARKS.md debian/qwarp/usr/share/doc/qwarp/TRADEMARKS.md
+	install -Dm644 LICENSES/Apache-2.0.txt debian/qwarp/usr/share/doc/qwarp/Apache-2.0.txt
+	install -Dm644 LICENSES/Glyphs-Poly-MIT.txt debian/qwarp/usr/share/doc/qwarp/Glyphs-Poly-MIT.txt

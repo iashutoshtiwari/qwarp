@@ -18,11 +18,15 @@ from qwarp.core.engine import WarpEngine
 from qwarp.core.instance import InstanceRole, SingleInstance
 from qwarp.core.state import WarpStateManager
 from qwarp.ui.styles import GLOBAL_QSS
-from qwarp.ui.tray import WarpTrayIcon, get_asset_icon
+from qwarp.ui.tray import WarpTrayIcon
 from qwarp.ui.window import WarpWindow
-from qwarp.utils.system import get_asset_dir
+from qwarp.utils.system import get_asset_dir, load_asset_icon
 
 logger = logging.getLogger(__name__)
+
+TERMS_CONSENT_KEY = "cloudflare_terms_revision"
+TERMS_CONSENT_REVISION = "cloudflare-application-terms-2024-10-18"
+LEGACY_TERMS_CONSENT_KEY = "terms_accepted"
 
 
 def unhandled_exception_hook(exc_type, exc_value, exc_traceback):
@@ -43,7 +47,7 @@ def setup_logging() -> None:
 
 def parse_cli_args(arguments: list[str]) -> argparse.Namespace:
     """Handle side-effect-free CLI options before creating any Qt objects."""
-    parser = argparse.ArgumentParser(description="QWarp GUI for the official Cloudflare WARP client")
+    parser = argparse.ArgumentParser(description="Qt6-based alternative desktop client for Cloudflare WARP")
     parser.add_argument("--version", action="version", version=f"QWarp {__version__}")
     parser.add_argument(
         "--start-minimized",
@@ -68,10 +72,18 @@ def setup_ipc_instance() -> SingleInstance:
     return instance_manager
 
 
+def has_current_terms_acceptance(settings: QSettings) -> bool:
+    """Return whether the reviewed Terms revision was accepted, removing legacy consent."""
+    if settings.contains(LEGACY_TERMS_CONSENT_KEY):
+        settings.remove(LEGACY_TERMS_CONSENT_KEY)
+        settings.sync()
+    return settings.value(TERMS_CONSENT_KEY, "", type=str) == TERMS_CONSENT_REVISION
+
+
 def remember_terms_acceptance(settings: QSettings, action: str, success: bool) -> None:
     """Persist consent only after the onboarding action completes successfully."""
     if action == "register" and success:
-        settings.setValue("terms_accepted", True)
+        settings.setValue(TERMS_CONSENT_KEY, TERMS_CONSENT_REVISION)
         settings.sync()
 
 
@@ -115,7 +127,7 @@ def main() -> None:
     instance_manager = setup_ipc_instance()
 
     app.setDesktopFileName("qwarp")  # Wayland integration
-    app.setWindowIcon(get_asset_icon("app-icon.svg"))
+    app.setWindowIcon(load_asset_icon("app-icon.svg"))
 
     tray_available = QSystemTrayIcon.isSystemTrayAvailable()
     app.setQuitOnLastWindowClosed(not tray_available)
@@ -128,7 +140,7 @@ def main() -> None:
     timer.timeout.connect(lambda: None)
     timer.start(500)
 
-    engine = WarpEngine(accept_tos=settings.value("terms_accepted", False, type=bool))
+    engine = WarpEngine(accept_tos=has_current_terms_acceptance(settings))
     manager = WarpStateManager(engine)
     window = WarpWindow(manager, tray_available=tray_available)
 

@@ -2,10 +2,10 @@
 pkgname=qwarp
 pkgver=0.9.2
 pkgrel=1
-pkgdesc="A lightweight, Wayland-native Qt6 wrapper for Cloudflare WARP"
+pkgdesc="Qt6-based alternative desktop client for Cloudflare WARP"
 arch=('x86_64')
 url="https://github.com/iashutoshtiwari/qwarp"
-license=('MIT')
+license=('MIT' 'Apache-2.0')
 depends=('python' 'python-pyqt6' 'cloudflare-warp-bin')
 makedepends=('python-build' 'python-installer' 'python-wheel' 'python-setuptools' 'qt6-tools')
 
@@ -45,4 +45,9 @@ package() {
 
   # Install the license
   install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 LICENSES/Apache-2.0.txt "$pkgdir/usr/share/licenses/$pkgname/Apache-2.0.txt"
+  install -Dm644 LICENSES/Glyphs-Poly-MIT.txt "$pkgdir/usr/share/licenses/$pkgname/Glyphs-Poly-MIT.txt"
+
+  # Install the third-party trademark notice
+  install -Dm644 TRADEMARKS.md "$pkgdir/usr/share/doc/$pkgname/TRADEMARKS.md"
 }

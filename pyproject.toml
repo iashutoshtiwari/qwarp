@@ -5,10 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "qwarp"
 dynamic = ["version"]
-description = "A lightweight, Wayland-native Qt6 wrapper for cloudflare-warp-bin"
+description = "A Wayland-native, Qt6-based alternative desktop client for Cloudflare WARP"
 readme = "README.md"
 requires-python = ">=3.11"
-license = {text = "MIT"}
+license = "MIT AND Apache-2.0"
+license-files = ["LICENSE", "LICENSES/*.txt", "TRADEMARKS.md"]
 dependencies = [
     "PyQt6>=6.6,<7",
 ]

@@ -3,8 +3,22 @@ Upstream-Name: qwarp
 Source: https://github.com/iashutoshtiwari/qwarp
 
 Files: *
-Copyright: 2024 Ashutosh Tiwari
+Copyright: 2026 Ashutosh Tiwari
 License: MIT
+
+Files: src/qwarp/assets/tray-connected.svg
+ src/qwarp/assets/tray-connecting.svg
+ src/qwarp/assets/tray-disconnected.svg
+ src/qwarp/assets/tray-error.svg
+ src/qwarp/assets/tray-unregistered.svg
+ src/qwarp/assets/gear.svg
+Copyright: Google LLC
+License: Apache-2.0
+
+Files: src/qwarp/assets/app-icon.svg
+Copyright: 2018 Goran Spasojevic
+ Google LLC
+License: MIT and Apache-2.0
 
 License: MIT
  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,3 +38,7 @@ License: MIT
  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
+
+License: Apache-2.0
+ The full Apache License, Version 2.0 is provided in
+ LICENSES/Apache-2.0.txt and installed with the package.

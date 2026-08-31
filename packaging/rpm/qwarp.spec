@@ -1,8 +1,8 @@
 Name:           qwarp
 Version:        0.9.2
 Release:        1%{?dist}
-Summary:        A lightweight, Wayland-native Qt6 wrapper for Cloudflare WARP
-License:        MIT
+Summary:        Qt6-based alternative desktop client for Cloudflare WARP
+License:        MIT AND Apache-2.0
 URL:            https://github.com/iashutoshtiwari/qwarp
 Source0:        %{name}-%{version}-source.tar.gz
 
@@ -19,7 +19,8 @@ Requires:       python3-pyqt6
 Requires:       cloudflare-warp
 
 %description
-QWarp is an unofficial, Linux-only PyQt6 GUI for the Cloudflare WARP client.
+QWarp is an independently developed, Linux-only PyQt6 controller for the
+official Cloudflare WARP client.
 It is intended to remain lightweight, Wayland-native, usable on X11, and suitable
 for both Python package and frozen PyInstaller builds.
 
@@ -38,8 +39,8 @@ install -Dm644 qwarp.desktop %{buildroot}%{_datadir}/applications/qwarp.desktop
 install -Dm644 src/qwarp/assets/app-icon.svg %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/qwarp.svg
 
 %files -n qwarp -f %{pyproject_files}
-%license LICENSE
-%doc README.md
+%license LICENSE LICENSES/Apache-2.0.txt LICENSES/Glyphs-Poly-MIT.txt
+%doc README.md TRADEMARKS.md
 %{_bindir}/qwarp
 %{_datadir}/applications/qwarp.desktop
 %{_datadir}/icons/hicolor/scalable/apps/qwarp.svg
