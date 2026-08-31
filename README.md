@@ -23,6 +23,16 @@ States and other jurisdictions.
 QWarp is pre-1.0 software. Features and interfaces may still change, and organization policy can restrict the actions
 available to Zero Trust users.
 
+## Screenshots
+
+<div align="center">
+  <img src="screenshots/disconnected.png" width="32%" alt="Disconnected State">
+  <img src="screenshots/connected.png" width="32%" alt="Connected State">
+  <img src="screenshots/kde-tray.png" width="32%" alt="System Tray Menu">
+  <br>
+  <em>Captured on KDE Plasma 6 with the Darkly theme applied.</em>
+</div>
+
 ## What QWarp provides
 
 - Consumer WARP registration and Cloudflare Zero Trust enrollment
