@@ -17,7 +17,7 @@ from qwarp import __version__
 from qwarp.core.engine import WarpEngine
 from qwarp.core.instance import InstanceRole, SingleInstance
 from qwarp.core.state import WarpStateManager
-from qwarp.ui.styles import GLOBAL_QSS
+from qwarp.ui.styles import apply_application_theme
 from qwarp.ui.tray import WarpTrayIcon
 from qwarp.ui.window import WarpWindow
 from qwarp.utils.system import get_asset_dir, load_asset_icon
@@ -100,7 +100,7 @@ def main() -> None:
     app = QApplication(sys.argv)
     app.setOrganizationName("qwarp")
     app.setApplicationName("qwarp")
-    app.setStyleSheet(GLOBAL_QSS)
+    apply_application_theme(app)
     settings = QSettings()
 
     # Localized runtime translation instantiation

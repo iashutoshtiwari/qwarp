@@ -416,256 +416,256 @@
 </context><context>
     <name>WarpTrayIcon</name>
     <message>
-        <location filename="../../ui/tray.py" line="38" />
+        <location filename="../../ui/tray.py" line="42" />
         <source>Connect</source>
         <translation>接続</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="42" />
+        <location filename="../../ui/tray.py" line="46" />
         <source>Disconnect</source>
         <translation>切断</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="48" />
+        <location filename="../../ui/tray.py" line="52" />
         <source>Show/Hide Window</source>
         <translation>ウィンドウの表示/非表示</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="52" />
+        <location filename="../../ui/tray.py" line="56" />
         <source>Quit</source>
         <translation>終了</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="80" />
+        <location filename="../../ui/tray.py" line="84" />
         <source>QWarp: Unknown</source>
         <translation>QWarp: 不明</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="85" />
+        <location filename="../../ui/tray.py" line="89" />
         <source>QWarp: Connected</source>
         <translation>QWarp: 接続済み</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="90" />
+        <location filename="../../ui/tray.py" line="94" />
         <source>QWarp: Disconnected</source>
         <translation>QWarp: 切断済み</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="95" />
+        <location filename="../../ui/tray.py" line="99" />
         <source>QWarp: Connecting...</source>
         <translation>QWarp: 接続中...</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="100" />
+        <location filename="../../ui/tray.py" line="104" />
         <source>QWarp: Registration Missing</source>
         <translation>QWarp: 未登録</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="105" />
+        <location filename="../../ui/tray.py" line="109" />
         <source>QWarp: Daemon Error</source>
         <translation>QWarp: Daemon エラー</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="110" />
+        <location filename="../../ui/tray.py" line="114" />
         <source>QWarp: Service Stopped</source>
         <translation>QWarp: サービス停止</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="115" />
+        <location filename="../../ui/tray.py" line="119" />
         <source>QWarp: </source>
         <translation>QWarp: </translation>
     </message>
 </context><context>
     <name>WarpWindow</name>
     <message>
-        <location filename="../../ui/window.py" line="112" />
+        <location filename="../../ui/window.py" line="113" />
         <source>Setup required</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="119" />
+        <location filename="../../ui/window.py" line="120" />
         <source>Review the official client's terms before continuing.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="126" />
+        <location filename="../../ui/window.py" line="127" />
         <source>Agree to the Cloudflare Application Terms and acknowledge the Application Privacy Policy</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="129" />
+        <location filename="../../ui/window.py" line="130" />
         <source>I agree to the &lt;a href='https://www.cloudflare.com/application/terms/'&gt;Cloudflare Application Terms&lt;/a&gt; and acknowledge the &lt;a href='https://www.cloudflare.com/application/privacypolicy/'&gt;Application Privacy Policy&lt;/a&gt;.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="251" />
-        <location filename="../../ui/window.py" line="141" />
+        <location filename="../../ui/window.py" line="252" />
+        <location filename="../../ui/window.py" line="142" />
         <source>Continue</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="250" />
-        <location filename="../../ui/window.py" line="146" />
+        <location filename="../../ui/window.py" line="251" />
+        <location filename="../../ui/window.py" line="147" />
         <source>Have an organization?</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="154" />
+        <location filename="../../ui/window.py" line="155" />
         <source>Organization name</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="180" />
+        <location filename="../../ui/window.py" line="181" />
         <source>Official Cloudflare client not found</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="189" />
+        <location filename="../../ui/window.py" line="190" />
         <source>QWarp requires the official warp-cli to be installed to function properly. Please install it and restart QWarp.&lt;br&gt;&lt;br&gt;&lt;a href='https://pkg.cloudflareclient.com/'&gt;Installation Instructions&lt;/a&gt;</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="211" />
+        <location filename="../../ui/window.py" line="212" />
         <source>Cloudflare WARP connection</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="212" />
+        <location filename="../../ui/window.py" line="213" />
         <source>Connect or disconnect Cloudflare WARP</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="214" />
+        <location filename="../../ui/window.py" line="215" />
         <source>Enable service</source>
         <translation>サービスを有効にする</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="220" />
+        <location filename="../../ui/window.py" line="221" />
         <source>UNKNOWN</source>
         <translation>不明</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="227" />
+        <location filename="../../ui/window.py" line="228" />
         <source>Connecting to daemon...</source>
         <translation>Daemon に接続中...</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="245" />
+        <location filename="../../ui/window.py" line="246" />
         <source>Use personal account instead</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="246" />
+        <location filename="../../ui/window.py" line="247" />
         <source>Join organization</source>
         <translation type="unfinished" />
     </message>
     <message>
+        <location filename="../../ui/window.py" line="265" />
         <location filename="../../ui/window.py" line="264" />
-        <location filename="../../ui/window.py" line="263" />
         <source>Application menu</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="268" />
+        <location filename="../../ui/window.py" line="269" />
         <source>Preferences</source>
         <translation>設定</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="271" />
+        <location filename="../../ui/window.py" line="272" />
         <source>Exit</source>
         <translation>終了</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="321" />
+        <location filename="../../ui/window.py" line="322" />
         <source>Accept the terms before continuing.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="327" />
+        <location filename="../../ui/window.py" line="328" />
         <source>Please enter an organization name.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="447" />
-        <location filename="../../ui/window.py" line="418" />
-        <location filename="../../ui/window.py" line="343" />
+        <location filename="../../ui/window.py" line="448" />
+        <location filename="../../ui/window.py" line="419" />
+        <location filename="../../ui/window.py" line="344" />
         <source>CONNECTING</source>
         <translation>接続中</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="447" />
-        <location filename="../../ui/window.py" line="343" />
+        <location filename="../../ui/window.py" line="448" />
+        <location filename="../../ui/window.py" line="344" />
         <source>DISCONNECTING</source>
         <translation>切断中</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="449" />
-        <location filename="../../ui/window.py" line="344" />
+        <location filename="../../ui/window.py" line="450" />
+        <location filename="../../ui/window.py" line="345" />
         <source>Please wait...</source>
         <translation>お待ちください...</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="355" />
+        <location filename="../../ui/window.py" line="356" />
         <source>Registration failed.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="358" />
+        <location filename="../../ui/window.py" line="359" />
         <source>The requested action failed.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="405" />
+        <location filename="../../ui/window.py" line="406" />
         <source>CONNECTED</source>
         <translation>接続済み</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="407" />
+        <location filename="../../ui/window.py" line="408" />
         <source>Your Internet is private.</source>
         <translation>インターネットはプライベートです。</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="412" />
+        <location filename="../../ui/window.py" line="413" />
         <source>DISCONNECTED</source>
         <translation>切断済み</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="414" />
+        <location filename="../../ui/window.py" line="415" />
         <source>Your Internet is not private.</source>
         <translation>インターネットはプライベートではありません。</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="420" />
+        <location filename="../../ui/window.py" line="421" />
         <source>Securing connection...</source>
         <translation>接続を保護しています...</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="425" />
+        <location filename="../../ui/window.py" line="426" />
         <source>ERROR</source>
         <translation>エラー</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="427" />
+        <location filename="../../ui/window.py" line="428" />
         <source>Unable to communicate with Cloudflare WARP.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="432" />
+        <location filename="../../ui/window.py" line="433" />
         <source>SERVICE OFF</source>
         <translation>サービス停止</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="434" />
+        <location filename="../../ui/window.py" line="435" />
         <source>Cloudflare WARP service is not running.</source>
         <translation>Cloudflare WARP サービスが実行されていません。</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="438" />
+        <location filename="../../ui/window.py" line="439" />
         <source>WAIT</source>
         <translation>待機中</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="439" />
+        <location filename="../../ui/window.py" line="440" />
         <source>Checking status...</source>
         <translation>ステータスを確認中...</translation>
     </message>

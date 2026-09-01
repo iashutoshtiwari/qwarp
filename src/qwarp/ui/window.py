@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
 
 from qwarp.core.engine import CliCapabilities, WarpState
 from qwarp.core.state import WarpStateManager
+from qwarp.ui.branding import GradientLabel
 from qwarp.ui.settings import SettingsDialog
 from qwarp.ui.toggle import AnimatedToggle
 from qwarp.utils.system import is_x11, load_asset_icon, load_symbolic_icon
@@ -45,8 +46,8 @@ class WarpWindow(QWidget):
         self.tray_available = tray_available
 
         self.setWindowTitle("QWarp")
-        self.setMinimumSize(340, 480)
-        self.resize(340, 480)
+        self.setWindowFlag(Qt.WindowType.WindowMaximizeButtonHint, False)
+        self.setFixedSize(340, 480)
 
         self._setup_ui()
         self._setup_signals()
@@ -83,7 +84,7 @@ class WarpWindow(QWidget):
 
     def _build_header(self) -> None:
         """Draws the massive QWARP logo."""
-        self.header_label = QLabel("QWARP")
+        self.header_label = GradientLabel("QWARP")
         header_font = self.header_label.font()
         header_font.setPointSize(36)
         header_font.setBold(True)

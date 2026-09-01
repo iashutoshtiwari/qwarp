@@ -3,13 +3,16 @@ from unittest.mock import patch
 
 import pytest
 from PyQt6 import sip
-from PyQt6.QtCore import QCoreApplication, Qt, QThread
+from PyQt6.QtCore import QCoreApplication, QSize, Qt, QThread
 from PyQt6.QtGui import QCloseEvent, QIcon
 from PyQt6.QtTest import QTest
 from PyQt6.QtWidgets import QDialog, QLabel, QMessageBox
 
 from qwarp.core.engine import CliCapabilities, WarpState
 from qwarp.core.state import WarpStateManager
+from qwarp.ui.branding import GradientLabel
+from qwarp.ui.combobox import AccentComboBox
+from qwarp.ui.styles import ACCENT_COLOR, ACCENT_GRADIENT_COLOR
 from qwarp.ui.tray import WarpTrayIcon
 from qwarp.ui.window import SettingsDialog, WarpWindow
 from tests.test_state import FakeEngine
@@ -47,6 +50,23 @@ def test_settings_loads_mode_asynchronously_and_masks_license(qapp, wait_until, 
     dialog.done(QDialog.DialogCode.Rejected)
     assert dialog._license_value == ""
     assert dialog.license_input.text() == ""
+
+
+def test_settings_dropdowns_use_consistent_accent_chevrons(qapp, manager):
+    dialog = SettingsDialog(manager)
+
+    for combo in (dialog.lang_combo, dialog.mode_combo, dialog.families_combo, dialog.protocol_combo):
+        assert isinstance(combo, AccentComboBox)
+        combo.resize(240, 32)
+        image = combo.grab().toImage()
+        arrow_colors = {
+            image.pixelColor(x, y).name()
+            for x in range(image.width() - 28, image.width())
+            for y in range(image.height())
+        }
+        assert {"#909090", "#c7c7c7", ACCENT_GRADIENT_COLOR} & arrow_colors
+
+    dialog.reject()
 
 
 def test_current_network_diagnostics_shape_is_rendered(qapp, manager):
@@ -203,6 +223,26 @@ def test_tray_uses_the_symbolic_icon_for_each_state(qapp, manager, state, icon_n
         tray.deleteLater()
 
 
+@pytest.mark.parametrize(
+    ("color_scheme", "tint_color"),
+    [
+        (Qt.ColorScheme.Light, "#222222"),
+        (Qt.ColorScheme.Dark, "#f1f1f1"),
+        (Qt.ColorScheme.Unknown, ACCENT_COLOR),
+    ],
+)
+def test_tray_icon_contrast_follows_desktop_not_application_palette(qapp, manager, color_scheme, tint_color):
+    with patch("qwarp.ui.tray.load_symbolic_icon", return_value=QIcon()) as load_icon:
+        tray = WarpTrayIcon(manager, lambda _position: None)
+        load_icon.reset_mock()
+
+        tray._update_ui_state(WarpState.CONNECTED, color_scheme)
+
+        assert load_icon.call_args.args[0] == "tray-connected.svg"
+        assert load_icon.call_args.kwargs["tint_color"] == tint_color
+        tray.deleteLater()
+
+
 def test_window_without_tray_quits_on_close(qapp, manager):
     window = WarpWindow(manager, tray_available=False)
     quit_requests = []
@@ -211,6 +251,25 @@ def test_window_without_tray_quits_on_close(qapp, manager):
     window.closeEvent(event)
     assert event.isAccepted()
     assert quit_requests == [True]
+    window.deleteLater()
+
+
+def test_main_window_is_fixed_and_cannot_be_maximized(qapp, manager):
+    window = WarpWindow(manager)
+
+    assert window.minimumSize() == QSize(340, 480)
+    assert window.maximumSize() == QSize(340, 480)
+    assert not window.windowFlags() & Qt.WindowType.WindowMaximizeButtonHint
+    window.deleteLater()
+
+
+def test_main_window_branding_uses_qwarp_gradient(qapp, manager):
+    window = WarpWindow(manager)
+
+    assert isinstance(window.header_label, GradientLabel)
+    assert window.header_label.gradient_start.name() == ACCENT_COLOR
+    assert window.header_label.gradient_end.name() == ACCENT_GRADIENT_COLOR
+    assert not window.header_label.grab().isNull()
     window.deleteLater()
 
 

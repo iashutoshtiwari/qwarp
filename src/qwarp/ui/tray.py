@@ -2,12 +2,12 @@ import logging
 from typing import Callable
 
 from PyQt6.QtCore import QPoint
-from PyQt6.QtGui import QAction, QCursor, QPalette
+from PyQt6.QtGui import QAction, QCursor
 from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from qwarp.core.engine import CliCapabilities, WarpState
 from qwarp.core.state import WarpStateManager
-from qwarp.utils.system import load_symbolic_icon
+from qwarp.utils.system import load_symbolic_icon, tray_icon_tint
 
 logger = logging.getLogger(__name__)
 
@@ -23,14 +23,18 @@ class WarpTrayIcon(QSystemTrayIcon):
         self._setup_signals()
         self._update_ui_state(self.manager.current_state)
 
-        # Connect to global palette changes for instantaneous reloading
+        # The app stays dark, but the tray must follow the desktop/panel scheme.
         app = QApplication.instance()
         if app:
-            app.paletteChanged.connect(self._on_palette_changed)
+            app.styleHints().colorSchemeChanged.connect(self._on_color_scheme_changed)
 
-    def _on_palette_changed(self, palette: QPalette):
-        """Forces a redraw of the tray icon when the system theme changes."""
-        self._update_ui_state(self.manager.current_state, palette)
+    def _on_color_scheme_changed(self, color_scheme) -> None:
+        """Redraw the tray icon when the desktop switches light/dark mode."""
+        self._update_ui_state(self.manager.current_state, color_scheme)
+
+    @staticmethod
+    def _load_icon(icon_name: str, color_scheme=None):
+        return load_symbolic_icon(icon_name, tint_color=tray_icon_tint(color_scheme))
 
     def _setup_menu(self):
         self.menu = QMenu()
@@ -76,42 +80,42 @@ class WarpTrayIcon(QSystemTrayIcon):
         else:
             self._update_ui_state(self.manager.current_state)
 
-    def _update_ui_state(self, state: WarpState, palette: QPalette = None):
+    def _update_ui_state(self, state: WarpState, color_scheme=None):
         tooltip = self.tr("QWarp: Unknown")
-        icon = load_symbolic_icon("tray-connecting.svg", palette)
+        icon = self._load_icon("tray-connecting.svg", color_scheme)
 
         if state == WarpState.CONNECTED:
-            icon = load_symbolic_icon("tray-connected.svg", palette)
+            icon = self._load_icon("tray-connected.svg", color_scheme)
             tooltip = self.tr("QWarp: Connected")
             self.action_connect.setEnabled(False)
             self.action_disconnect.setEnabled(True)
         elif state == WarpState.DISCONNECTED:
-            icon = load_symbolic_icon("tray-disconnected.svg", palette)
+            icon = self._load_icon("tray-disconnected.svg", color_scheme)
             tooltip = self.tr("QWarp: Disconnected")
             self.action_connect.setEnabled(True)
             self.action_disconnect.setEnabled(False)
         elif state == WarpState.CONNECTING:
-            icon = load_symbolic_icon("tray-connecting.svg", palette)
+            icon = self._load_icon("tray-connecting.svg", color_scheme)
             tooltip = self.tr("QWarp: Connecting...")
             self.action_connect.setEnabled(False)
             self.action_disconnect.setEnabled(False)
         elif state == WarpState.UNREGISTERED:
-            icon = load_symbolic_icon("tray-unregistered.svg", palette)
+            icon = self._load_icon("tray-unregistered.svg", color_scheme)
             tooltip = self.tr("QWarp: Registration Missing")
             self.action_connect.setEnabled(False)
             self.action_disconnect.setEnabled(False)
         elif state == WarpState.DAEMON_ERROR:
-            icon = load_symbolic_icon("tray-error.svg", palette)
+            icon = self._load_icon("tray-error.svg", color_scheme)
             tooltip = self.tr("QWarp: Daemon Error")
             self.action_connect.setEnabled(False)
             self.action_disconnect.setEnabled(False)
         elif state == WarpState.SERVICE_STOPPED:
-            icon = load_symbolic_icon("tray-error.svg", palette)
+            icon = self._load_icon("tray-error.svg", color_scheme)
             tooltip = self.tr("QWarp: Service Stopped")
             self.action_connect.setEnabled(False)
             self.action_disconnect.setEnabled(False)
         else:
-            icon = load_symbolic_icon("tray-connecting.svg", palette)
+            icon = self._load_icon("tray-connecting.svg", color_scheme)
             tooltip = self.tr("QWarp: ") + state.name
             self.action_connect.setEnabled(False)
             self.action_disconnect.setEnabled(False)

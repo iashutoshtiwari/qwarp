@@ -1,10 +1,12 @@
 import os
 import uuid
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from xml.etree import ElementTree
 
-from PyQt6.QtCore import QCoreApplication, QSettings
+from PyQt6.QtCore import QCoreApplication, QSettings, QSize
+from PyQt6.QtGui import QPalette
 
+from qwarp import __version__
 from qwarp.core.instance import InstanceRole, SingleInstance
 from qwarp.main import (
     LEGACY_TERMS_CONSENT_KEY,
@@ -14,7 +16,8 @@ from qwarp.main import (
     parse_cli_args,
     remember_terms_acceptance,
 )
-from qwarp.utils.system import get_asset_dir
+from qwarp.ui.styles import ACCENT_COLOR, apply_application_theme
+from qwarp.utils.system import get_asset_dir, load_symbolic_icon, tray_icon_tint
 
 
 def test_single_instance_primary_and_secondary(qapp, wait_until):
@@ -96,6 +99,49 @@ def test_assets_exclude_retired_cloudflare_branding():
         assert retired_fingerprint not in svg_text
 
 
+def test_symbolic_icons_remain_scalable_at_high_dpi(qapp):
+    icon = load_symbolic_icon("tray-connected.svg", qapp.palette())
+
+    assert icon.availableSizes() == []
+    pixmap = icon.pixmap(QSize(22, 22), 2.0)
+    assert pixmap.size() == QSize(44, 44)
+    assert pixmap.devicePixelRatio() == 2.0
+    assert not pixmap.isNull()
+
+
+def test_high_dpi_symbolic_icon_keeps_transparent_padding(qapp):
+    pixmap = load_symbolic_icon("gear.svg", qapp.palette()).pixmap(QSize(22, 22), 2.0)
+    image = pixmap.toImage()
+    edge_alpha = [
+        *(image.pixelColor(x, 0).alpha() for x in range(image.width())),
+        *(image.pixelColor(x, image.height() - 1).alpha() for x in range(image.width())),
+        *(image.pixelColor(0, y).alpha() for y in range(image.height())),
+        *(image.pixelColor(image.width() - 1, y).alpha() for y in range(image.height())),
+    ]
+
+    assert not any(edge_alpha)
+
+
+def test_tray_icon_tint_contrasts_with_desktop_color_scheme():
+    from PyQt6.QtCore import Qt
+
+    assert tray_icon_tint(Qt.ColorScheme.Light) == "#222222"
+    assert tray_icon_tint(Qt.ColorScheme.Dark) == "#f1f1f1"
+    assert tray_icon_tint(Qt.ColorScheme.Unknown) == ACCENT_COLOR
+
+
+def test_application_theme_is_fixed_dark_fusion_with_qwarp_accent():
+    app = Mock()
+    apply_application_theme(app)
+
+    app.setStyle.assert_called_once_with("Fusion")
+    palette = app.setPalette.call_args.args[0]
+    assert palette.color(QPalette.ColorRole.Window).name() == "#222222"
+    assert palette.color(QPalette.ColorRole.Base).name() == "#2c2c2c"
+    assert palette.color(QPalette.ColorRole.Button).name() == "#323232"
+    assert palette.color(QPalette.ColorRole.Highlight).name() == ACCENT_COLOR
+
+
 def test_version_option_has_no_qt_or_daemon_side_effect(capsys):
     with patch.object(QCoreApplication, "instance", return_value=None):
         try:
@@ -104,7 +150,7 @@ def test_version_option_has_no_qt_or_daemon_side_effect(capsys):
             assert exc.code == 0
         else:
             raise AssertionError("--version did not exit")
-    assert "QWarp 0.9.3" in capsys.readouterr().out
+    assert f"QWarp {__version__}" in capsys.readouterr().out
 
 
 def test_terms_acceptance_is_persisted_only_after_success(qapp):
