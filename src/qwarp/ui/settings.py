@@ -5,7 +5,6 @@ from PyQt6.QtCore import QSettings, QSize, Qt
 from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import (
     QCheckBox,
-    QComboBox,
     QDialog,
     QFormLayout,
     QFrame,
@@ -23,6 +22,7 @@ from PyQt6.QtWidgets import (
 from qwarp import __version__
 from qwarp.core.engine import CliCapabilities, WarpState
 from qwarp.core.state import WarpStateManager
+from qwarp.ui.combobox import AccentComboBox
 from qwarp.utils.system import load_asset_icon
 
 logger = logging.getLogger(__name__)
@@ -111,7 +111,7 @@ class SettingsDialog(QDialog):
 
         # Language Dropdown setting
         gen_layout.addWidget(QLabel(self.tr("Language:")))
-        self.lang_combo = QComboBox()
+        self.lang_combo = AccentComboBox()
 
         translations_map = [
             (self.tr("System Default"), ""),
@@ -277,7 +277,7 @@ class SettingsDialog(QDialog):
         conn_layout.addWidget(self.connection_status_lbl)
         conn_layout.addWidget(QLabel(self.tr("Routing Mode:")))
 
-        self.mode_combo = QComboBox()
+        self.mode_combo = AccentComboBox()
         self.mode_combo.addItem(self.tr("1.1.1.1 with WARP"), "warp")
         self.mode_combo.addItem(self.tr("1.1.1.1 (DNS over DoH)"), "doh")
         self.mode_combo.addItem(self.tr("WARP + DoH"), "warp+doh")
@@ -294,7 +294,7 @@ class SettingsDialog(QDialog):
         # Families DNS Filtering
         conn_layout.addWidget(QLabel(self.tr("DNS Content Filtering:")))
 
-        self.families_combo = QComboBox()
+        self.families_combo = AccentComboBox()
         self.families_combo.addItem(self.tr("Off (No Filtering)"), "off")
         self.families_combo.addItem(self.tr("Malware Only"), "malware")
         self.families_combo.addItem(self.tr("Malware + Adult Content"), "full")
@@ -308,7 +308,7 @@ class SettingsDialog(QDialog):
         conn_layout.addWidget(sep1)
 
         conn_layout.addWidget(QLabel(self.tr("Tunnel Protocol:")))
-        self.protocol_combo = QComboBox()
+        self.protocol_combo = AccentComboBox()
         self.protocol_combo.addItem(self.tr("MASQUE (Default)"), "MASQUE")
         self.protocol_combo.addItem(self.tr("WireGuard (Legacy)"), "WireGuard")
         self.protocol_combo.currentIndexChanged.connect(self._on_protocol_changed)

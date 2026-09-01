@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.9.4] – 2026-09-01
+
+### Changed
+
+- Give QWarp a desktop-independent Darkly-inspired dark palette with fixed blue accents, gradient wordmark branding, and consistent dropdown controls.
+- Keep tray icon contrast synchronized with the desktop light or dark scheme while the application itself remains dark.
+
+### Fixed
+
+- Render symbolic SVG icons at each requested size and device-pixel ratio so KDE Plasma tray and toolbar icons stay sharp and uncropped on HiDPI displays.
+- Prevent the compact main window from being resized or maximized.
+
 ## [v0.9.3] – 2026-08-31
 
 ### Added
