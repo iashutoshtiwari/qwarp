@@ -29,8 +29,6 @@ available to Zero Trust users.
   <img src="screenshots/disconnected.png" width="32%" alt="Disconnected State">
   <img src="screenshots/connected.png" width="32%" alt="Connected State">
   <img src="screenshots/kde-tray.png" width="32%" alt="System Tray Menu">
-  <br>
-  <em>Captured on KDE Plasma 6 with the Darkly theme applied.</em>
 </div>
 
 ## What QWarp provides
