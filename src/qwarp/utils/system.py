@@ -90,9 +90,6 @@ def load_symbolic_icon(icon_name: str, palette=None, *, tint_color: str | None =
         def pixmap(self, size: QSize, mode, state) -> QPixmap:
             return self._render_pixmap(size, mode, state, 1.0)
 
-        def scaledPixmap(self, size: QSize, mode, state, scale: float) -> QPixmap:
-            return self._render_pixmap(size, mode, state, scale)
-
         def _render_pixmap(self, size: QSize, mode, state, scale: float) -> QPixmap:
             pixel_size = QSize(round(size.width() * scale), round(size.height() * scale))
             pixmap = QPixmap(pixel_size)
