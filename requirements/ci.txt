@@ -8,6 +8,6 @@ PyQt6-sip==13.12.0
 Pygments==2.21.0
 pyproject-hooks==1.2.0
 pytest==9.1.1
-ruff==0.16.5
+ruff==0.16.6
 setuptools==84.0.0
 wheel==0.48.0
