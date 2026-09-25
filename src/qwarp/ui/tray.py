@@ -2,7 +2,7 @@ import logging
 from typing import Callable
 
 from PyQt6.QtCore import QPoint
-from PyQt6.QtGui import QAction, QCursor
+from PyQt6.QtGui import QAction, QActionGroup, QCursor
 from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from qwarp.core.engine import CliCapabilities, WarpState
@@ -40,6 +40,11 @@ class WarpTrayIcon(QSystemTrayIcon):
     def _setup_menu(self):
         self.menu = QMenu()
 
+        self.action_status = QAction(self.tr("Checking WARP status…"), self.menu)
+        self.action_status.setEnabled(False)
+        self.menu.addAction(self.action_status)
+        self.menu.addSeparator()
+
         self.action_connect = QAction(self.tr("Connect"), self.menu)
         self.action_connect.triggered.connect(self.manager.request_connect)
         self.menu.addAction(self.action_connect)
@@ -47,6 +52,26 @@ class WarpTrayIcon(QSystemTrayIcon):
         self.action_disconnect = QAction(self.tr("Disconnect"), self.menu)
         self.action_disconnect.triggered.connect(self.manager.request_disconnect)
         self.menu.addAction(self.action_disconnect)
+
+        self.mode_menu = QMenu(self.tr("Mode"), self.menu)
+        self.mode_group = QActionGroup(self.mode_menu)
+        self.mode_group.setExclusive(True)
+        self.mode_actions: dict[str, QAction] = {}
+        for label, mode in (
+            (self.tr("WARP"), "warp"),
+            (self.tr("DNS over HTTPS"), "doh"),
+            (self.tr("DNS over TLS"), "dot"),
+            (self.tr("WARP + DNS over HTTPS"), "warp+doh"),
+            (self.tr("WARP + DNS over TLS"), "warp+dot"),
+            (self.tr("Local proxy"), "proxy"),
+            (self.tr("Tunnel only"), "tunnel_only"),
+        ):
+            action = self.mode_menu.addAction(label)
+            action.setCheckable(True)
+            self.mode_group.addAction(action)
+            action.triggered.connect(lambda _checked=False, selected=mode: self.manager.request_set_mode(selected))
+            self.mode_actions[mode] = action
+        self.menu.addMenu(self.mode_menu)
 
         self.menu.addSeparator()
 
@@ -94,5 +119,16 @@ class WarpTrayIcon(QSystemTrayIcon):
             enrollment_label = self.tr("Zero Trust enrolled")
             tooltip += f" · {enrollment_label}"
         self.setToolTip(tooltip)
+        self.action_status.setText(presentation.tray_label)
         self.action_connect.setEnabled(presentation.connect_enabled and not self.manager.is_busy)
         self.action_disconnect.setEnabled(presentation.disconnect_enabled and not self.manager.is_busy)
+        mode_switch_allowed = bool(
+            self._capabilities
+            and self._capabilities.cli_found
+            and self._capabilities.mode_switch_allowed
+            and self.manager.current_settings.get("available")
+        )
+        self.mode_menu.menuAction().setVisible(mode_switch_allowed)
+        self.mode_menu.setEnabled(mode_switch_allowed and not self.manager.is_busy)
+        for mode, action in self.mode_actions.items():
+            action.setChecked(self.manager.current_settings.get("mode") == mode)

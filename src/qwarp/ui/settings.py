@@ -11,8 +11,10 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QListWidget,
     QMessageBox,
     QPushButton,
+    QScrollArea,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
@@ -62,6 +64,8 @@ class SettingsDialog(QDialog):
         self._build_account_tab()
         self._build_device_tab()
         self._build_connection_tab()
+        self._build_split_tunnel_tab()
+        self._build_dns_tab()
         self._build_diagnostics_tab()
         self._build_about_tab()
 
@@ -76,6 +80,7 @@ class SettingsDialog(QDialog):
         self.manager.settings_updated.connect(self._on_settings_updated)
         self.manager.capabilities_detected.connect(self._on_capabilities_updated)
         self.manager.network_diagnostics_updated.connect(self._on_query_worker_finished)
+        self.manager.connection_stats_updated.connect(self._on_connection_stats_updated)
         self.manager.platform_settings_updated.connect(self._on_platform_settings_updated)
         self.tabs.currentChanged.connect(self._load_current_tab)
         self._on_capabilities_updated(self._capabilities)
@@ -353,7 +358,14 @@ class SettingsDialog(QDialog):
     def _build_diagnostics_tab(self) -> None:
         """Constructs the diagnostics information tab."""
         diag_tab = QWidget()
-        diag_layout = QVBoxLayout(diag_tab)
+        outer_layout = QVBoxLayout(diag_tab)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        content = QWidget()
+        diag_layout = QVBoxLayout(content)
+        scroll.setWidget(content)
+        outer_layout.addWidget(scroll)
 
         def _add_section(title: str) -> QFormLayout:
             lbl = QLabel(title)
@@ -383,6 +395,16 @@ class SettingsDialog(QDialog):
         conn_fl.addRow(self.tr("Tunnel Status:"), self.lbl_tun_status)
         conn_fl.addRow(self.tr("Override:"), self.lbl_override)
 
+        stats_fl = _add_section(self.tr("Tunnel and DNS Statistics"))
+        self.lbl_tunnel_stats = QLabel(self.tr("Loading on request…"))
+        self.lbl_dns_stats = QLabel(self.tr("Loading on request…"))
+        self.lbl_tunnel_stats.setWordWrap(True)
+        self.lbl_dns_stats.setWordWrap(True)
+        self.lbl_tunnel_stats.setTextInteractionFlags(selectable_flag)
+        self.lbl_dns_stats.setTextInteractionFlags(selectable_flag)
+        stats_fl.addRow(self.tr("Tunnel:"), self.lbl_tunnel_stats)
+        stats_fl.addRow(self.tr("DNS:"), self.lbl_dns_stats)
+
         split_fl = _add_section(self.tr("Split Tunnel"))
         self.lbl_split_mode = QLabel(self.tr("Loading..."))
         self.lbl_ip_rules = QLabel(self.tr("Loading..."))
@@ -403,8 +425,133 @@ class SettingsDialog(QDialog):
         diag_layout.addStretch()
         self.tabs.addTab(diag_tab, self.tr("Diagnostics"))
 
+    def _build_split_tunnel_tab(self) -> None:
+        """Manage supported split-tunnel rules without exposing CLI syntax."""
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        note = QLabel(self.tr("Choose traffic that should follow a different route from the WARP tunnel."))
+        note.setWordWrap(True)
+        note.setProperty("styleClass", "desc_default")
+        layout.addWidget(note)
+        self.split_policy_note = QLabel(self.tr("Split-tunnel changes are available for personal registrations only."))
+        self.split_policy_note.setProperty("styleClass", "desc_default")
+        self.split_policy_note.setWordWrap(True)
+        self.split_policy_note.hide()
+        layout.addWidget(self.split_policy_note)
+
+        layout.addWidget(QLabel(self.tr("IP addresses and networks")))
+        self.split_ip_list = QListWidget()
+        self.split_ip_list.setAccessibleName(self.tr("Split tunnel IP rules"))
+        layout.addWidget(self.split_ip_list)
+        ip_row = QHBoxLayout()
+        self.split_ip_input = QLineEdit()
+        self.split_ip_input.setAccessibleName(self.tr("Split tunnel IP or network"))
+        self.split_ip_input.setPlaceholderText(self.tr("Example: 192.168.1.0/24"))
+        self.split_ip_add_btn = QPushButton(self.tr("Add"))
+        self.split_ip_remove_btn = QPushButton(self.tr("Remove"))
+        self.split_ip_remove_btn.setEnabled(False)
+        self.split_ip_add_btn.clicked.connect(lambda: self.manager.request_add_split_ip(self.split_ip_input.text()))
+        self.split_ip_input.returnPressed.connect(self.split_ip_add_btn.click)
+        self.split_ip_remove_btn.clicked.connect(self._remove_selected_split_ip)
+        self.split_ip_list.itemSelectionChanged.connect(self._apply_control_state)
+        ip_row.addWidget(self.split_ip_input)
+        ip_row.addWidget(self.split_ip_add_btn)
+        ip_row.addWidget(self.split_ip_remove_btn)
+        layout.addLayout(ip_row)
+
+        layout.addWidget(QLabel(self.tr("Hostnames")))
+        self.split_host_list = QListWidget()
+        self.split_host_list.setAccessibleName(self.tr("Split tunnel hostname rules"))
+        layout.addWidget(self.split_host_list)
+        host_row = QHBoxLayout()
+        self.split_host_input = QLineEdit()
+        self.split_host_input.setAccessibleName(self.tr("Split tunnel hostname"))
+        self.split_host_input.setPlaceholderText(self.tr("Example: internal.example.com"))
+        self.split_host_add_btn = QPushButton(self.tr("Add"))
+        self.split_host_remove_btn = QPushButton(self.tr("Remove"))
+        self.split_host_remove_btn.setEnabled(False)
+        self.split_host_add_btn.clicked.connect(
+            lambda: self.manager.request_add_split_host(self.split_host_input.text())
+        )
+        self.split_host_input.returnPressed.connect(self.split_host_add_btn.click)
+        self.split_host_remove_btn.clicked.connect(self._remove_selected_split_host)
+        self.split_host_list.itemSelectionChanged.connect(self._apply_control_state)
+        host_row.addWidget(self.split_host_input)
+        host_row.addWidget(self.split_host_add_btn)
+        host_row.addWidget(self.split_host_remove_btn)
+        layout.addLayout(host_row)
+
+        self.split_reset_btn = QPushButton(self.tr("Restore defaults"))
+        self.split_reset_btn.setProperty("styleClass", "danger")
+        self.split_reset_btn.clicked.connect(self._confirm_split_reset)
+        layout.addWidget(self.split_reset_btn, alignment=Qt.AlignmentFlag.AlignRight)
+        self.tabs.addTab(tab, self.tr("Split Tunneling"))
+
+    def _build_dns_tab(self) -> None:
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        note = QLabel(self.tr("Use the local DNS resolver for these fallback domains."))
+        note.setWordWrap(True)
+        note.setProperty("styleClass", "desc_default")
+        layout.addWidget(note)
+        self.fallback_policy_note = QLabel(
+            self.tr("Local domain fallback changes are available for personal registrations only.")
+        )
+        self.fallback_policy_note.setProperty("styleClass", "desc_default")
+        self.fallback_policy_note.setWordWrap(True)
+        self.fallback_policy_note.hide()
+        layout.addWidget(self.fallback_policy_note)
+        self.fallback_list = QListWidget()
+        self.fallback_list.setAccessibleName(self.tr("Local domain fallback rules"))
+        layout.addWidget(self.fallback_list)
+        row = QHBoxLayout()
+        self.fallback_input = QLineEdit()
+        self.fallback_input.setAccessibleName(self.tr("Local fallback domain"))
+        self.fallback_input.setPlaceholderText(self.tr("Example: corp.example.com"))
+        self.fallback_add_btn = QPushButton(self.tr("Add domain"))
+        self.fallback_remove_btn = QPushButton(self.tr("Remove"))
+        self.fallback_remove_btn.setEnabled(False)
+        self.fallback_add_btn.clicked.connect(
+            lambda: self.manager.request_add_fallback_domain(self.fallback_input.text())
+        )
+        self.fallback_input.returnPressed.connect(self.fallback_add_btn.click)
+        self.fallback_remove_btn.clicked.connect(self._remove_selected_fallback)
+        self.fallback_list.itemSelectionChanged.connect(self._apply_control_state)
+        row.addWidget(self.fallback_input)
+        row.addWidget(self.fallback_add_btn)
+        row.addWidget(self.fallback_remove_btn)
+        layout.addLayout(row)
+        self.tabs.addTab(tab, self.tr("DNS"))
+
+    def _remove_selected_split_ip(self) -> None:
+        item = self.split_ip_list.currentItem()
+        if item is not None:
+            self.manager.request_remove_split_ip(item.text())
+
+    def _remove_selected_split_host(self) -> None:
+        item = self.split_host_list.currentItem()
+        if item is not None:
+            self.manager.request_remove_split_host(item.text())
+
+    def _remove_selected_fallback(self) -> None:
+        item = self.fallback_list.currentItem()
+        if item is not None:
+            self.manager.request_remove_fallback_domain(item.text())
+
+    def _confirm_split_reset(self) -> None:
+        answer = QMessageBox.question(
+            self,
+            self.tr("Restore split-tunnel defaults"),
+            self.tr("Restore the official default IP and hostname split-tunnel rules?"),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel,
+            QMessageBox.StandardButton.Cancel,
+        )
+        if answer == QMessageBox.StandardButton.Yes:
+            self.manager.request_reset_split_tunnel()
+
     def _refresh_diagnostics_tab(self) -> None:
         self.manager.request_network_diagnostics()
+        self.manager.request_connection_stats()
 
     def _load_current_tab(self, index: int) -> None:
         """Load only the daemon data needed by the visible tab."""
@@ -414,8 +561,10 @@ class SettingsDialog(QDialog):
             self.manager.request_diagnostics()
         elif index == 3:
             self.manager.request_settings()
-        elif index == 4:
+        elif index in {4, 5, 6}:
             self.manager.request_network_diagnostics()
+            if index == 4:
+                self.manager.request_connection_stats()
 
     def _on_query_worker_finished(self, net_info: dict, over_info: dict, split_info: dict) -> None:
         self.lbl_iface.setText(self.tr(net_info.get("interface") or "Unknown"))
@@ -442,6 +591,28 @@ class SettingsDialog(QDialog):
         self.lbl_ip_rules.setText(self.tr(str(ip_count) + " rules"))
         self.lbl_host_rules.setText(self.tr(str(host_count) + " rules"))
         self.lbl_fallback.setText(self.tr(str(fallback_count) + " domains"))
+
+        for widget, values in (
+            (getattr(self, "split_ip_list", None), split_info.get("ip_rules", [])),
+            (getattr(self, "split_host_list", None), split_info.get("host_rules", [])),
+            (getattr(self, "fallback_list", None), split_info.get("fallback_domains", [])),
+        ):
+            if widget is not None:
+                widget.clear()
+                widget.addItems([str(value) for value in values])
+
+    def _on_connection_stats_updated(self, tunnel_stats: dict, dns_stats: dict) -> None:
+        self.lbl_tunnel_stats.setText(self._stats_summary(tunnel_stats))
+        self.lbl_dns_stats.setText(self._stats_summary(dns_stats))
+
+    def _stats_summary(self, stats: dict) -> str:
+        if not stats:
+            return self.tr("Unavailable")
+        values = []
+        for key, value in stats.items():
+            if isinstance(value, (str, int, float, bool)):
+                values.append(f"{key.replace('_', ' ').title()}: {value}")
+        return " · ".join(values[:6]) or self.tr("No supported counters were returned.")
 
     def _build_about_tab(self) -> None:
         """Constructs application metadata and disclaimers tab."""
@@ -595,6 +766,8 @@ class SettingsDialog(QDialog):
         self.cli_version_label.setText(self.tr("Installed client version: %s") % version_text)
         managed = caps.is_zero_trust and not caps.mode_switch_allowed
         self.zt_note_lbl.setVisible(managed)
+        self.split_policy_note.setVisible(caps.is_zero_trust)
+        self.fallback_policy_note.setVisible(caps.is_zero_trust)
         if managed:
             self.zt_note_lbl.setText(
                 self.tr(
@@ -742,6 +915,31 @@ class SettingsDialog(QDialog):
         self.autostart_cb.setEnabled(not busy)
         self.suppress_taskbar_cb.setEnabled(not busy)
         self.minimized_cb.setEnabled(not busy and self.tray_available and self.autostart_cb.isChecked())
+        split_allowed = (
+            not busy
+            and not self._capabilities.is_zero_trust
+            and self._capabilities.has_split_tunnel
+            and consumer_allowed
+        )
+        fallback_allowed = (
+            not busy
+            and not self._capabilities.is_zero_trust
+            and self._capabilities.has_fallback_domains
+            and consumer_allowed
+        )
+        for widget in (
+            self.split_ip_input,
+            self.split_ip_add_btn,
+            self.split_host_input,
+            self.split_host_add_btn,
+            self.split_reset_btn,
+        ):
+            widget.setEnabled(split_allowed)
+        self.split_ip_remove_btn.setEnabled(split_allowed and self.split_ip_list.currentItem() is not None)
+        self.split_host_remove_btn.setEnabled(split_allowed and self.split_host_list.currentItem() is not None)
+        for widget in (self.fallback_input, self.fallback_add_btn):
+            widget.setEnabled(fallback_allowed)
+        self.fallback_remove_btn.setEnabled(fallback_allowed and self.fallback_list.currentItem() is not None)
 
     def _on_action_finished(self, action: str, success: bool, message: str) -> None:
         platform_actions = {"set_autostart", "set_taskbar_suppressed"}
@@ -773,6 +971,13 @@ class SettingsDialog(QDialog):
             "set_proxy_port",
             "set_trusted_ethernet",
             "set_trusted_wifi",
+            "add_split_ip",
+            "remove_split_ip",
+            "add_split_host",
+            "remove_split_host",
+            "reset_split_tunnel",
+            "add_fallback_domain",
+            "remove_fallback_domain",
         }
         if action not in settings_actions:
             return
@@ -791,6 +996,12 @@ class SettingsDialog(QDialog):
             self.license_input.clear()
         elif action == "delete_registration":
             self.accept()
+        elif action == "add_split_ip":
+            self.split_ip_input.clear()
+        elif action == "add_split_host":
+            self.split_host_input.clear()
+        elif action == "add_fallback_domain":
+            self.fallback_input.clear()
 
     def _on_license_reveal_toggled(self, revealed: bool) -> None:
         self._license_revealed = revealed

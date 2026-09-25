@@ -242,6 +242,7 @@ def test_onboarding_requires_linked_terms_consent_for_every_registration_path(qa
         (WarpState.SERVICE_STARTING, False, False),
         (WarpState.DAEMON_ERROR, False, False),
         (WarpState.POLICY_RESTRICTED, False, False),
+        (WarpState.NO_NETWORK, False, False),
         (WarpState.AUTHENTICATION_REQUIRED, False, False),
         (WarpState.TRANSIENT_ERROR, False, False),
         (WarpState.UNKNOWN, False, False),
@@ -268,6 +269,7 @@ def test_tray_actions_match_every_state(qapp, manager, state, connect_enabled, d
         (WarpState.SERVICE_STARTING, "tray-connecting.svg"),
         (WarpState.DAEMON_ERROR, "tray-error.svg"),
         (WarpState.POLICY_RESTRICTED, "tray-error.svg"),
+        (WarpState.NO_NETWORK, "tray-error.svg"),
         (WarpState.AUTHENTICATION_REQUIRED, "tray-error.svg"),
         (WarpState.TRANSIENT_ERROR, "tray-error.svg"),
         (WarpState.UNKNOWN, "tray-connecting.svg"),
@@ -500,4 +502,34 @@ def test_accessible_names_exist_for_icon_and_custom_controls(qapp, manager):
     assert window.terms_label.accessibleName()
     assert window.terms_label.focusPolicy() == Qt.FocusPolicy.StrongFocus
     assert window.org_input.accessibleName() == "Organization name"
+    window.deleteLater()
+
+
+def test_split_tunnel_and_fallback_action_results_in_settings_dialog(qapp, manager):
+    window = WarpWindow(manager)
+    dialog = SettingsDialog(manager, window)
+    dialog.show()
+
+    dialog._on_action_finished("add_split_ip", False, "Invalid address")
+    assert dialog.action_error_lbl.isVisible()
+    assert dialog.action_error_lbl.text() == "Invalid address"
+
+    dialog.split_ip_input.setText("192.0.2.1")
+    dialog._on_action_finished("add_split_ip", True, "")
+    assert dialog.split_ip_input.text() == ""
+    assert not dialog.action_error_lbl.isVisible()
+
+    dialog.split_host_input.setText("internal.example.com")
+    dialog._on_action_finished("add_split_host", True, "")
+    assert dialog.split_host_input.text() == ""
+
+    dialog.fallback_input.setText("corp.example.com")
+    dialog._on_action_finished("add_fallback_domain", True, "")
+    assert dialog.fallback_input.text() == ""
+
+    assert dialog.split_ip_input.accessibleName() == "Split tunnel IP or network"
+    assert dialog.split_host_input.accessibleName() == "Split tunnel hostname"
+    assert dialog.fallback_input.accessibleName() == "Local fallback domain"
+
+    dialog.deleteLater()
     window.deleteLater()

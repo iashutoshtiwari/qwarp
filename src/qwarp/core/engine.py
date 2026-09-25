@@ -1,3 +1,4 @@
+import ipaddress
 import json
 import logging
 import os
@@ -27,6 +28,7 @@ class WarpState(Enum):
     SERVICE_STARTING = auto()
     DAEMON_ERROR = auto()
     POLICY_RESTRICTED = auto()
+    NO_NETWORK = auto()
     TRANSIENT_ERROR = auto()
     UNKNOWN = auto()
 
@@ -44,6 +46,8 @@ class CliCapabilities:
     tunnel_protocols: tuple[str, ...] = ()
     has_trusted_networks: bool = True
     cli_found: bool = False
+    has_split_tunnel: bool = False
+    has_fallback_domains: bool = False
 
 
 class WarpSettings(TypedDict):
@@ -129,11 +133,16 @@ class WarpEngine:
         """Keep command diagnostics useful without surfacing credentials or auth URLs."""
         message = cls._redact(value, sensitive_values).strip()
         message = re.sub(r"https?://\S+", "<redacted URL>", message, flags=re.IGNORECASE)
+        message = re.sub(r"-----BEGIN [A-Z ]+-----[\s\S]*?-----END [A-Z ]+-----", "<redacted certificate/key>", message)
+        message = re.sub(r"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]+", "<redacted token>", message)
         message = re.sub(
-            r"(?im)^(.*(?:license|token|authorization|device id|organization).{0,80}):\s*.*$",
+            r"(?im)^(.*(?:license|token|authorization|device id|organization|unlock code|private key).{0,80}):\s*.*$",
             r"\1: <redacted>",
             message,
         )
+        message = re.sub(r"(?i)\b(license(?:\s+key)?\s*[:=]?\s*)[A-Za-z0-9-]+", r"\1<redacted>", message)
+        message = re.sub(r"(?i)\b(token\s*[:=]?\s*)[A-Za-z0-9_.-]+", r"\1<redacted>", message)
+        message = re.sub(r"(?i)\b(unlock(?:\s+code)?\s*[:=]?\s*)[A-Za-z0-9-]+", r"\1<redacted>", message)
         return message[:500]
 
     @staticmethod
@@ -152,6 +161,8 @@ class WarpEngine:
             return {"code": "PolicyRestricted", "error": "This action is restricted by your organization policy."}
         if any(marker in normalized for marker in ("daemon", "ipc", "communicate with warp", "service unavailable")):
             return {"code": "DaemonUnavailable", "error": "The WARP daemon is unavailable."}
+        if any(marker in normalized for marker in ("no network", "network unavailable", "network is unreachable")):
+            return {"code": "NetworkUnavailable", "error": "No network connection is available."}
         return None
 
     @classmethod
@@ -454,6 +465,11 @@ class WarpEngine:
             )
             caps.has_tunnel_protocol = bool(caps.tunnel_protocols)
 
+        split_help_ok, _ = self._run_process([self.CLI_PATH, "tunnel", "ip", "--help"], timeout=5, quiet=True)
+        fallback_help_ok, _ = self._run_process([self.CLI_PATH, "dns", "fallback", "--help"], timeout=5, quiet=True)
+        caps.has_split_tunnel = split_help_ok
+        caps.has_fallback_domains = fallback_help_ok
+
         # Check mode-switch permission
         result = self._run_json_command("settings", "mode-switch-allowed", quiet=True)
         caps.has_json = self._is_json_response(result)
@@ -571,6 +587,10 @@ class WarpEngine:
     def _state_from_cli_error(self, code: str, error: str) -> WarpState:
         details = f"{code} {error}".lower()
         normalized_code = self._normalize_setting(code)
+        if normalized_code in {"nonetwork", "networkunavailable", "networkunreachable"} or any(
+            marker in details for marker in ("no network", "network unavailable", "network is unreachable")
+        ):
+            return WarpState.NO_NETWORK
         if normalized_code in {"termsrequired", "tosrequired"} or any(
             marker in details for marker in ("terms of service", "terms acceptance", "accept-tos")
         ):
@@ -590,6 +610,11 @@ class WarpEngine:
 
     def _state_from_unable_reason(self, reason: Any) -> WarpState:
         details = str(reason).lower()
+        normalized = self._normalize_setting(details)
+        if "nonetwork" in normalized or any(
+            marker in details for marker in ("no network", "network unavailable", "network is unreachable")
+        ):
+            return WarpState.NO_NETWORK
         if any(marker in details for marker in ("terms of service", "terms acceptance", "accept-tos")):
             return WarpState.TERMS_REQUIRED
         if any(marker in details for marker in ("authenticationrequired", "reauth", "loginrequired")):
@@ -624,6 +649,9 @@ class WarpEngine:
         if status_str == "connecting":
             self._last_status_warning = ""
             return WarpState.CONNECTING
+        if self._normalize_setting(status_str) in {"nonetwork", "networkunavailable", "networkunreachable"}:
+            self._last_status_warning = ""
+            return WarpState.NO_NETWORK
 
         # "Unable" status with structured reason
         if status_str == "unable":
@@ -644,11 +672,36 @@ class WarpEngine:
         logger.warning("Unknown WARP status shape: %s", shape)
 
     def status(self) -> WarpState:
-        """Query daemon connection status and preserve actionable CLI states."""
+        """Query status with a validated text fallback for current CLI builds."""
         with self._command_lock:
             result = self._run_json_command("status", quiet=True)
             failure = self._last_cli_failure
-            return self._interpret_status(result, failure)
+            state = self._interpret_status(result, failure)
+            if result is not None or failure in {"missing_cli", "timeout", "cancelled"}:
+                return state
+            success, output = self._run_command("status", quiet=True)
+            if not success:
+                return state
+            # Check the full state token, in priority order.  In particular,
+            # never mistake "Disconnected" for "Connected" by substring.
+            text = output.strip().lower()
+            match = re.search(r"(?:status(?:\s+update)?\s*:\s*)?([a-z ]+)", text)
+            value = match.group(1).strip() if match else text
+            if value.startswith("disconnected"):
+                return WarpState.DISCONNECTED
+            if value.startswith("connected"):
+                return WarpState.CONNECTED
+            if value.startswith("connecting"):
+                return WarpState.CONNECTING
+            if value.startswith("no network") or "waiting for internet" in value:
+                return WarpState.NO_NETWORK
+            known = self._text_error_response(output)
+            if known:
+                return self._state_from_cli_error(str(known["code"]), str(known["error"]))
+            # Retain the existing transient-error classification when both
+            # transports are malformed; do not turn a daemon health failure
+            # into a fabricated state.
+            return state
 
     # ------------------------------------------------------------------
     # Connection actions
@@ -1021,7 +1074,8 @@ class WarpEngine:
         result = self._run_json_command("debug", "network", quiet=True, timeout=5)
         response = self._json_object(result)
         if response is None or self._is_error_response(response):
-            return {}
+            success, output = self._run_command("debug", "network", quiet=True)
+            return self._parse_text_fields(output) if success else {}
 
         # Cloudflare WARP 2026.7 reports separate IPv4/IPv6 interface
         # objects.  Preserve the raw fields while providing the stable,
@@ -1041,7 +1095,8 @@ class WarpEngine:
         result = self._run_json_command("tunnel", "stats", quiet=True, timeout=5)
         response = self._json_object(result)
         if response is None or self._is_error_response(response):
-            return {}
+            success, output = self._run_command("tunnel", "stats", quiet=True)
+            return self._parse_text_fields(output) if success else {}
         return response
 
     def get_dns_stats(self) -> dict[str, Any]:
@@ -1049,8 +1104,38 @@ class WarpEngine:
         result = self._run_json_command("dns", "stats", quiet=True, timeout=5)
         response = self._json_object(result)
         if response is None or self._is_error_response(response):
-            return {}
+            success, output = self._run_command("dns", "stats", quiet=True)
+            return self._parse_text_fields(output) if success else {}
         return response
+
+    @classmethod
+    def _parse_text_fields(cls, output: str) -> dict[str, Any]:
+        """Conservatively preserve labelled text output from CLI versions without JSON."""
+        fields: dict[str, Any] = {}
+        for line in output.splitlines():
+            key, separator, value = line.partition(":")
+            if separator and key.strip() and value.strip():
+                fields[cls._normalize_setting(key)] = value.strip()
+        return fields
+
+    @staticmethod
+    def _parse_text_list(output: str) -> list[str]:
+        values = []
+        for line in output.splitlines():
+            value = line.strip().lstrip("-• ")
+            if value and not value.endswith(":"):
+                values.append(value)
+        return values
+
+    @staticmethod
+    def _rule_value(item: Any, *keys: str) -> str:
+        if not isinstance(item, dict):
+            return str(item)
+        for key in keys:
+            value = item.get(key)
+            if value is not None:
+                return str(value)
+        return ""
 
     def get_override_status(self) -> dict[str, Any]:
         """Get current admin override status."""
@@ -1076,4 +1161,113 @@ class WarpEngine:
             info["ip_count"] = len(settings.get("split_tunnel_ips", []))
             info["host_count"] = len(settings.get("split_tunnel_hosts", []))
             info["fallback_count"] = len(settings.get("fallback_domains", []))
+            info["ip_rules"] = [
+                self._rule_value(item, "value", "address", "range") for item in settings.get("split_tunnel_ips", [])
+            ]
+            info["host_rules"] = [
+                self._rule_value(item, "value", "host", "hostname", "domain")
+                for item in settings.get("split_tunnel_hosts", [])
+            ]
+            info["fallback_domains"] = [
+                self._rule_value(item, "domain", "value", "host", "hostname")
+                for item in settings.get("fallback_domains", [])
+            ]
+            info["ip_rules"] = [value for value in info["ip_rules"] if value]
+            info["host_rules"] = [value for value in info["host_rules"] if value]
+            info["fallback_domains"] = [value for value in info["fallback_domains"] if value]
+            return info
+        for key, command in (
+            ("ip_rules", ("tunnel", "ip", "list")),
+            ("host_rules", ("tunnel", "host", "list")),
+            ("fallback_domains", ("dns", "fallback", "list")),
+        ):
+            success, output = self._run_command(*command, quiet=True)
+            values = self._parse_text_list(output) if success else []
+            if key == "ip_rules":
+                valid_values = []
+                for value in values:
+                    try:
+                        ipaddress.ip_network(value, strict=False)
+                    except ValueError:
+                        continue
+                    valid_values.append(value)
+                info[key] = valid_values
+            else:
+                info[key] = [value for value in values if self._valid_hostname(value)]
+        info["ip_count"] = len(info["ip_rules"])
+        info["host_count"] = len(info["host_rules"])
+        info["fallback_count"] = len(info["fallback_domains"])
         return info
+
+    @staticmethod
+    def _valid_hostname(value: str) -> bool:
+        hostname = value.rstrip(".")
+        return bool(
+            hostname
+            and len(hostname) <= 253
+            and all(
+                re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?", label) for label in hostname.split(".")
+            )
+        )
+
+    def add_split_tunnel_ip(self, value: str) -> tuple[bool, str]:
+        try:
+            parsed = ipaddress.ip_network(value, strict=False)
+        except ValueError:
+            return False, "Enter a valid IP address or CIDR network."
+        info = self.get_split_tunnel_info()
+        existing_rules = {rule.lower() for rule in info.get("ip_rules", [])}
+        arg = str(parsed.network_address) if parsed.prefixlen == parsed.max_prefixlen else str(parsed)
+        if arg.lower() in existing_rules or str(parsed).lower() in existing_rules:
+            return False, "This split-tunnel rule already exists."
+        command = ("tunnel", "ip", "add") if parsed.prefixlen == parsed.max_prefixlen else ("tunnel", "ip", "add-range")
+        return self._run_command(*command, arg)
+
+    def remove_split_tunnel_ip(self, value: str) -> tuple[bool, str]:
+        try:
+            parsed = ipaddress.ip_network(value, strict=False)
+        except ValueError:
+            return False, "Enter a valid IP address or CIDR network."
+        arg = str(parsed.network_address) if parsed.prefixlen == parsed.max_prefixlen else str(parsed)
+        command = (
+            ("tunnel", "ip", "remove") if parsed.prefixlen == parsed.max_prefixlen else ("tunnel", "ip", "remove-range")
+        )
+        return self._run_command(*command, arg)
+
+    def add_split_tunnel_host(self, hostname: str) -> tuple[bool, str]:
+        value = hostname.strip().rstrip(".")
+        if not self._valid_hostname(value):
+            return False, "Enter a valid hostname or domain."
+        if value.lower() in {rule.lower().rstrip(".") for rule in self.get_split_tunnel_info().get("host_rules", [])}:
+            return False, "This split-tunnel hostname already exists."
+        return self._run_command("tunnel", "host", "add", value)
+
+    def remove_split_tunnel_host(self, hostname: str) -> tuple[bool, str]:
+        value = hostname.strip().rstrip(".")
+        if not self._valid_hostname(value):
+            return False, "Enter a valid hostname or domain."
+        return self._run_command("tunnel", "host", "remove", value)
+
+    def reset_split_tunnel(self) -> tuple[bool, str]:
+        with self._command_lock:
+            for command in (("tunnel", "ip", "reset"), ("tunnel", "host", "reset")):
+                success, message = self._run_command(*command)
+                if not success:
+                    return success, message
+        return True, ""
+
+    def add_fallback_domain(self, hostname: str) -> tuple[bool, str]:
+        value = hostname.strip().rstrip(".")
+        if not self._valid_hostname(value):
+            return False, "Enter a valid hostname or domain."
+        if value.lower() in {
+            rule.lower().rstrip(".") for rule in self.get_split_tunnel_info().get("fallback_domains", [])
+        }:
+            return False, "This fallback domain already exists."
+        return self._run_command("dns", "fallback", "add", value)
+
+    def remove_fallback_domain(self, hostname: str) -> tuple[bool, str]:
+        value = hostname.strip().rstrip(".")
+        if not self._valid_hostname(value):
+            return False, "Enter a valid hostname or domain."
+        return self._run_command("dns", "fallback", "remove", value)

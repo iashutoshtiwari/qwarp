@@ -87,6 +87,24 @@ def test_json_status_authentication_required_is_actionable(mock_run):
 
 
 @patch("subprocess.run")
+def test_json_status_no_network_is_actionable(mock_run):
+    mock_run.return_value = json_output(
+        {"code": "NetworkUnavailable", "error": "No network connection is available."}, returncode=1
+    )
+    assert WarpEngine().status() == WarpState.NO_NETWORK
+
+
+def test_status_falls_back_to_validated_text_without_matching_disconnected_as_connected():
+    engine = WarpEngine()
+    engine._run_json_command = MagicMock(return_value=None)
+    engine._last_cli_failure = "malformed_response"
+    engine._run_command = MagicMock(return_value=(True, "Status update: Disconnected"))
+
+    assert engine.status() == WarpState.DISCONNECTED
+    engine._run_command.assert_called_once_with("status", quiet=True)
+
+
+@patch("subprocess.run")
 def test_json_status_daemon_unavailable_is_distinguished(mock_run):
     mock_run.side_effect = [
         json_output({"code": "DaemonUnavailable", "error": "daemon IPC unavailable"}, returncode=1),
@@ -636,6 +654,8 @@ def test_capability_detection(mock_which, mock_run):
     mock_run.side_effect = [
         process(stdout="warp-cli 2026.6.880.0"),  # version
         process(stdout="  - MASQUE: default\n  - WireGuard: legacy"),  # protocol help
+        process(stdout="Commands:\n  list\n  add\n"),  # split tunnel help
+        process(stdout="Commands:\n  list\n  add\n"),  # fallback help
         json_output({"allowed": True}),  # mode-switch-allowed
         json_output({"error": "No org"}, returncode=1),  # org check
     ]
@@ -644,6 +664,8 @@ def test_capability_detection(mock_which, mock_run):
     assert caps.version == "warp-cli 2026.6.880.0"
     assert caps.has_json is True
     assert caps.tunnel_protocols == ("MASQUE", "WireGuard")
+    assert caps.has_split_tunnel is True
+    assert caps.has_fallback_domains is True
     assert caps.mode_switch_allowed is True
     assert caps.is_zero_trust is False
 
@@ -654,12 +676,16 @@ def test_capability_detection_zero_trust(mock_which, mock_run):
     mock_run.side_effect = [
         process(stdout="warp-cli 2026.6.880.0"),
         process(stdout="  - MASQUE: default\n  - WireGuard: legacy"),
+        process(stdout="Commands:\n  list\n  add\n"),
+        process(stdout="Commands:\n  list\n  add\n"),
         json_output({"allowed": False}),  # mode locked by org
         json_output({"organization": "my-corp"}),
     ]
     caps = WarpEngine().detect_capabilities()
     assert caps.is_zero_trust is True
     assert caps.organization == "my-corp"
+    assert caps.has_split_tunnel is True
+    assert caps.has_fallback_domains is True
     assert caps.mode_switch_allowed is False
 
 
@@ -669,6 +695,8 @@ def test_capability_detection_accepts_scalar_json(mock_which, mock_run):
     mock_run.side_effect = [
         process(stdout="warp-cli 2026.7.1377.0"),
         process(stdout="  - MASQUE: default\n  - WireGuard: legacy"),
+        process(stdout="Commands:\n  list\n  add\n"),
+        process(stdout="Commands:\n  list\n  add\n"),
         json_output(False),
         json_output("synthetic-org"),
     ]
@@ -676,6 +704,8 @@ def test_capability_detection_accepts_scalar_json(mock_which, mock_run):
     caps = WarpEngine().detect_capabilities()
 
     assert caps.has_json is True
+    assert caps.has_split_tunnel is True
+    assert caps.has_fallback_domains is True
     assert caps.mode_switch_allowed is False
     assert caps.is_zero_trust is True
     assert caps.organization == "synthetic-org"
@@ -733,3 +763,59 @@ def test_get_split_tunnel_info(mock_run):
     assert info["ip_count"] == 1
     assert info["host_count"] == 0
     assert info["fallback_count"] == 1
+
+
+def test_split_tunnel_ip_validation_and_range_command():
+    engine = WarpEngine()
+    engine.get_split_tunnel_info = MagicMock(return_value={"ip_rules": []})
+    engine._run_command = MagicMock(return_value=(True, ""))
+
+    assert engine.add_split_tunnel_ip("not an address") == (False, "Enter a valid IP address or CIDR network.")
+    assert engine.add_split_tunnel_ip("2001:db8::/48") == (True, "")
+    engine._run_command.assert_called_with("tunnel", "ip", "add-range", "2001:db8::/48")
+    assert engine.add_split_tunnel_ip("192.0.2.1") == (True, "")
+    engine._run_command.assert_called_with("tunnel", "ip", "add", "192.0.2.1")
+    assert engine.remove_split_tunnel_ip("192.0.2.1") == (True, "")
+    engine._run_command.assert_called_with("tunnel", "ip", "remove", "192.0.2.1")
+    assert engine.remove_split_tunnel_ip("2001:db8::/48") == (True, "")
+    engine._run_command.assert_called_with("tunnel", "ip", "remove-range", "2001:db8::/48")
+
+
+def test_split_tunnel_hostname_and_fallback_reject_duplicates():
+    engine = WarpEngine()
+    engine.get_split_tunnel_info = MagicMock(
+        return_value={"host_rules": ["internal.example.com"], "fallback_domains": ["corp.example.com"]}
+    )
+
+    assert engine.add_split_tunnel_host("internal.example.com") == (False, "This split-tunnel hostname already exists.")
+    assert engine.add_fallback_domain("corp.example.com") == (False, "This fallback domain already exists.")
+    assert engine.add_fallback_domain("bad_domain") == (False, "Enter a valid hostname or domain.")
+
+
+def test_safe_cli_message_redacts_secrets_adversarially():
+    engine = WarpEngine()
+
+    assert "<redacted>" in engine._safe_cli_message("Error: invalid license key 1234-5678-ABCD")
+    assert "1234-5678-ABCD" not in engine._safe_cli_message("Error: invalid license key 1234-5678-ABCD")
+
+    assert "<redacted>" in engine._safe_cli_message("Failed with token secret_token_value_here")
+    assert "secret_token_value_here" not in engine._safe_cli_message("Failed with token secret_token_value_here")
+
+    jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgN"
+    assert "<redacted" in engine._safe_cli_message(f"Auth token: {jwt}")
+    assert jwt not in engine._safe_cli_message(f"Auth token: {jwt}")
+
+    pem = "-----BEGIN CERTIFICATE-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A\n-----END CERTIFICATE-----"
+    assert "<redacted certificate/key>" in engine._safe_cli_message(f"Client cert:\n{pem}")
+    assert "MIIBIjAN" not in engine._safe_cli_message(f"Client cert:\n{pem}")
+
+    auth_url = "https://example.cloudflareaccess.com/cdn-cgi/access/callback?token=supersecret123"
+    assert "<redacted URL>" in engine._safe_cli_message(f"Navigate to {auth_url} to authenticate")
+    assert "supersecret123" not in engine._safe_cli_message(f"Navigate to {auth_url} to authenticate")
+
+    assert "<redacted>" in engine._safe_cli_message(
+        "warp-cli override unlock mysecretcode", sensitive_values=("mysecretcode",)
+    )
+    assert "mysecretcode" not in engine._safe_cli_message(
+        "warp-cli override unlock mysecretcode", sensitive_values=("mysecretcode",)
+    )

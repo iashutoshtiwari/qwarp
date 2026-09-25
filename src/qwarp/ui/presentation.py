@@ -129,7 +129,7 @@ def _connection_for(state: WarpState) -> ConnectionState:
         return ConnectionState.DISCONNECTED
     if state == WarpState.CONNECTING:
         return ConnectionState.CONNECTING
-    if state in {WarpState.DAEMON_ERROR, WarpState.TRANSIENT_ERROR, WarpState.POLICY_RESTRICTED}:
+    if state in {WarpState.DAEMON_ERROR, WarpState.TRANSIENT_ERROR, WarpState.POLICY_RESTRICTED, WarpState.NO_NETWORK}:
         return ConnectionState.ERROR
     return ConnectionState.UNKNOWN
 
@@ -268,6 +268,18 @@ def presentation_for(
             tray_label=_tr("Managed by your organization"),
             icon_name="tray-error.svg",
             title_style="title_error",
+            connect_enabled=False,
+            disconnect_enabled=False,
+        )
+    if state == WarpState.NO_NETWORK:
+        return WarpPresentation(
+            **common,
+            primary_status=_tr("No network"),
+            mode_label=mode_label,
+            description=_tr("Waiting for Internet connectivity."),
+            tray_label=_tr("No network"),
+            icon_name="tray-error.svg",
+            title_style="title_disconnected",
             connect_enabled=False,
             disconnect_enabled=False,
         )

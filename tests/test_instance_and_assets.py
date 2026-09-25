@@ -7,6 +7,7 @@ from PyQt6.QtCore import QCoreApplication, QSettings, QSize
 from PyQt6.QtGui import QPalette
 
 from qwarp import __version__
+from qwarp.core.engine import WarpState
 from qwarp.core.instance import InstanceRole, SingleInstance
 from qwarp.main import (
     LEGACY_TERMS_CONSENT_KEY,
@@ -15,6 +16,7 @@ from qwarp.main import (
     has_current_terms_acceptance,
     parse_cli_args,
     remember_terms_acceptance,
+    status_payload,
 )
 from qwarp.ui.styles import ACCENT_COLOR, apply_application_theme
 from qwarp.utils.system import get_asset_dir, load_symbolic_icon, tray_icon_tint
@@ -158,6 +160,27 @@ def test_debug_and_log_level_arguments_are_side_effect_free():
 
     assert args.debug is True
     assert args.log_level == "WARNING"
+
+
+def test_status_payload_is_stable_and_does_not_include_organization_name():
+    engine = Mock()
+    engine.status.return_value = WarpState.CONNECTED
+    engine.get_settings.return_value = {"mode": "warp"}
+    engine.detect_capabilities.return_value = Mock(
+        is_zero_trust=True, mode_switch_allowed=False, organization="Secret Org"
+    )
+
+    payload, exit_code = status_payload(engine)
+
+    assert exit_code == 0
+    assert payload == {
+        "schema_version": 1,
+        "connection": "connected",
+        "mode": "warp",
+        "service": "active",
+        "enrollment": "zero_trust",
+        "organization_managed": True,
+    }
 
 
 def test_terms_acceptance_is_persisted_only_after_success(qapp):

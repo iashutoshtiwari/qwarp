@@ -92,3 +92,11 @@ def test_unknown_future_mode_is_not_presented_as_warp():
     assert presentation.mode == OperatingMode.UNKNOWN
     assert presentation.primary_status == "Connected"
     assert presentation.mode_label == "Unknown mode"
+
+
+def test_no_network_has_its_own_presentation():
+    presentation = presentation_for(WarpState.NO_NETWORK)
+
+    assert presentation.primary_status == "No network"
+    assert presentation.description == "Waiting for Internet connectivity."
+    assert presentation.connect_enabled is False
