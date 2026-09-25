@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
 <TS version="2.1" language="hi_IN">
-<context>
+    <context>
     <name>SettingsDialog</name>
     <message>
         <location filename="../../ui/settings.py" line="56" />
@@ -11,7 +11,7 @@
     <message>
         <location filename="../../ui/settings.py" line="102" />
         <source>Start QWarp on login</source>
-        <translation type="unfinished" />
+        <translation>लॉगिन पर QWarp शुरू करें</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="108" />
@@ -31,12 +31,12 @@
     <message>
         <location filename="../../ui/settings.py" line="149" />
         <source>Hide official Cloudflare tray icon</source>
-        <translation type="unfinished" />
+        <translation>आधिकारिक Cloudflare ट्रे आइकन छुपाएं</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="152" />
         <source>Prevents the official Cloudflare client from showing its own tray icon while QWarp is running.</source>
-        <translation type="unfinished" />
+        <translation>QWarp चलने के दौरान आधिकारिक Cloudflare क्लाइंट को अपना ट्रे आइकन प्रदर्शित करने से रोकता है।</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="158" />
@@ -78,7 +78,7 @@
         <location filename="../../ui/settings.py" line="206" />
         <location filename="../../ui/settings.py" line="189" />
         <source>Show</source>
-        <translation type="unfinished" />
+        <translation>दिखाएं</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="195" />
@@ -98,12 +98,12 @@
     <message>
         <location filename="../../ui/settings.py" line="204" />
         <source>Enter WARP+ License Key</source>
-        <translation type="unfinished" />
+        <translation>WARP+ लाइसेंस कुंजी दर्ज करें</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="209" />
         <source>Apply</source>
-        <translation type="unfinished" />
+        <translation>लागू करें</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="223" />
@@ -124,39 +124,39 @@
     <message>
         <location filename="../../ui/settings.py" line="253" />
         <source>Registration Status:</source>
-        <translation type="unfinished" />
+        <translation>पंजीकरण स्थिति:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="254" />
         <source>Device ID:</source>
-        <translation type="unfinished" />
+        <translation>डिवाइस आईडी:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="256" />
         <source>Organization:</source>
-        <translation type="unfinished" />
+        <translation>संगठन:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="432" />
         <location filename="../../ui/settings.py" line="263" />
         <source>Refresh</source>
-        <translation type="unfinished" />
+        <translation>रिफ्रेश करें</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="813" />
         <location filename="../../ui/settings.py" line="267" />
         <source>Leave Organization</source>
-        <translation type="unfinished" />
+        <translation>संगठन छोड़ें</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="277" />
         <source>Device</source>
-        <translation type="unfinished" />
+        <translation>डिवाइस</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="286" />
         <source>Loading connection settings…</source>
-        <translation type="unfinished" />
+        <translation>कनेक्शन सेटिंग्स लोड हो रही हैं…</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="290" />
@@ -201,64 +201,64 @@
     <message>
         <location filename="../../ui/settings.py" line="307" />
         <source>DNS Content Filtering:</source>
-        <translation type="unfinished" />
+        <translation>DNS सामग्री फ़िल्टरिंग:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="310" />
         <source>Off (No Filtering)</source>
-        <translation type="unfinished" />
+        <translation>बंद (कोई फ़िल्टरिंग नहीं)</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="311" />
         <source>Malware Only</source>
-        <translation type="unfinished" />
+        <translation>केवल मैलवेयर</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="312" />
         <source>Malware + Adult Content</source>
-        <translation type="unfinished" />
+        <translation>मैलवेयर + वयस्क सामग्री</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="322" />
         <source>Tunnel Protocol:</source>
-        <translation type="unfinished" />
+        <translation>टनल प्रोटोकॉल:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="799" />
         <location filename="../../ui/settings.py" line="324" />
         <source>MASQUE (Default)</source>
-        <translation type="unfinished" />
+        <translation>MASQUE (डिफ़ॉल्ट)</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="800" />
         <location filename="../../ui/settings.py" line="325" />
         <source>WireGuard (Legacy)</source>
-        <translation type="unfinished" />
+        <translation>WireGuard (पुरातन)</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="330" />
         <source>Proxy Port:</source>
-        <translation type="unfinished" />
+        <translation>प्रॉक्सी पोर्ट:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="344" />
         <source>Trusted Networks:</source>
-        <translation type="unfinished" />
+        <translation>विश्वसनीय नेटवर्क:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="350" />
         <source>Auto-disconnect on Ethernet</source>
-        <translation type="unfinished" />
+        <translation>ईथरनेट पर स्वतः डिस्कनेक्ट करें</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="354" />
         <source>Auto-disconnect on Wi-Fi</source>
-        <translation type="unfinished" />
+        <translation>वाई-फ़ाई पर स्वतः डिस्कनेक्ट करें</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="358" />
         <source>(Consumer only — managed by organization policy in Zero Trust mode)</source>
-        <translation type="unfinished" />
+        <translation>(केवल उपभोक्ता — Zero Trust मोड में संगठन की नीति द्वारा प्रबंधित)</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="365" />
@@ -268,237 +268,237 @@
     <message>
         <location filename="../../ui/settings.py" line="391" />
         <source>Network Information</source>
-        <translation type="unfinished" />
+        <translation>नेटवर्क जानकारी</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="397" />
         <source>Interface:</source>
-        <translation type="unfinished" />
+        <translation>इंटरफ़ेस:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="398" />
         <source>Gateway:</source>
-        <translation type="unfinished" />
+        <translation>गेटवे:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="399" />
         <source>DNS Servers:</source>
-        <translation type="unfinished" />
+        <translation>DNS सर्वर:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="401" />
         <source>Connection Statistics</source>
-        <translation type="unfinished" />
+        <translation>कनेक्शन आंकड़े</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="406" />
         <source>Tunnel Status:</source>
-        <translation type="unfinished" />
+        <translation>टनल स्थिति:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="407" />
         <source>Override:</source>
-        <translation type="unfinished" />
+        <translation>ओवरराइड:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="409" />
         <source>Tunnel and DNS Statistics</source>
-        <translation type="unfinished" />
+        <translation>टनल और DNS आंकड़े</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="411" />
         <location filename="../../ui/settings.py" line="410" />
         <source>Loading on request…</source>
-        <translation type="unfinished" />
+        <translation>अनुरोध पर लोड हो रहा है…</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="416" />
         <source>Tunnel:</source>
-        <translation type="unfinished" />
+        <translation>टनल:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="417" />
         <source>DNS:</source>
-        <translation type="unfinished" />
+        <translation>DNS:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="419" />
         <source>Split Tunnel</source>
-        <translation type="unfinished" />
+        <translation>स्प्लिट टनल</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="426" />
         <source>Mode:</source>
-        <translation type="unfinished" />
+        <translation>मोड:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="427" />
         <source>IP Rules:</source>
-        <translation type="unfinished" />
+        <translation>IP नियम:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="428" />
         <source>Host Rules:</source>
-        <translation type="unfinished" />
+        <translation>होस्ट नियम:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="429" />
         <source>Fallback Domains:</source>
-        <translation type="unfinished" />
+        <translation>फ़ॉलबैक डोमेन:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="438" />
         <source>Diagnostics</source>
-        <translation type="unfinished" />
+        <translation>डायग्नोस्टिक्स</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="444" />
         <source>Choose traffic that should follow a different route from the WARP tunnel.</source>
-        <translation type="unfinished" />
+        <translation>वह ट्रैफ़िक चुनें जो WARP टनल से भिन्न मार्ग का अनुसरण करे।</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="448" />
         <source>Split-tunnel changes are available for personal registrations only.</source>
-        <translation type="unfinished" />
+        <translation>स्प्लिट टनल परिवर्तन केवल व्यक्तिगत पंजीकरण के लिए उपलब्ध हैं।</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="454" />
         <source>IP addresses and networks</source>
-        <translation type="unfinished" />
+        <translation>IP पते और नेटवर्क</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="456" />
         <source>Split tunnel IP rules</source>
-        <translation type="unfinished" />
+        <translation>स्प्लिट टनल IP नियम</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="460" />
         <source>Split tunnel IP or network</source>
-        <translation type="unfinished" />
+        <translation>स्प्लिट टनल IP या नेटवर्क</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="461" />
         <source>Example: 192.168.1.0/24</source>
-        <translation type="unfinished" />
+        <translation>उदाहरण: 192.168.1.0/24</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="482" />
         <location filename="../../ui/settings.py" line="462" />
         <source>Add</source>
-        <translation type="unfinished" />
+        <translation>जोड़ें</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="524" />
         <location filename="../../ui/settings.py" line="483" />
         <location filename="../../ui/settings.py" line="463" />
         <source>Remove</source>
-        <translation type="unfinished" />
+        <translation>हटाएं</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="474" />
         <source>Hostnames</source>
-        <translation type="unfinished" />
+        <translation>होस्टनाम</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="476" />
         <source>Split tunnel hostname rules</source>
-        <translation type="unfinished" />
+        <translation>स्प्लिट टनल होस्टनाम नियम</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="480" />
         <source>Split tunnel hostname</source>
-        <translation type="unfinished" />
+        <translation>स्प्लिट टनल होस्टनाम</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="481" />
         <source>Example: internal.example.com</source>
-        <translation type="unfinished" />
+        <translation>उदाहरण: internal.example.com</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="496" />
         <source>Restore defaults</source>
-        <translation type="unfinished" />
+        <translation>डिफ़ॉल्ट पुनर्स्थापित करें</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="500" />
         <source>Split Tunneling</source>
-        <translation type="unfinished" />
+        <translation>स्प्लिट टनलिंग</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="505" />
         <source>Use the local DNS resolver for these fallback domains.</source>
-        <translation type="unfinished" />
+        <translation>इन फ़ॉलबैक डोमेन के लिए स्थानीय DNS रिज़ॉल्वर का उपयोग करें।</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="510" />
         <source>Local domain fallback changes are available for personal registrations only.</source>
-        <translation type="unfinished" />
+        <translation>स्थानीय डोमेन फ़ॉलबैक परिवर्तन केवल व्यक्तिगत पंजीकरण के लिए उपलब्ध हैं।</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="517" />
         <source>Local domain fallback rules</source>
-        <translation type="unfinished" />
+        <translation>स्थानीय डोमेन फ़ॉलबैक नियम</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="521" />
         <source>Local fallback domain</source>
-        <translation type="unfinished" />
+        <translation>स्थानीय फ़ॉलबैक डोमेन</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="522" />
         <source>Example: corp.example.com</source>
-        <translation type="unfinished" />
+        <translation>उदाहरण: corp.example.com</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="523" />
         <source>Add domain</source>
-        <translation type="unfinished" />
+        <translation>डोमेन जोड़ें</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="536" />
         <source>DNS</source>
-        <translation type="unfinished" />
+        <translation>DNS</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="556" />
         <source>Restore split-tunnel defaults</source>
-        <translation type="unfinished" />
+        <translation>स्प्लिट टनल डिफ़ॉल्ट पुनर्स्थापित करें</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="557" />
         <source>Restore the official default IP and hostname split-tunnel rules?</source>
-        <translation type="unfinished" />
+        <translation>क्या आधिकारिक डिफ़ॉल्ट IP और होस्टनाम स्प्लिट टनल नियम पुनर्स्थापित करें?</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="592" />
         <source>Active</source>
-        <translation type="unfinished" />
+        <translation>सक्रिय</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="594" />
         <source>Inactive</source>
-        <translation type="unfinished" />
+        <translation>निष्क्रिय</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="757" />
         <location filename="../../ui/settings.py" line="622" />
         <source>Unavailable</source>
-        <translation type="unfinished" />
+        <translation>अनुपलब्ध</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="627" />
         <source>No supported counters were returned.</source>
-        <translation type="unfinished" />
+        <translation>कोई समर्थित काउंटर प्राप्त नहीं हुए।</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="652" />
         <source>A Qt6-based alternative desktop client for Cloudflare® WARP®.</source>
-        <translation type="unfinished" />
+        <translation>Cloudflare® WARP® के लिए एक Qt6-आधारित वैकल्पिक डेस्कटॉप क्लाइंट।</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="670" />
         <source>QWarp is independently developed and is not affiliated with, authorized, sponsored, or endorsed by Cloudflare, Inc. It requires a separately installed official client and does not distribute Cloudflare software.&lt;br&gt;&lt;br&gt;Cloudflare, 1.1.1.1, WARP, and WARP+ are trademarks and/or registered trademarks of Cloudflare, Inc. in the United States and other jurisdictions.&lt;br&gt;&lt;br&gt;&lt;a href='https://www.cloudflare.com/trademark/'&gt;Trademark Guidelines&lt;/a&gt; | &lt;a href='https://www.cloudflare.com/application/terms/'&gt;Application Terms&lt;/a&gt; | &lt;a href='https://www.cloudflare.com/application/privacypolicy/'&gt;Application Privacy Policy&lt;/a&gt;</source>
-        <translation type="unfinished" />
+        <translation>QWarp स्वतंत्र रूप से विकसित है और यह Cloudflare, Inc. से संबद्ध, अधिकृत, प्रायोजित या समर्थित नहीं है। इसके लिए अलग से स्थापित आधिकारिक क्लाइंट आवश्यक है और यह Cloudflare सॉफ़्टवेयर वितरित नहीं करता है।&lt;br&gt;&lt;br&gt;Cloudflare, 1.1.1.1, WARP और WARP+ संयुक्त राज्य अमेरिका और अन्य क्षेत्रों में Cloudflare, Inc. के ट्रेडमार्क और/या पंजीकृत ट्रेडमार्क हैं।&lt;br&gt;&lt;br&gt;&lt;a href='https://www.cloudflare.com/trademark/'&gt;ट्रेडमार्क दिशानिर्देश&lt;/a&gt; | &lt;a href='https://www.cloudflare.com/application/terms/'&gt;एप्लिकेशन शर्तें&lt;/a&gt; | &lt;a href='https://www.cloudflare.com/application/privacypolicy/'&gt;एप्लिकेशन गोपनीयता नीति&lt;/a&gt;</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="689" />
@@ -508,54 +508,54 @@
     <message>
         <location filename="../../ui/settings.py" line="756" />
         <source>Registered</source>
-        <translation type="unfinished" />
+        <translation>पंजीकृत</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="756" />
         <source>Not registered</source>
-        <translation type="unfinished" />
+        <translation>पंजीकृत नहीं</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="778" />
         <source>Installed client version: %s</source>
-        <translation type="unfinished" />
+        <translation>स्थापित क्लाइंट संस्करण: %s</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="785" />
         <source>Managed by your organization. This setting is controlled by your organization's Zero Trust policy.</source>
-        <translation type="unfinished" />
+        <translation>आपके संगठन द्वारा प्रबंधित। यह सेटिंग आपके संगठन की Zero Trust नीति द्वारा नियंत्रित है।</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="814" />
         <source>Are you sure you want to leave this organization?</source>
-        <translation type="unfinished" />
+        <translation>क्या आप निश्चित रूप से इस संगठन को छोड़ना चाहते हैं?</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="827" />
         <source>Delete this WARP registration? You will need to register again before reconnecting.</source>
-        <translation type="unfinished" />
+        <translation>क्या इस WARP पंजीकरण को हटाना चाहते हैं? पुनः कनेक्ट करने से पहले आपको फिर से पंजीकरण करना होगा।</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="876" />
         <source>Connection settings are unavailable.</source>
-        <translation type="unfinished" />
+        <translation>कनेक्शन सेटिंग्स अनुपलब्ध हैं।</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="997" />
         <location filename="../../ui/settings.py" line="971" />
         <source>The requested action failed.</source>
-        <translation type="unfinished" />
+        <translation>अनुरोधित कार्रवाई विफल रही।</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="1026" />
         <location filename="../../ui/settings.py" line="1020" />
         <source>Hide</source>
-        <translation type="unfinished" />
+        <translation>छुपाएं</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="1031" />
         <source>Unknown</source>
-        <translation type="unfinished" />
+        <translation>अज्ञात</translation>
     </message>
 </context><context>
     <name>WarpStateManager</name>
@@ -563,14 +563,14 @@
         <location filename="../../core/state.py" line="547" />
         <location filename="../../core/state.py" line="459" />
         <source>Another WARP action is already in progress.</source>
-        <translation type="unfinished" />
+        <translation>एक अन्य WARP कार्रवाई पहले से ही जारी है।</translation>
     </message>
 </context><context>
     <name>WarpTrayIcon</name>
     <message>
         <location filename="../../ui/tray.py" line="49" />
         <source>Checking WARP status…</source>
-        <translation type="unfinished" />
+        <translation>WARP स्थिति की जांच की जा रही है…</translation>
     </message>
     <message>
         <location filename="../../ui/tray.py" line="54" />
@@ -585,42 +585,42 @@
     <message>
         <location filename="../../ui/tray.py" line="62" />
         <source>Mode</source>
-        <translation type="unfinished" />
+        <translation>मोड</translation>
     </message>
     <message>
         <location filename="../../ui/tray.py" line="67" />
         <source>WARP</source>
-        <translation type="unfinished" />
+        <translation>WARP</translation>
     </message>
     <message>
         <location filename="../../ui/tray.py" line="68" />
         <source>DNS over HTTPS</source>
-        <translation type="unfinished" />
+        <translation>DNS over HTTPS</translation>
     </message>
     <message>
         <location filename="../../ui/tray.py" line="69" />
         <source>DNS over TLS</source>
-        <translation type="unfinished" />
+        <translation>DNS over TLS</translation>
     </message>
     <message>
         <location filename="../../ui/tray.py" line="70" />
         <source>WARP + DNS over HTTPS</source>
-        <translation type="unfinished" />
+        <translation>WARP + DNS over HTTPS</translation>
     </message>
     <message>
         <location filename="../../ui/tray.py" line="71" />
         <source>WARP + DNS over TLS</source>
-        <translation type="unfinished" />
+        <translation>WARP + DNS over TLS</translation>
     </message>
     <message>
         <location filename="../../ui/tray.py" line="72" />
         <source>Local proxy</source>
-        <translation type="unfinished" />
+        <translation>स्थानीय प्रॉक्सी</translation>
     </message>
     <message>
         <location filename="../../ui/tray.py" line="73" />
         <source>Tunnel only</source>
-        <translation type="unfinished" />
+        <translation>केवल टनल</translation>
     </message>
     <message>
         <location filename="../../ui/tray.py" line="84" />
@@ -635,68 +635,68 @@
     <message>
         <location filename="../../ui/tray.py" line="123" />
         <source>QWarp: %s</source>
-        <translation type="unfinished" />
+        <translation>QWarp: %s</translation>
     </message>
     <message>
         <location filename="../../ui/tray.py" line="125" />
         <source>Zero Trust enrolled</source>
-        <translation type="unfinished" />
+        <translation>Zero Trust में नामांकित</translation>
     </message>
 </context><context>
     <name>WarpWindow</name>
     <message>
         <location filename="../../ui/window.py" line="151" />
         <source>Agree to the Cloudflare Application Terms and acknowledge the Application Privacy Policy</source>
-        <translation type="unfinished" />
+        <translation>Cloudflare एप्लिकेशन की शर्तों से सहमत हों और एप्लिकेशन गोपनीयता नीति को स्वीकार करें</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="154" />
         <source>I agree to the &lt;a href='https://www.cloudflare.com/application/terms/'&gt;Cloudflare Application Terms&lt;/a&gt; and acknowledge the &lt;a href='https://www.cloudflare.com/application/privacypolicy/'&gt;Application Privacy Policy&lt;/a&gt;.</source>
-        <translation type="unfinished" />
+        <translation>मैं &lt;a href='https://www.cloudflare.com/application/terms/'&gt;Cloudflare एप्लिकेशन शर्तों&lt;/a&gt; से सहमत हूं और &lt;a href='https://www.cloudflare.com/application/privacypolicy/'&gt;एप्लिकेशन गोपनीयता नीति&lt;/a&gt; को स्वीकार करता हूं।</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="164" />
         <source>Cloudflare Application Terms and Application Privacy Policy</source>
-        <translation type="unfinished" />
+        <translation>Cloudflare एप्लिकेशन शर्तें और एप्लिकेशन गोपनीयता नीति</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="316" />
         <location filename="../../ui/window.py" line="169" />
         <source>Continue</source>
-        <translation type="unfinished" />
+        <translation>जारी रखें</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="315" />
         <location filename="../../ui/window.py" line="174" />
         <source>Connect to an organization</source>
-        <translation type="unfinished" />
+        <translation>संगठन से कनेक्ट करें</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="185" />
         <location filename="../../ui/window.py" line="183" />
         <location filename="../../ui/window.py" line="182" />
         <source>Organization name</source>
-        <translation type="unfinished" />
+        <translation>संगठन का नाम</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="212" />
         <source>Official Cloudflare client not found</source>
-        <translation type="unfinished" />
+        <translation>आधिकारिक Cloudflare क्लाइंट नहीं मिला</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="221" />
         <source>QWarp requires the official warp-cli to be installed to function properly. Please install it and restart QWarp.&lt;br&gt;&lt;br&gt;&lt;a href='https://pkg.cloudflareclient.com/'&gt;Installation Instructions&lt;/a&gt;</source>
-        <translation type="unfinished" />
+        <translation>QWarp के ठीक से काम करने के लिए आधिकारिक warp-cli स्थापित होना आवश्यक है। कृपया इसे स्थापित करें और QWarp पुनः आरंभ करें।&lt;br&gt;&lt;br&gt;&lt;a href='https://pkg.cloudflareclient.com/'&gt;स्थापना निर्देश&lt;/a&gt;</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="244" />
         <source>Cloudflare WARP connection</source>
-        <translation type="unfinished" />
+        <translation>Cloudflare WARP कनेक्शन</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="245" />
         <source>Connect or disconnect Cloudflare WARP</source>
-        <translation type="unfinished" />
+        <translation>Cloudflare WARP कनेक्ट या डिस्कनेक्ट करें</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="247" />
@@ -716,33 +716,33 @@
     <message>
         <location filename="../../ui/window.py" line="285" />
         <source>Complete organization sign-in</source>
-        <translation type="unfinished" />
+        <translation>संगठन साइन-इन पूर्ण करें</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="291" />
         <source>Complete authentication in your browser to enroll this device.</source>
-        <translation type="unfinished" />
+        <translation>इस डिवाइस को नामांकित करने के लिए अपने ब्राउज़र में प्रमाणीकरण पूरा करें।</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="311" />
         <source>Connect to your organization</source>
-        <translation type="unfinished" />
+        <translation>अपने संगठन से कनेक्ट करें</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="312" />
         <source>Enter the organization name provided by your administrator.</source>
-        <translation type="unfinished" />
+        <translation>अपने व्यवस्थापक द्वारा प्रदान किया गया संगठन नाम दर्ज करें।</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="313" />
         <source>Use personal setup</source>
-        <translation type="unfinished" />
+        <translation>व्यक्तिगत सेटअप का उपयोग करें</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="329" />
         <location filename="../../ui/window.py" line="328" />
         <source>Settings</source>
-        <translation type="unfinished">सेटिंग्स</translation>
+        <translation>सेटिंग्स</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="334" />
@@ -757,22 +757,22 @@
     <message>
         <location filename="../../ui/window.py" line="382" />
         <source>Connected to %s</source>
-        <translation type="unfinished" />
+        <translation>%s से कनेक्टेड</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="382" />
         <source>Zero Trust enrolled</source>
-        <translation type="unfinished" />
+        <translation>Zero Trust में नामांकित</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="395" />
         <source>Accept the terms before continuing.</source>
-        <translation type="unfinished" />
+        <translation>जारी रखने से पहले शर्तों को स्वीकार करें।</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="401" />
         <source>Please enter an organization name.</source>
-        <translation type="unfinished" />
+        <translation>कृपया संगठन का नाम दर्ज करें।</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="513" />
@@ -795,11 +795,11 @@
     <message>
         <location filename="../../ui/window.py" line="429" />
         <source>Registration failed.</source>
-        <translation type="unfinished" />
+        <translation>पंजीकरण विफल रहा।</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="432" />
         <source>The requested action failed.</source>
-        <translation type="unfinished" />
+        <translation>अनुरोधित कार्रवाई विफल रही।</translation>
     </message>
 </context></TS>

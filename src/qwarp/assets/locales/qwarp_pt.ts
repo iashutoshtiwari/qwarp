@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
 <TS version="2.1" language="pt_PT">
-<context>
+    <context>
     <name>SettingsDialog</name>
     <message>
         <location filename="../../ui/settings.py" line="56" />
@@ -11,7 +11,7 @@
     <message>
         <location filename="../../ui/settings.py" line="102" />
         <source>Start QWarp on login</source>
-        <translation type="unfinished" />
+        <translation>Iniciar o QWarp ao iniciar a sessão</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="108" />
@@ -31,12 +31,12 @@
     <message>
         <location filename="../../ui/settings.py" line="149" />
         <source>Hide official Cloudflare tray icon</source>
-        <translation type="unfinished" />
+        <translation>Ocultar ícone de bandeja oficial da Cloudflare</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="152" />
         <source>Prevents the official Cloudflare client from showing its own tray icon while QWarp is running.</source>
-        <translation type="unfinished" />
+        <translation>Evita que o cliente oficial da Cloudflare mostre o seu próprio ícone na bandeja enquanto o QWarp estiver em execução.</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="158" />
@@ -78,7 +78,7 @@
         <location filename="../../ui/settings.py" line="206" />
         <location filename="../../ui/settings.py" line="189" />
         <source>Show</source>
-        <translation type="unfinished" />
+        <translation>Mostrar</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="195" />
@@ -98,12 +98,12 @@
     <message>
         <location filename="../../ui/settings.py" line="204" />
         <source>Enter WARP+ License Key</source>
-        <translation type="unfinished" />
+        <translation>Introduzir chave de licença do WARP+</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="209" />
         <source>Apply</source>
-        <translation type="unfinished" />
+        <translation>Aplicar</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="223" />
@@ -124,39 +124,39 @@
     <message>
         <location filename="../../ui/settings.py" line="253" />
         <source>Registration Status:</source>
-        <translation type="unfinished" />
+        <translation>Estado do registo:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="254" />
         <source>Device ID:</source>
-        <translation type="unfinished" />
+        <translation>ID do dispositivo:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="256" />
         <source>Organization:</source>
-        <translation type="unfinished" />
+        <translation>Organização:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="432" />
         <location filename="../../ui/settings.py" line="263" />
         <source>Refresh</source>
-        <translation type="unfinished" />
+        <translation>Atualizar</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="813" />
         <location filename="../../ui/settings.py" line="267" />
         <source>Leave Organization</source>
-        <translation type="unfinished" />
+        <translation>Sair da organização</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="277" />
         <source>Device</source>
-        <translation type="unfinished" />
+        <translation>Dispositivo</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="286" />
         <source>Loading connection settings…</source>
-        <translation type="unfinished" />
+        <translation>A carregar definições de ligação…</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="290" />
@@ -201,64 +201,64 @@
     <message>
         <location filename="../../ui/settings.py" line="307" />
         <source>DNS Content Filtering:</source>
-        <translation type="unfinished" />
+        <translation>Filtragem de conteúdo DNS:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="310" />
         <source>Off (No Filtering)</source>
-        <translation type="unfinished" />
+        <translation>Desativado (Sem filtragem)</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="311" />
         <source>Malware Only</source>
-        <translation type="unfinished" />
+        <translation>Apenas malware</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="312" />
         <source>Malware + Adult Content</source>
-        <translation type="unfinished" />
+        <translation>Malware e conteúdo adulto</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="322" />
         <source>Tunnel Protocol:</source>
-        <translation type="unfinished" />
+        <translation>Protocolo de túnel:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="799" />
         <location filename="../../ui/settings.py" line="324" />
         <source>MASQUE (Default)</source>
-        <translation type="unfinished" />
+        <translation>MASQUE (Predefinido)</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="800" />
         <location filename="../../ui/settings.py" line="325" />
         <source>WireGuard (Legacy)</source>
-        <translation type="unfinished" />
+        <translation>WireGuard (Legado)</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="330" />
         <source>Proxy Port:</source>
-        <translation type="unfinished" />
+        <translation>Porta de proxy:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="344" />
         <source>Trusted Networks:</source>
-        <translation type="unfinished" />
+        <translation>Redes fidedignas:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="350" />
         <source>Auto-disconnect on Ethernet</source>
-        <translation type="unfinished" />
+        <translation>Desligar automaticamente em Ethernet</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="354" />
         <source>Auto-disconnect on Wi-Fi</source>
-        <translation type="unfinished" />
+        <translation>Desligar automaticamente em Wi-Fi</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="358" />
         <source>(Consumer only — managed by organization policy in Zero Trust mode)</source>
-        <translation type="unfinished" />
+        <translation>(Apenas consumidor — gerido por política da organização no modo Zero Trust)</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="365" />
@@ -268,237 +268,237 @@
     <message>
         <location filename="../../ui/settings.py" line="391" />
         <source>Network Information</source>
-        <translation type="unfinished" />
+        <translation>Informações de rede</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="397" />
         <source>Interface:</source>
-        <translation type="unfinished" />
+        <translation>Interface:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="398" />
         <source>Gateway:</source>
-        <translation type="unfinished" />
+        <translation>Gateway:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="399" />
         <source>DNS Servers:</source>
-        <translation type="unfinished" />
+        <translation>Servidores DNS:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="401" />
         <source>Connection Statistics</source>
-        <translation type="unfinished" />
+        <translation>Estatísticas da ligação</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="406" />
         <source>Tunnel Status:</source>
-        <translation type="unfinished" />
+        <translation>Estado do túnel:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="407" />
         <source>Override:</source>
-        <translation type="unfinished" />
+        <translation>Substituição:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="409" />
         <source>Tunnel and DNS Statistics</source>
-        <translation type="unfinished" />
+        <translation>Estatísticas de túnel e DNS</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="411" />
         <location filename="../../ui/settings.py" line="410" />
         <source>Loading on request…</source>
-        <translation type="unfinished" />
+        <translation>A carregar sob pedido…</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="416" />
         <source>Tunnel:</source>
-        <translation type="unfinished" />
+        <translation>Túnel:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="417" />
         <source>DNS:</source>
-        <translation type="unfinished" />
+        <translation>DNS:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="419" />
         <source>Split Tunnel</source>
-        <translation type="unfinished" />
+        <translation>Túnel dividido</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="426" />
         <source>Mode:</source>
-        <translation type="unfinished" />
+        <translation>Modo:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="427" />
         <source>IP Rules:</source>
-        <translation type="unfinished" />
+        <translation>Regras de IP:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="428" />
         <source>Host Rules:</source>
-        <translation type="unfinished" />
+        <translation>Regras de anfitrião:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="429" />
         <source>Fallback Domains:</source>
-        <translation type="unfinished" />
+        <translation>Domínios de recurso:</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="438" />
         <source>Diagnostics</source>
-        <translation type="unfinished" />
+        <translation>Diagnóstico</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="444" />
         <source>Choose traffic that should follow a different route from the WARP tunnel.</source>
-        <translation type="unfinished" />
+        <translation>Escolha o tráfego que deve seguir um trajeto diferente do túnel WARP.</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="448" />
         <source>Split-tunnel changes are available for personal registrations only.</source>
-        <translation type="unfinished" />
+        <translation>As alterações de túnel dividido estão disponíveis apenas para registos pessoais.</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="454" />
         <source>IP addresses and networks</source>
-        <translation type="unfinished" />
+        <translation>Endereços IP e redes</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="456" />
         <source>Split tunnel IP rules</source>
-        <translation type="unfinished" />
+        <translation>Regras de IP de túnel dividido</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="460" />
         <source>Split tunnel IP or network</source>
-        <translation type="unfinished" />
+        <translation>IP ou rede de túnel dividido</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="461" />
         <source>Example: 192.168.1.0/24</source>
-        <translation type="unfinished" />
+        <translation>Exemplo: 192.168.1.0/24</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="482" />
         <location filename="../../ui/settings.py" line="462" />
         <source>Add</source>
-        <translation type="unfinished" />
+        <translation>Adicionar</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="524" />
         <location filename="../../ui/settings.py" line="483" />
         <location filename="../../ui/settings.py" line="463" />
         <source>Remove</source>
-        <translation type="unfinished" />
+        <translation>Remover</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="474" />
         <source>Hostnames</source>
-        <translation type="unfinished" />
+        <translation>Nomes de anfitrião</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="476" />
         <source>Split tunnel hostname rules</source>
-        <translation type="unfinished" />
+        <translation>Regras de nomes de anfitrião de túnel dividido</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="480" />
         <source>Split tunnel hostname</source>
-        <translation type="unfinished" />
+        <translation>Nome de anfitrião de túnel dividido</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="481" />
         <source>Example: internal.example.com</source>
-        <translation type="unfinished" />
+        <translation>Exemplo: internal.example.com</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="496" />
         <source>Restore defaults</source>
-        <translation type="unfinished" />
+        <translation>Restaurar predefinições</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="500" />
         <source>Split Tunneling</source>
-        <translation type="unfinished" />
+        <translation>Túnel dividido</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="505" />
         <source>Use the local DNS resolver for these fallback domains.</source>
-        <translation type="unfinished" />
+        <translation>Utilizar o resolvedor DNS local para estes domínios de recurso.</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="510" />
         <source>Local domain fallback changes are available for personal registrations only.</source>
-        <translation type="unfinished" />
+        <translation>As alterações aos domínios de recurso locais estão disponíveis apenas para registos pessoais.</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="517" />
         <source>Local domain fallback rules</source>
-        <translation type="unfinished" />
+        <translation>Regras de domínios de recurso locais</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="521" />
         <source>Local fallback domain</source>
-        <translation type="unfinished" />
+        <translation>Domínio de recurso local</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="522" />
         <source>Example: corp.example.com</source>
-        <translation type="unfinished" />
+        <translation>Exemplo: corp.example.com</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="523" />
         <source>Add domain</source>
-        <translation type="unfinished" />
+        <translation>Adicionar domínio</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="536" />
         <source>DNS</source>
-        <translation type="unfinished" />
+        <translation>DNS</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="556" />
         <source>Restore split-tunnel defaults</source>
-        <translation type="unfinished" />
+        <translation>Restaurar predefinições de túnel dividido</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="557" />
         <source>Restore the official default IP and hostname split-tunnel rules?</source>
-        <translation type="unfinished" />
+        <translation>Restaurar as regras oficiais predefinidas de IP e anfitrião do túnel dividido?</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="592" />
         <source>Active</source>
-        <translation type="unfinished" />
+        <translation>Ativo</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="594" />
         <source>Inactive</source>
-        <translation type="unfinished" />
+        <translation>Inativo</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="757" />
         <location filename="../../ui/settings.py" line="622" />
         <source>Unavailable</source>
-        <translation type="unfinished" />
+        <translation>Indisponível</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="627" />
         <source>No supported counters were returned.</source>
-        <translation type="unfinished" />
+        <translation>Não foram devolvidos contadores suportados.</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="652" />
         <source>A Qt6-based alternative desktop client for Cloudflare® WARP®.</source>
-        <translation type="unfinished" />
+        <translation>Cliente de desktop alternativo baseado em Qt6 para Cloudflare® WARP®.</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="670" />
         <source>QWarp is independently developed and is not affiliated with, authorized, sponsored, or endorsed by Cloudflare, Inc. It requires a separately installed official client and does not distribute Cloudflare software.&lt;br&gt;&lt;br&gt;Cloudflare, 1.1.1.1, WARP, and WARP+ are trademarks and/or registered trademarks of Cloudflare, Inc. in the United States and other jurisdictions.&lt;br&gt;&lt;br&gt;&lt;a href='https://www.cloudflare.com/trademark/'&gt;Trademark Guidelines&lt;/a&gt; | &lt;a href='https://www.cloudflare.com/application/terms/'&gt;Application Terms&lt;/a&gt; | &lt;a href='https://www.cloudflare.com/application/privacypolicy/'&gt;Application Privacy Policy&lt;/a&gt;</source>
-        <translation type="unfinished" />
+        <translation>O QWarp é desenvolvido de forma independente e não é afiliado, autorizado, patrocinado ou endossado pela Cloudflare, Inc. Requer um cliente oficial instalado separadamente e não distribui software da Cloudflare.&lt;br&gt;&lt;br&gt;Cloudflare, 1.1.1.1, WARP e WARP+ são marcas comerciais e/ou marcas registadas da Cloudflare, Inc. nos Estados Unidos e noutras jurisdições.&lt;br&gt;&lt;br&gt;&lt;a href='https://www.cloudflare.com/trademark/'&gt;Diretrizes de Marcas&lt;/a&gt; | &lt;a href='https://www.cloudflare.com/application/terms/'&gt;Termos da Aplicação&lt;/a&gt; | &lt;a href='https://www.cloudflare.com/application/privacypolicy/'&gt;Política de Privacidade da Aplicação&lt;/a&gt;</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="689" />
@@ -508,54 +508,54 @@
     <message>
         <location filename="../../ui/settings.py" line="756" />
         <source>Registered</source>
-        <translation type="unfinished" />
+        <translation>Registado</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="756" />
         <source>Not registered</source>
-        <translation type="unfinished" />
+        <translation>Não registado</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="778" />
         <source>Installed client version: %s</source>
-        <translation type="unfinished" />
+        <translation>Versão do cliente instalada: %s</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="785" />
         <source>Managed by your organization. This setting is controlled by your organization's Zero Trust policy.</source>
-        <translation type="unfinished" />
+        <translation>Gerido pela sua organização. Esta definição é controlada pela política Zero Trust da sua organização.</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="814" />
         <source>Are you sure you want to leave this organization?</source>
-        <translation type="unfinished" />
+        <translation>Tem a certeza de que deseja sair desta organização?</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="827" />
         <source>Delete this WARP registration? You will need to register again before reconnecting.</source>
-        <translation type="unfinished" />
+        <translation>Eliminar este registo do WARP? Terá de se registar novamente antes de restabelecer a ligação.</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="876" />
         <source>Connection settings are unavailable.</source>
-        <translation type="unfinished" />
+        <translation>As definições de ligação estão indisponíveis.</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="997" />
         <location filename="../../ui/settings.py" line="971" />
         <source>The requested action failed.</source>
-        <translation type="unfinished" />
+        <translation>A ação solicitada falhou.</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="1026" />
         <location filename="../../ui/settings.py" line="1020" />
         <source>Hide</source>
-        <translation type="unfinished" />
+        <translation>Ocultar</translation>
     </message>
     <message>
         <location filename="../../ui/settings.py" line="1031" />
         <source>Unknown</source>
-        <translation type="unfinished" />
+        <translation>Desconhecido</translation>
     </message>
 </context><context>
     <name>WarpStateManager</name>
@@ -563,14 +563,14 @@
         <location filename="../../core/state.py" line="547" />
         <location filename="../../core/state.py" line="459" />
         <source>Another WARP action is already in progress.</source>
-        <translation type="unfinished" />
+        <translation>Outra ação do WARP já se encontra em curso.</translation>
     </message>
 </context><context>
     <name>WarpTrayIcon</name>
     <message>
         <location filename="../../ui/tray.py" line="49" />
         <source>Checking WARP status…</source>
-        <translation type="unfinished" />
+        <translation>A verificar o estado do WARP…</translation>
     </message>
     <message>
         <location filename="../../ui/tray.py" line="54" />
@@ -585,42 +585,42 @@
     <message>
         <location filename="../../ui/tray.py" line="62" />
         <source>Mode</source>
-        <translation type="unfinished" />
+        <translation>Modo</translation>
     </message>
     <message>
         <location filename="../../ui/tray.py" line="67" />
         <source>WARP</source>
-        <translation type="unfinished" />
+        <translation>WARP</translation>
     </message>
     <message>
         <location filename="../../ui/tray.py" line="68" />
         <source>DNS over HTTPS</source>
-        <translation type="unfinished" />
+        <translation>DNS através de HTTPS</translation>
     </message>
     <message>
         <location filename="../../ui/tray.py" line="69" />
         <source>DNS over TLS</source>
-        <translation type="unfinished" />
+        <translation>DNS através de TLS</translation>
     </message>
     <message>
         <location filename="../../ui/tray.py" line="70" />
         <source>WARP + DNS over HTTPS</source>
-        <translation type="unfinished" />
+        <translation>WARP + DNS através de HTTPS</translation>
     </message>
     <message>
         <location filename="../../ui/tray.py" line="71" />
         <source>WARP + DNS over TLS</source>
-        <translation type="unfinished" />
+        <translation>WARP + DNS através de TLS</translation>
     </message>
     <message>
         <location filename="../../ui/tray.py" line="72" />
         <source>Local proxy</source>
-        <translation type="unfinished" />
+        <translation>Proxy local</translation>
     </message>
     <message>
         <location filename="../../ui/tray.py" line="73" />
         <source>Tunnel only</source>
-        <translation type="unfinished" />
+        <translation>Apenas túnel</translation>
     </message>
     <message>
         <location filename="../../ui/tray.py" line="84" />
@@ -635,68 +635,68 @@
     <message>
         <location filename="../../ui/tray.py" line="123" />
         <source>QWarp: %s</source>
-        <translation type="unfinished" />
+        <translation>QWarp: %s</translation>
     </message>
     <message>
         <location filename="../../ui/tray.py" line="125" />
         <source>Zero Trust enrolled</source>
-        <translation type="unfinished" />
+        <translation>Inscrito no Zero Trust</translation>
     </message>
 </context><context>
     <name>WarpWindow</name>
     <message>
         <location filename="../../ui/window.py" line="151" />
         <source>Agree to the Cloudflare Application Terms and acknowledge the Application Privacy Policy</source>
-        <translation type="unfinished" />
+        <translation>Aceitar os Termos da Aplicação da Cloudflare e reconhecer a Política de Privacidade da Aplicação</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="154" />
         <source>I agree to the &lt;a href='https://www.cloudflare.com/application/terms/'&gt;Cloudflare Application Terms&lt;/a&gt; and acknowledge the &lt;a href='https://www.cloudflare.com/application/privacypolicy/'&gt;Application Privacy Policy&lt;/a&gt;.</source>
-        <translation type="unfinished" />
+        <translation>Concordo com os &lt;a href='https://www.cloudflare.com/application/terms/'&gt;Termos da Aplicação da Cloudflare&lt;/a&gt; e reconheço a &lt;a href='https://www.cloudflare.com/application/privacypolicy/'&gt;Política de Privacidade da Aplicação&lt;/a&gt;.</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="164" />
         <source>Cloudflare Application Terms and Application Privacy Policy</source>
-        <translation type="unfinished" />
+        <translation>Termos da Aplicação e Política de Privacidade da Cloudflare</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="316" />
         <location filename="../../ui/window.py" line="169" />
         <source>Continue</source>
-        <translation type="unfinished" />
+        <translation>Continuar</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="315" />
         <location filename="../../ui/window.py" line="174" />
         <source>Connect to an organization</source>
-        <translation type="unfinished" />
+        <translation>Ligar a uma organização</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="185" />
         <location filename="../../ui/window.py" line="183" />
         <location filename="../../ui/window.py" line="182" />
         <source>Organization name</source>
-        <translation type="unfinished" />
+        <translation>Nome da organização</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="212" />
         <source>Official Cloudflare client not found</source>
-        <translation type="unfinished" />
+        <translation>Cliente oficial da Cloudflare não encontrado</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="221" />
         <source>QWarp requires the official warp-cli to be installed to function properly. Please install it and restart QWarp.&lt;br&gt;&lt;br&gt;&lt;a href='https://pkg.cloudflareclient.com/'&gt;Installation Instructions&lt;/a&gt;</source>
-        <translation type="unfinished" />
+        <translation>O QWarp requer que o cliente oficial warp-cli esteja instalado para funcionar corretamente. Instale-o e reinicie o QWarp.&lt;br&gt;&lt;br&gt;&lt;a href='https://pkg.cloudflareclient.com/'&gt;Instruções de Instalação&lt;/a&gt;</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="244" />
         <source>Cloudflare WARP connection</source>
-        <translation type="unfinished" />
+        <translation>Ligação Cloudflare WARP</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="245" />
         <source>Connect or disconnect Cloudflare WARP</source>
-        <translation type="unfinished" />
+        <translation>Ligar ou desligar o Cloudflare WARP</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="247" />
@@ -716,33 +716,33 @@
     <message>
         <location filename="../../ui/window.py" line="285" />
         <source>Complete organization sign-in</source>
-        <translation type="unfinished" />
+        <translation>Concluir início de sessão da organização</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="291" />
         <source>Complete authentication in your browser to enroll this device.</source>
-        <translation type="unfinished" />
+        <translation>Conclua a autenticação no seu navegador para inscrever este dispositivo.</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="311" />
         <source>Connect to your organization</source>
-        <translation type="unfinished" />
+        <translation>Ligar à sua organização</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="312" />
         <source>Enter the organization name provided by your administrator.</source>
-        <translation type="unfinished" />
+        <translation>Introduza o nome da organização fornecido pelo seu administrador.</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="313" />
         <source>Use personal setup</source>
-        <translation type="unfinished" />
+        <translation>Utilizar configuração pessoal</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="329" />
         <location filename="../../ui/window.py" line="328" />
         <source>Settings</source>
-        <translation type="unfinished">Configurações</translation>
+        <translation>Definições</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="334" />
@@ -757,22 +757,22 @@
     <message>
         <location filename="../../ui/window.py" line="382" />
         <source>Connected to %s</source>
-        <translation type="unfinished" />
+        <translation>Ligado a %s</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="382" />
         <source>Zero Trust enrolled</source>
-        <translation type="unfinished" />
+        <translation>Inscrito no Zero Trust</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="395" />
         <source>Accept the terms before continuing.</source>
-        <translation type="unfinished" />
+        <translation>Aceite os termos antes de continuar.</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="401" />
         <source>Please enter an organization name.</source>
-        <translation type="unfinished" />
+        <translation>Por favor, introduza um nome de organização.</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="513" />
@@ -795,11 +795,11 @@
     <message>
         <location filename="../../ui/window.py" line="429" />
         <source>Registration failed.</source>
-        <translation type="unfinished" />
+        <translation>Falha no registo.</translation>
     </message>
     <message>
         <location filename="../../ui/window.py" line="432" />
         <source>The requested action failed.</source>
-        <translation type="unfinished" />
+        <translation>A ação solicitada falhou.</translation>
     </message>
 </context></TS>
