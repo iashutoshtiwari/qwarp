@@ -5,6 +5,35 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.10.0] – 2026-09-25
+
+### Added
+
+- Add dedicated Split Tunneling management in Settings with support for IP addresses, CIDR network ranges, hostnames, and restoring official defaults.
+- Add DNS Local Domain Fallback management in Settings to route local search domains to local resolvers.
+- Add a tray mode switching submenu to change WARP routing modes directly from the desktop panel.
+- Add a headless `--status-json` CLI mode to output structured, non-secret WARP status without starting Qt or GUI windows.
+- Add explicit support and presentation for `NO_NETWORK` connection state.
+- Add on-demand connection and DNS query statistics in the Diagnostics tab.
+
+### Changed
+
+- Follow the desktop's native Qt style, color scheme, and light/dark palette across KDE Plasma, GNOME, and other Linux desktops instead of forcing a built-in dark theme.
+- Adapt custom controls, status typography, and button states dynamically to both light and dark system palettes while preserving QWarp's signature blue identity.
+- Derive system tray symbolic icon tint from the live Qt desktop palette (such as KDE's WindowText foreground) with dynamic updates on color scheme switches instead of binary black/white tinting.
+- Render main-window settings button deterministically with the bundled symbolic gear asset recolored to match the active desktop palette.
+- Unify WARP connection, service, enrollment, and mode presentation across the main window and system tray.
+- Enhance secret redaction in command diagnostics, logs, and error reporting to cover PEM certificates, JWTs, and inline credentials.
+- Update Qt translation catalogs across all supported languages (de, en, es, hi, it, ja, pt, zh).
+
+### Fixed
+
+- Enable word wrapping and provide full content width for main-window status descriptions to prevent horizontal clipping across all client states.
+- Ensure single IP addresses in split tunneling are passed to `warp-cli tunnel ip add/remove` without redundant subnet masks.
+- Preserve existing personal and Zero Trust registrations during Terms of Service acceptance and client upgrades.
+- Restore input clearing and user error feedback for split-tunnel and DNS fallback actions.
+- Prevent blocking subprocesses and slow daemon calls on the Qt GUI thread.
+
 ## [v0.9.4] – 2026-09-01
 
 ### Changed

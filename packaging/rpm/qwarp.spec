@@ -1,5 +1,5 @@
 Name:           qwarp
-Version:        0.9.4
+Version:        0.10.0
 Release:        1%{?dist}
 Summary:        Qt6-based alternative desktop client for Cloudflare WARP
 License:        MIT AND Apache-2.0
@@ -46,6 +46,10 @@ install -Dm644 src/qwarp/assets/app-icon.svg %{buildroot}%{_datadir}/icons/hicol
 %{_datadir}/icons/hicolor/scalable/apps/qwarp.svg
 
 %changelog
+* Fri Sep 25 2026 Ashutosh Tiwari <contact@ashutoshtiwari.dev> - 0.10.0-1
+- Add split tunneling, local domain fallback DNS, and tray mode switching
+- Add headless --status-json mode and improve state presentation
+
 * Tue Sep 01 2026 Ashutosh Tiwari <contact@ashutoshtiwari.dev> - 0.9.4-1
 - Improve dark UI consistency and HiDPI icon rendering
 

@@ -1,3 +1,4 @@
+import logging
 import threading
 from unittest.mock import patch
 
@@ -205,16 +206,18 @@ def test_network_diagnostics_run_in_manager_pool(qapp, wait_until):
     manager.shutdown()
 
 
-def test_state_changed_only_on_transition_but_refresh_always_emits(qapp):
+def test_state_changed_only_on_transition_but_refresh_always_emits(qapp, caplog):
     manager = WarpStateManager(FakeEngine(), start_polling=False)
     changed = []
     refreshed = []
     manager.state_changed.connect(changed.append)
     manager.state_refreshed.connect(refreshed.append)
-    manager._on_status_result(WarpState.DISCONNECTED)
-    manager._on_status_result(WarpState.DISCONNECTED)
+    with caplog.at_level(logging.INFO):
+        manager._on_status_result(WarpState.DISCONNECTED)
+        manager._on_status_result(WarpState.DISCONNECTED)
     assert changed == [WarpState.DISCONNECTED]
     assert refreshed == [WarpState.DISCONNECTED, WarpState.DISCONNECTED]
+    assert caplog.text.count("State transition") == 1
     manager.shutdown()
 
 

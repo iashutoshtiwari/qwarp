@@ -28,6 +28,13 @@ class ActionId(StrEnum):
     SET_PROXY_PORT = "set_proxy_port"
     SET_TRUSTED_ETHERNET = "set_trusted_ethernet"
     SET_TRUSTED_WIFI = "set_trusted_wifi"
+    ADD_SPLIT_IP = "add_split_ip"
+    REMOVE_SPLIT_IP = "remove_split_ip"
+    ADD_SPLIT_HOST = "add_split_host"
+    REMOVE_SPLIT_HOST = "remove_split_host"
+    RESET_SPLIT_TUNNEL = "reset_split_tunnel"
+    ADD_FALLBACK_DOMAIN = "add_fallback_domain"
+    REMOVE_FALLBACK_DOMAIN = "remove_fallback_domain"
     SET_AUTOSTART = "set_autostart"
     SET_TASKBAR_SUPPRESSED = "set_taskbar_suppressed"
 
@@ -65,16 +72,18 @@ class StatusWorker(QThread):
     def interval_for(self, state: WarpState) -> float:
         with self._state_lock:
             visible = self._visible
-        if state == WarpState.CONNECTING:
+        if state in {WarpState.CONNECTING, WarpState.SERVICE_STARTING, WarpState.TRANSIENT_ERROR}:
             return self.transition_interval_seconds
         return self.interval_seconds if visible else self.hidden_interval_seconds
 
     def run(self) -> None:
+        logger.info("WARP status worker started")
         while not self.isInterruptionRequested():
             state = self.engine.status()
             self.signals.result_ready.emit(state)
             self._wake_event.wait(self.interval_for(state))
             self._wake_event.clear()
+        logger.info("WARP status worker stopped")
 
 
 class QueryWorkerSignals(QObject):
@@ -113,11 +122,15 @@ class ActionWorker(QRunnable):
 
     @pyqtSlot()
     def run(self) -> None:
+        def unsupported() -> tuple[bool, str]:
+            return False, "This WARP client does not support this feature."
+
         no_argument_actions = {
             "connect": self.engine.connect,
             "disconnect": self.engine.disconnect,
             "delete_registration": self.engine.delete_registration,
             "repair_service": self.engine.repair_service,
+            "reset_split_tunnel": getattr(self.engine, "reset_split_tunnel", unsupported),
         }
         argument_actions = {
             "set_mode": (self.engine.set_mode, "mode"),
@@ -125,6 +138,12 @@ class ActionWorker(QRunnable):
             "set_license": (self.engine.set_license, "key"),
             "set_tunnel_protocol": (self.engine.set_tunnel_protocol, "protocol"),
             "set_proxy_port": (self.engine.set_proxy_port, "port"),
+            "add_split_ip": (getattr(self.engine, "add_split_tunnel_ip", unsupported), "value"),
+            "remove_split_ip": (getattr(self.engine, "remove_split_tunnel_ip", unsupported), "value"),
+            "add_split_host": (getattr(self.engine, "add_split_tunnel_host", unsupported), "value"),
+            "remove_split_host": (getattr(self.engine, "remove_split_tunnel_host", unsupported), "value"),
+            "add_fallback_domain": (getattr(self.engine, "add_fallback_domain", unsupported), "value"),
+            "remove_fallback_domain": (getattr(self.engine, "remove_fallback_domain", unsupported), "value"),
         }
         bool_argument_actions = {
             "set_trusted_ethernet": (self.engine.set_trusted_ethernet, "enable"),
@@ -204,6 +223,7 @@ class WarpStateManager(QObject):
     state_refreshed = pyqtSignal(WarpState)
     diagnostics_updated = pyqtSignal(dict)
     network_diagnostics_updated = pyqtSignal(dict, dict, dict)
+    connection_stats_updated = pyqtSignal(dict, dict)
     settings_updated = pyqtSignal(dict)
     platform_settings_updated = pyqtSignal(dict)
     capabilities_detected = pyqtSignal(object)
@@ -233,9 +253,11 @@ class WarpStateManager(QObject):
         self.thread_pool = self.query_pool
         self.active_action: Optional[str] = None
         self.current_capabilities: Optional[CliCapabilities] = None
+        self.current_settings: dict[str, Any] = {}
         self._pending_action_result: Optional[tuple[str, bool, str]] = None
         self._diagnostics_pending = False
         self._network_diagnostics_pending = False
+        self._connection_stats_pending = False
         self._settings_pending = False
         self._capabilities_pending = False
         self._platform_settings_pending = False
@@ -336,7 +358,14 @@ class WarpStateManager(QObject):
     def _on_capabilities_result(self, result: object) -> None:
         self._capabilities_pending = False
         if isinstance(result, CliCapabilities):
+            previous_zero_trust = bool(self.current_capabilities and self.current_capabilities.is_zero_trust)
             self.current_capabilities = result
+            if previous_zero_trust != result.is_zero_trust:
+                logger.info(
+                    "Enrollment context: %s -> %s",
+                    "Zero Trust" if previous_zero_trust else "personal or unknown",
+                    "Zero Trust" if result.is_zero_trust else "personal or unknown",
+                )
             self.capabilities_detected.emit(result)
 
     # ------------------------------------------------------------------
@@ -394,6 +423,34 @@ class WarpStateManager(QObject):
     @pyqtSlot(bool)
     def request_set_trusted_wifi(self, enable: bool) -> None:
         self._dispatch_action(ActionId.SET_TRUSTED_WIFI, enable=enable)
+
+    @pyqtSlot(str)
+    def request_add_split_ip(self, value: str) -> None:
+        self._dispatch_action(ActionId.ADD_SPLIT_IP, value=value)
+
+    @pyqtSlot(str)
+    def request_remove_split_ip(self, value: str) -> None:
+        self._dispatch_action(ActionId.REMOVE_SPLIT_IP, value=value)
+
+    @pyqtSlot(str)
+    def request_add_split_host(self, value: str) -> None:
+        self._dispatch_action(ActionId.ADD_SPLIT_HOST, value=value)
+
+    @pyqtSlot(str)
+    def request_remove_split_host(self, value: str) -> None:
+        self._dispatch_action(ActionId.REMOVE_SPLIT_HOST, value=value)
+
+    @pyqtSlot()
+    def request_reset_split_tunnel(self) -> None:
+        self._dispatch_action(ActionId.RESET_SPLIT_TUNNEL)
+
+    @pyqtSlot(str)
+    def request_add_fallback_domain(self, value: str) -> None:
+        self._dispatch_action(ActionId.ADD_FALLBACK_DOMAIN, value=value)
+
+    @pyqtSlot(str)
+    def request_remove_fallback_domain(self, value: str) -> None:
+        self._dispatch_action(ActionId.REMOVE_FALLBACK_DOMAIN, value=value)
 
     def _dispatch_action(self, action: ActionId, **kwargs: Any) -> bool:
         if self._shutting_down:
@@ -463,6 +520,8 @@ class WarpStateManager(QObject):
 
         if success and action in {"register", "delete_registration", "set_license"}:
             self.request_diagnostics()
+        if success and action in {"register", "delete_registration"}:
+            self.request_capabilities()
         if success and action in {
             "set_mode",
             "set_families_mode",
@@ -470,8 +529,16 @@ class WarpStateManager(QObject):
             "set_proxy_port",
             "set_trusted_ethernet",
             "set_trusted_wifi",
+            "add_split_ip",
+            "remove_split_ip",
+            "add_split_host",
+            "remove_split_host",
+            "reset_split_tunnel",
+            "add_fallback_domain",
+            "remove_fallback_domain",
         }:
             self.request_settings()
+            self.request_network_diagnostics()
 
     def _dispatch_platform_action(self, action: ActionId, callback: Callable[[], tuple[bool, str]]) -> bool:
         if self._shutting_down:
@@ -558,6 +625,33 @@ class WarpStateManager(QObject):
             self.network_diagnostics_updated.emit(*result)
 
     @pyqtSlot()
+    def request_connection_stats(self) -> None:
+        """Load tunnel and DNS counters only when diagnostics asks for them."""
+        if self._shutting_down or self._connection_stats_pending:
+            return
+        self._connection_stats_pending = True
+        worker = QueryWorker(self._query_connection_stats)
+        worker.signals.result_ready.connect(self._on_connection_stats_result)
+        self.query_pool.start(worker)
+
+    def _query_connection_stats(self) -> tuple[dict, dict]:
+        results: list[dict] = []
+        for query in (self.engine.get_tunnel_stats, self.engine.get_dns_stats):
+            try:
+                value = query()
+            except Exception:
+                logger.exception("Background connection statistics query failed")
+                value = {}
+            results.append(value if isinstance(value, dict) else {})
+        return results[0], results[1]
+
+    @pyqtSlot(object)
+    def _on_connection_stats_result(self, result: object) -> None:
+        self._connection_stats_pending = False
+        if isinstance(result, tuple) and len(result) == 2:
+            self.connection_stats_updated.emit(*result)
+
+    @pyqtSlot()
     def request_settings(self) -> None:
         if self._shutting_down or self._settings_pending:
             return
@@ -570,6 +664,11 @@ class WarpStateManager(QObject):
     def _on_settings_result(self, result: object) -> None:
         self._settings_pending = False
         if isinstance(result, dict):
+            previous_mode = str(self.current_settings.get("mode", ""))
+            current_mode = str(result.get("mode", ""))
+            self.current_settings = result
+            if previous_mode != current_mode:
+                logger.info("Operating mode: %s -> %s", previous_mode or "unknown", current_mode or "unknown")
             self.settings_updated.emit(result)
 
     @pyqtSlot()

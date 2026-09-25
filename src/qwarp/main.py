@@ -1,26 +1,22 @@
 import argparse
-import os
-import sys
-
-# Set xdgdesktopportal as fallback for GNOME theme support before QApplication starts.
-# KDE Plasma overrides this natively, so setdefault ensures zero regressions on KDE.
-os.environ.setdefault("QT_QPA_PLATFORMTHEME", "xdgdesktopportal")
-
+import json
 import logging
+import os
 import signal
+import sys
 import traceback
 
-from PyQt6.QtCore import QLocale, QPoint, QSettings, QTimer, QTranslator
+from PyQt6.QtCore import PYQT_VERSION_STR, QT_VERSION_STR, QLocale, QPoint, QSettings, QTimer, QTranslator
 from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
 
 from qwarp import __version__
-from qwarp.core.engine import WarpEngine
+from qwarp.core.engine import CliCapabilities, WarpEngine, WarpState
 from qwarp.core.instance import InstanceRole, SingleInstance
 from qwarp.core.state import WarpStateManager
 from qwarp.ui.styles import apply_application_theme
 from qwarp.ui.tray import WarpTrayIcon
 from qwarp.ui.window import WarpWindow
-from qwarp.utils.system import get_asset_dir, load_asset_icon
+from qwarp.utils.system import get_asset_dir, is_x11, load_asset_icon
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +36,12 @@ def unhandled_exception_hook(exc_type, exc_value, exc_traceback):
     sys.__excepthook__(exc_type, exc_value, exc_traceback)
 
 
-def setup_logging() -> None:
+def setup_logging(level_name: str = "INFO") -> None:
     """Initialize system-wide logging configuration."""
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
+    logging.basicConfig(
+        level=getattr(logging, level_name.upper(), logging.INFO),
+        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+    )
 
 
 def parse_cli_args(arguments: list[str]) -> argparse.Namespace:
@@ -54,8 +53,69 @@ def parse_cli_args(arguments: list[str]) -> argparse.Namespace:
         action="store_true",
         help="Start minimized in system tray",
     )
+    parser.add_argument("--debug", action="store_true", help="Enable sanitized diagnostic logging")
+    parser.add_argument(
+        "--status-json",
+        action="store_true",
+        help="Print a machine-readable WARP status without launching the desktop application",
+    )
+    parser.add_argument(
+        "--log-level",
+        choices=("DEBUG", "INFO", "WARNING", "ERROR"),
+        default="INFO",
+        type=str.upper,
+        help="Set terminal log verbosity (default: INFO)",
+    )
     args, _ = parser.parse_known_args(arguments)
     return args
+
+
+def status_payload(engine: WarpEngine) -> tuple[dict[str, object], int]:
+    """Build the documented, non-secret status API response without Qt objects."""
+    try:
+        state = engine.status()
+    except Exception:
+        state = WarpState.UNKNOWN
+    try:
+        settings = engine.get_settings()
+    except Exception:
+        settings = {}
+    try:
+        capabilities = engine.detect_capabilities()
+    except Exception:
+        capabilities = CliCapabilities()
+    connection = {
+        WarpState.CONNECTED: "connected",
+        WarpState.DISCONNECTED: "disconnected",
+        WarpState.CONNECTING: "connecting",
+        WarpState.NO_NETWORK: "no_network",
+        WarpState.UNREGISTERED: "unregistered",
+        WarpState.TERMS_REQUIRED: "terms_required",
+        WarpState.AUTHENTICATION_REQUIRED: "authentication_required",
+    }.get(state, "unknown")
+    service = "active"
+    if state == WarpState.CLI_MISSING:
+        service = "missing"
+    elif state == WarpState.SERVICE_STOPPED:
+        service = "stopped"
+    elif state in {WarpState.DAEMON_ERROR, WarpState.TRANSIENT_ERROR}:
+        service = "unavailable"
+    enrollment = "zero_trust" if capabilities.is_zero_trust else "personal"
+    if state == WarpState.UNREGISTERED:
+        enrollment = "unregistered"
+    elif state == WarpState.TERMS_REQUIRED:
+        enrollment = "terms_required"
+    elif state == WarpState.AUTHENTICATION_REQUIRED:
+        enrollment = "authentication_required"
+    payload = {
+        "schema_version": 1,
+        "connection": connection,
+        "mode": settings.get("mode") or "unknown",
+        "service": service,
+        "enrollment": enrollment,
+        "organization_managed": bool(capabilities.is_zero_trust and not capabilities.mode_switch_allowed),
+    }
+    return payload, 0 if state != WarpState.UNKNOWN else 1
 
 
 def setup_ipc_instance() -> SingleInstance:
@@ -92,7 +152,21 @@ def main() -> None:
     Application entry point. Bootstraps Qt, IPC, background workers, and signals.
     """
     cli_args = parse_cli_args(sys.argv[1:])
-    setup_logging()
+    setup_logging("DEBUG" if cli_args.debug else cli_args.log_level)
+    if cli_args.status_json:
+        payload, exit_code = status_payload(WarpEngine(timeout=2.0))
+        print(json.dumps(payload, sort_keys=True))
+        if exit_code:
+            raise SystemExit(exit_code)
+        return
+    logger.info(
+        "Starting QWarp %s (Python %s, PyQt %s, Qt %s, %s session)",
+        __version__,
+        sys.version.split()[0],
+        PYQT_VERSION_STR,
+        QT_VERSION_STR,
+        "X11" if is_x11() else "Wayland or non-X11",
+    )
 
     # Configure global exception trapping
     sys.excepthook = unhandled_exception_hook
@@ -101,6 +175,7 @@ def main() -> None:
     app.setOrganizationName("qwarp")
     app.setApplicationName("qwarp")
     apply_application_theme(app)
+    app.styleHints().colorSchemeChanged.connect(lambda _scheme: apply_application_theme(app))
     settings = QSettings()
 
     # Localized runtime translation instantiation
@@ -146,6 +221,7 @@ def main() -> None:
 
     # Detect CLI capabilities on startup
     manager.request_capabilities()
+    manager.request_settings()
 
     manager.action_finished.connect(
         lambda action, success, _message: remember_terms_acceptance(settings, action, success)
@@ -198,7 +274,7 @@ def main() -> None:
 
     app.aboutToQuit.connect(gracefully_shutdown)
 
-    logger.info("QWarp started successfully.")
+    logger.info("QWarp startup complete (system tray available: %s)", tray_available)
     sys.exit(app.exec())
 
 

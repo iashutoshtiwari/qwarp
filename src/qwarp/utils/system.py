@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 
 
@@ -47,21 +48,33 @@ def load_asset_icon(icon_name: str):
     return QIcon(asset_path) if os.path.exists(asset_path) else QIcon()
 
 
-def tray_icon_tint(color_scheme=None) -> str:
-    """Return a contrasting tray tint from the platform color scheme."""
-    from PyQt6.QtCore import Qt
-    from PyQt6.QtGui import QGuiApplication
+def tray_icon_tint(palette=None) -> str:
+    """Return a tray foreground tint derived from the active Qt palette.
 
-    if color_scheme is None:
+    Prefers QPalette.ColorRole.WindowText from the provided or application palette,
+    falling back to a conservative high-contrast tone only when no live
+    palette is available.
+    """
+    from PyQt6.QtCore import Qt
+    from PyQt6.QtGui import QColor, QGuiApplication, QPalette
+
+    if palette is None:
         app = QGuiApplication.instance()
         if app is not None:
-            color_scheme = app.styleHints().colorScheme()
+            palette = app.palette()
 
-    if color_scheme == Qt.ColorScheme.Light:
+    if isinstance(palette, QColor):
+        return palette.name()
+
+    if isinstance(palette, QPalette):
+        color = palette.color(QPalette.ColorRole.WindowText)
+        if color.isValid():
+            return color.name()
+
+    if palette == Qt.ColorScheme.Light:
         return "#222222"
-    if color_scheme == Qt.ColorScheme.Dark:
-        return "#f1f1f1"
-    return "#2f80ed"
+
+    return "#f1f1f1"
 
 
 def load_symbolic_icon(icon_name: str, palette=None, *, tint_color: str | None = None):
@@ -85,10 +98,19 @@ def load_symbolic_icon(icon_name: str, palette=None, *, tint_color: str | None =
 
         def paint(self, painter: QPainter, rect, mode, state) -> None:
             renderer = QSvgRenderer(QByteArray(self._svg_data))
-            renderer.render(painter, QRectF(rect))
+            if mode == QIcon.Mode.Disabled:
+                painter.save()
+                painter.setOpacity(0.38)
+                renderer.render(painter, QRectF(rect))
+                painter.restore()
+            else:
+                renderer.render(painter, QRectF(rect))
 
         def pixmap(self, size: QSize, mode, state) -> QPixmap:
             return self._render_pixmap(size, mode, state, 1.0)
+
+        def scaledPixmap(self, size: QSize, mode, state, scale: float) -> QPixmap:
+            return self._render_pixmap(size, mode, state, scale)
 
         def _render_pixmap(self, size: QSize, mode, state, scale: float) -> QPixmap:
             pixel_size = QSize(round(size.width() * scale), round(size.height() * scale))
@@ -113,13 +135,14 @@ def load_symbolic_icon(icon_name: str, palette=None, *, tint_color: str | None =
             svg_data = f.read()
 
         if tint_color is None:
-            is_dark = is_dark_mode(palette)
-            # Content icons follow QWarp's application palette.
-            tint_color = "#FFFFFF" if is_dark else "#444444"
+            tint_color = tray_icon_tint(palette)
+        elif hasattr(tint_color, "name"):
+            tint_color = tint_color.name()
 
-        # Symbolic assets use currentColor so their authored geometry remains
-        # independent from the active desktop theme.
+        # Symbolic assets replace currentColor and authored fill colors with the tint color.
         svg_data = svg_data.replace("currentColor", tint_color)
+        svg_data = re.sub(r'fill="(?!(?:none)\b)[^"]*"', f'fill="{tint_color}"', svg_data)
+        svg_data = re.sub(r'fill:\s*(?!(?:none)\b)[^;"]*', f"fill: {tint_color}", svg_data)
 
         return QIcon(SymbolicSvgIconEngine(svg_data.encode("utf-8")))
     except Exception as e:

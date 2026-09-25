@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from PyQt6.QtCore import QEvent, QPoint, QSize, Qt, pyqtSignal
+from PyQt6.QtCore import QEvent, QObject, QPoint, QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QCloseEvent, QIcon
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 from qwarp.core.engine import CliCapabilities, WarpState
 from qwarp.core.state import WarpStateManager
 from qwarp.ui.branding import GradientLabel
+from qwarp.ui.presentation import presentation_for
 from qwarp.ui.settings import SettingsDialog
 from qwarp.ui.toggle import AnimatedToggle
 from qwarp.utils.system import is_x11, load_asset_icon, load_symbolic_icon
@@ -44,6 +45,7 @@ class WarpWindow(QWidget):
         super().__init__(parent)
         self.manager = manager
         self.tray_available = tray_available
+        self._organization_flow = False
 
         self.setWindowTitle("QWarp")
         self.setWindowFlag(Qt.WindowType.WindowMaximizeButtonHint, False)
@@ -55,18 +57,39 @@ class WarpWindow(QWidget):
         if self.manager.current_capabilities is not None:
             self._on_capabilities_detected(self.manager.current_capabilities)
 
+    def event(self, event: QEvent) -> bool:
+        if event.type() == QEvent.Type.ApplicationPaletteChange:
+            self.changeEvent(event)
+        return super().event(event)
+
     def changeEvent(self, event: QEvent) -> None:
-        """Intercepts system theme changes and forces an icon redraw."""
+        """Intercepts system theme changes and forces an icon and custom widget redraw."""
         super().changeEvent(event)
         if event.type() in (QEvent.Type.PaletteChange, QEvent.Type.ApplicationPaletteChange):
             if hasattr(self, "settings_btn"):
                 self._update_icons()
             else:
                 self.setWindowIcon(load_asset_icon("app-icon.svg"))
+            if hasattr(self, "toggle"):
+                self.toggle.update()
+            if hasattr(self, "header_label"):
+                self.header_label.update()
+            if hasattr(self, "status_title"):
+                self.status_title.style().unpolish(self.status_title)
+                self.status_title.style().polish(self.status_title)
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
+        if watched is getattr(self, "settings_btn", None) and event.type() in (
+            QEvent.Type.PaletteChange,
+            QEvent.Type.ApplicationPaletteChange,
+        ):
+            self._update_icons()
+        return super().eventFilter(watched, event)
 
     def _update_icons(self) -> None:
-        """Reload the desktop settings icon and unmodified application artwork."""
-        settings_icon = load_symbolic_icon("gear.svg", self.palette())
+        """Reload the bundled settings icon and application artwork."""
+        palette = self.settings_btn.palette() if hasattr(self, "settings_btn") else self.palette()
+        settings_icon = load_symbolic_icon("gear.svg", palette)
         self.settings_btn.setIcon(settings_icon)
         self.settings_btn.setText("⋮" if settings_icon.isNull() else "")
         self.setWindowIcon(load_asset_icon("app-icon.svg"))
@@ -74,7 +97,7 @@ class WarpWindow(QWidget):
     def _setup_ui(self) -> None:
         """Fully boots the visual DOM equivalent of the application."""
         self.main_layout = QVBoxLayout(self)
-        self.main_layout.setContentsMargins(20, 30, 20, 20)
+        self.main_layout.setContentsMargins(20, 24, 20, 20)
 
         self._build_header()
         self.main_layout.addStretch()
@@ -110,41 +133,45 @@ class WarpWindow(QWidget):
         self.page0 = QWidget()
         p0_layout = QVBoxLayout(self.page0)
 
-        not_reg_label = QLabel(self.tr("Setup required"))
-        font = not_reg_label.font()
+        self.setup_heading = QLabel()
+        font = self.setup_heading.font()
         font.setPointSize(15)
         font.setBold(True)
-        not_reg_label.setFont(font)
-        not_reg_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setup_heading.setFont(font)
+        self.setup_heading.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        info_label = QLabel(self.tr("Review the official client's terms before continuing."))
-        info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        info_label.setWordWrap(True)
+        self.setup_description = QLabel()
+        self.setup_description.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setup_description.setWordWrap(True)
+        self.setup_description.setProperty("styleClass", "desc_default")
 
         consent_layout = QHBoxLayout()
         self.terms_checkbox = QCheckBox()
         self.terms_checkbox.setAccessibleName(
             self.tr("Agree to the Cloudflare Application Terms and acknowledge the Application Privacy Policy")
         )
-        terms_label = QLabel(
+        self.terms_label = QLabel(
             self.tr(
                 "I agree to the <a href='https://www.cloudflare.com/application/terms/'>Cloudflare Application "
                 "Terms</a> and acknowledge the <a href='https://www.cloudflare.com/application/privacypolicy/'>"
                 "Application Privacy Policy</a>."
             )
         )
-        terms_label.setWordWrap(True)
-        terms_label.setOpenExternalLinks(True)
-        terms_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+        self.terms_label.setWordWrap(True)
+        self.terms_label.setOpenExternalLinks(True)
+        self.terms_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+        self.terms_label.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.terms_label.setAccessibleName(self.tr("Cloudflare Application Terms and Application Privacy Policy"))
+        self.terms_label.setProperty("styleClass", "legal_text")
         consent_layout.addWidget(self.terms_checkbox, alignment=Qt.AlignmentFlag.AlignTop)
-        consent_layout.addWidget(terms_label, stretch=1)
+        consent_layout.addWidget(self.terms_label, stretch=1)
 
         self.register_btn = QPushButton(self.tr("Continue"))
         self.register_btn.setFixedSize(160, 40)
         self.register_btn.setProperty("styleClass", "primary")
         self.register_btn.setEnabled(False)
 
-        self.org_toggle_btn = QPushButton(self.tr("Have an organization?"))
+        self.org_toggle_btn = QPushButton(self.tr("Connect to an organization"))
         self.org_toggle_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.org_toggle_btn.setStyleSheet(
             "color: palette(link); text-decoration: underline; border: none; background: transparent;"
@@ -153,13 +180,17 @@ class WarpWindow(QWidget):
 
         self.org_input = QLineEdit()
         self.org_input.setPlaceholderText(self.tr("Organization name"))
+        self.org_input.setAccessibleName(self.tr("Organization name"))
         self.org_input.hide()
+        self.org_input_label = QLabel(self.tr("Organization name"))
+        self.org_input_label.hide()
 
         p0_layout.addStretch()
-        p0_layout.addWidget(not_reg_label)
-        p0_layout.addWidget(info_label)
+        p0_layout.addWidget(self.setup_heading)
+        p0_layout.addWidget(self.setup_description)
         p0_layout.addSpacing(15)
         p0_layout.addLayout(consent_layout)
+        p0_layout.addWidget(self.org_input_label)
         p0_layout.addWidget(self.org_input)
         p0_layout.addWidget(self.register_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
         self.registration_error = QLabel("")
@@ -206,6 +237,7 @@ class WarpWindow(QWidget):
         # Flow 2: Primary Connectivity State Driven View
         self.page2 = QWidget()
         p2_layout = QVBoxLayout(self.page2)
+        p2_layout.setContentsMargins(0, 0, 0, 0)
         p2_layout.setSpacing(10)
 
         self.toggle = AnimatedToggle()
@@ -224,33 +256,65 @@ class WarpWindow(QWidget):
         title_font.setBold(True)
         self.status_title.setFont(title_font)
         self.status_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.status_title.setWordWrap(True)
 
         self.status_desc = QLabel(self.tr("Connecting to daemon..."))
         self.status_desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.status_desc.setWordWrap(True)
         self.status_desc.setProperty("styleClass", "desc_default")
+
+        self.status_mode = QLabel()
+        self.status_mode.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.status_mode.setWordWrap(True)
+        self.status_mode.setProperty("styleClass", "status_mode")
 
         p2_layout.addStretch()
         p2_layout.addWidget(self.toggle, alignment=Qt.AlignmentFlag.AlignHCenter)
         p2_layout.addSpacing(10)
         p2_layout.addWidget(self.status_title)
+        p2_layout.addWidget(self.status_mode)
         p2_layout.addWidget(self.status_desc)
         p2_layout.addWidget(self.repair_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
         p2_layout.addStretch()
 
         self.stack.addWidget(self.page2)
+
+        # Flow 3: Organization browser authentication is pending.
+        self.page3 = QWidget()
+        p3_layout = QVBoxLayout(self.page3)
+        self.auth_heading = QLabel(self.tr("Complete organization sign-in"))
+        auth_font = self.auth_heading.font()
+        auth_font.setPointSize(15)
+        auth_font.setBold(True)
+        self.auth_heading.setFont(auth_font)
+        self.auth_heading.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.auth_description = QLabel(self.tr("Complete authentication in your browser to enroll this device."))
+        self.auth_description.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.auth_description.setWordWrap(True)
+        self.auth_description.setProperty("styleClass", "desc_default")
+        p3_layout.addStretch()
+        p3_layout.addWidget(self.auth_heading)
+        p3_layout.addSpacing(10)
+        p3_layout.addWidget(self.auth_description)
+        p3_layout.addStretch()
+        self.stack.addWidget(self.page3)
         self.main_layout.addWidget(self.stack)
 
     def _toggle_org_input(self) -> None:
-        if self.org_input.isHidden():
-            self.org_input.show()
-            self.org_toggle_btn.setText(self.tr("Use personal account instead"))
-            self.register_btn.setText(self.tr("Join organization"))
-            self.registration_error.hide()
+        self._set_organization_flow(not self._organization_flow)
+
+    def _set_organization_flow(self, enabled: bool) -> None:
+        self._organization_flow = enabled
+        self.org_input.setVisible(enabled)
+        self.org_input_label.setVisible(enabled)
+        if enabled:
+            self.setup_heading.setText(self.tr("Connect to your organization"))
+            self.setup_description.setText(self.tr("Enter the organization name provided by your administrator."))
+            self.org_toggle_btn.setText(self.tr("Use personal setup"))
         else:
-            self.org_input.hide()
-            self.org_toggle_btn.setText(self.tr("Have an organization?"))
-            self.register_btn.setText(self.tr("Continue"))
-            self.registration_error.hide()
+            self.org_toggle_btn.setText(self.tr("Connect to an organization"))
+        self.register_btn.setText(self.tr("Continue"))
+        self.registration_error.hide()
 
     def _build_footer(self) -> None:
         """Constructs the bottom toolbar items (Settings, Status Icons)."""
@@ -261,8 +325,9 @@ class WarpWindow(QWidget):
         self.settings_btn.setIconSize(QSize(22, 22))
         self.settings_btn.setProperty("styleClass", "icon")
         self.settings_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.settings_btn.setAccessibleName(self.tr("Application menu"))
-        self.settings_btn.setToolTip(self.tr("Application menu"))
+        self.settings_btn.setAccessibleName(self.tr("Settings"))
+        self.settings_btn.setToolTip(self.tr("Settings"))
+        self.settings_btn.installEventFilter(self)
         self._update_icons()
 
         self.settings_menu = QMenu(self)
@@ -300,6 +365,7 @@ class WarpWindow(QWidget):
         self.manager.action_finished.connect(self._on_action_finished)
         self.manager.busy_changed.connect(self._on_busy_changed)
         self.manager.capabilities_detected.connect(self._on_capabilities_detected)
+        self.manager.settings_updated.connect(self._on_settings_updated)
         self.toggle.clicked.connect(self._on_toggle_clicked)
         self.terms_checkbox.toggled.connect(self._update_registration_controls)
         self.register_btn.clicked.connect(self._on_register_clicked)
@@ -309,12 +375,19 @@ class WarpWindow(QWidget):
         if not caps.cli_found:
             self.stack.setCurrentIndex(1)
             self.settings_btn.setEnabled(False)
+            return
 
-        if caps.is_zero_trust and caps.organization:
-            self.org_badge.setText(self.tr(caps.organization))
+        if caps.is_zero_trust:
+            self.org_badge.setText(
+                self.tr("Connected to %s") % caps.organization if caps.organization else self.tr("Zero Trust enrolled")
+            )
             self.org_badge.show()
         else:
             self.org_badge.hide()
+        self._update_ui_state(self.manager.current_state)
+
+    def _on_settings_updated(self, _settings: dict) -> None:
+        self._update_ui_state(self.manager.current_state)
 
     def _on_register_clicked(self) -> None:
         logger.info("User requested daemon registration")
@@ -379,65 +452,57 @@ class WarpWindow(QWidget):
         self.status_title.style().polish(self.status_title)
 
     def _update_ui_state(self, state: WarpState) -> None:
-        """
-        Dynamically repaints the view state correlating strictly to the daemon reality.
-        Locks the visual toggle signals to prevent circular infinite loops.
-        """
-        # Note: Index 1 is now missing client view, so normal states use Index 2.
-        if state == WarpState.UNREGISTERED:
+        """Render one shared presentation without conflating WARP dimensions."""
+        presentation = presentation_for(
+            state,
+            self.manager.current_settings,
+            self.manager.current_capabilities,
+        )
+
+        if presentation.show_setup:
             self.stack.setCurrentIndex(0)
+            self.settings_btn.setEnabled(True)
+            if self._organization_flow:
+                self._set_organization_flow(True)
+            else:
+                self.setup_heading.setText(presentation.setup_heading)
+                self.setup_description.setText(presentation.setup_description)
+                self.registration_error.hide()
+            return
+
+        if presentation.show_authentication:
+            self.stack.setCurrentIndex(3)
+            self.settings_btn.setEnabled(True)
+            self.auth_heading.setText(presentation.primary_status)
+            self.auth_description.setText(presentation.description)
+            return
+
+        if state == WarpState.CLI_MISSING:
+            self.stack.setCurrentIndex(1)
             self.settings_btn.setEnabled(False)
             return
 
-        if self.stack.currentIndex() != 1:  # Only change if not on missing client view
-            self.stack.setCurrentIndex(2)
-            self.settings_btn.setEnabled(True)
+        # CLI availability can change while QWarp is running (for example,
+        # after installing the package). Any non-missing state must leave the
+        # dedicated installation page instead of becoming visually stale.
+        self.stack.setCurrentIndex(2)
+        self.settings_btn.setEnabled(True)
 
         self.toggle.blockSignals(True)
 
-        if state == WarpState.SERVICE_STOPPED:
-            self.repair_btn.show()
-        else:
-            self.repair_btn.hide()
-
         if state == WarpState.CONNECTED:
             self.toggle.setChecked(True)
-            self.toggle.setEnabled(not self.manager.is_busy)
-            self.status_title.setText(self.tr("CONNECTED"))
-            self._update_status_style("title_connected")
-            self.status_desc.setText(self.tr("Your Internet is private."))
-
-        elif state == WarpState.DISCONNECTED:
+        elif state != WarpState.CONNECTING:
             self.toggle.setChecked(False)
-            self.toggle.setEnabled(not self.manager.is_busy)
-            self.status_title.setText(self.tr("DISCONNECTED"))
-            self._update_status_style("title_disconnected")
-            self.status_desc.setText(self.tr("Your Internet is not private."))
-
-        elif state == WarpState.CONNECTING:
-            self.toggle.setEnabled(False)
-            self.status_title.setText(self.tr("CONNECTING"))
-            self._update_status_style("title_disconnected")
-            self.status_desc.setText(self.tr("Securing connection..."))
-
-        elif state == WarpState.DAEMON_ERROR:
-            self.toggle.setChecked(False)
-            self.toggle.setEnabled(False)
-            self.status_title.setText(self.tr("ERROR"))
-            self._update_status_style("title_error")
-            self.status_desc.setText(self.tr("Unable to communicate with Cloudflare WARP."))
-
-        elif state == WarpState.SERVICE_STOPPED:
-            self.toggle.setChecked(False)
-            self.toggle.setEnabled(False)
-            self.status_title.setText(self.tr("SERVICE OFF"))
-            self._update_status_style("title_error")
-            self.status_desc.setText(self.tr("Cloudflare WARP service is not running."))
-
-        else:
-            self.toggle.setEnabled(False)
-            self.status_title.setText(self.tr("WAIT"))
-            self.status_desc.setText(self.tr("Checking status..."))
+        self.toggle.setEnabled(
+            not self.manager.is_busy and (presentation.connect_enabled or presentation.disconnect_enabled)
+        )
+        self.repair_btn.setVisible(state == WarpState.SERVICE_STOPPED)
+        self.status_title.setText(presentation.primary_status)
+        self.status_mode.setText(presentation.mode_label)
+        self.status_mode.setVisible(bool(presentation.mode_label))
+        self.status_desc.setText(presentation.description)
+        self._update_status_style(presentation.title_style)
 
         self.toggle.blockSignals(False)
 

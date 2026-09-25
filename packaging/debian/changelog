@@ -1,3 +1,10 @@
+qwarp (0.10.0-1) unstable; urgency=medium
+
+  * Add split tunneling, local domain fallback DNS, and tray mode switching.
+  * Add headless --status-json mode and improve state presentation.
+
+ -- Ashutosh Tiwari <contact@ashutoshtiwari.dev>  Fri, 25 Sep 2026 12:00:00 +0000
+
 qwarp (0.9.4-1) unstable; urgency=medium
 
   * Improve dark UI consistency and HiDPI icon rendering.
