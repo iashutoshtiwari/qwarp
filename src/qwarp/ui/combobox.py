@@ -1,19 +1,38 @@
-from PyQt6.QtCore import QPointF, Qt
-from PyQt6.QtGui import QColor, QPainter, QPen, QPolygonF
+from PyQt6.QtCore import QEvent, QPointF, Qt
+from PyQt6.QtGui import QPainter, QPalette, QPen, QPolygonF
 from PyQt6.QtWidgets import QComboBox
-
-from qwarp.ui.styles import ACCENT_GRADIENT_COLOR
 
 
 class AccentComboBox(QComboBox):
-    """A combo box with a clean, palette-independent dropdown chevron."""
+    """A combo box with a clean dropdown chevron derived from the desktop palette."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setStyleSheet("""
+            QComboBox::down-arrow {
+                image: none;
+            }
+        """)
+
+    def changeEvent(self, event: QEvent) -> None:
+        super().changeEvent(event)
+        if event.type() in (
+            QEvent.Type.PaletteChange,
+            QEvent.Type.ApplicationPaletteChange,
+            QEvent.Type.EnabledChange,
+        ):
+            self.update()
 
     def paintEvent(self, event) -> None:
         super().paintEvent(event)
 
-        color = "#909090" if not self.isEnabled() else "#c7c7c7"
-        if self.isEnabled() and (self.hasFocus() or self.underMouse()):
-            color = ACCENT_GRADIENT_COLOR
+        palette = self.palette()
+        if not self.isEnabled():
+            color = palette.color(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text)
+        elif self.hasFocus() or self.underMouse():
+            color = palette.color(QPalette.ColorRole.Highlight)
+        else:
+            color = palette.color(QPalette.ColorRole.Text)
 
         center_x = float(self.width() - 14)
         center_y = float(self.height()) / 2.0
@@ -27,8 +46,9 @@ class AccentComboBox(QComboBox):
 
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        pen = QPen(QColor(color), 1.5)
+        pen = QPen(color, 1.5)
         pen.setCapStyle(Qt.PenCapStyle.RoundCap)
         pen.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
         painter.setPen(pen)
         painter.drawPolyline(chevron)
+        painter.end()

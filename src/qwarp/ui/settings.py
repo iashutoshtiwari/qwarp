@@ -1,8 +1,8 @@
 import logging
 from typing import Optional
 
-from PyQt6.QtCore import QSettings, QSize, Qt
-from PyQt6.QtGui import QCloseEvent
+from PyQt6.QtCore import QEvent, QSettings, QSize, Qt
+from PyQt6.QtGui import QCloseEvent, QIcon
 from PyQt6.QtWidgets import (
     QCheckBox,
     QDialog,
@@ -85,6 +85,11 @@ class SettingsDialog(QDialog):
         self.tabs.currentChanged.connect(self._load_current_tab)
         self._on_capabilities_updated(self._capabilities)
         self._load_current_tab(self.tabs.currentIndex())
+
+    def changeEvent(self, event: QEvent) -> None:
+        super().changeEvent(event)
+        if event.type() in (QEvent.Type.PaletteChange, QEvent.Type.ApplicationPaletteChange):
+            self.update()
 
     def _build_general_tab(self) -> None:
         """Constructs the application preferences tab."""
@@ -216,6 +221,7 @@ class SettingsDialog(QDialog):
 
         btn_layout = QHBoxLayout()
         self.refresh_btn = QPushButton(self.tr("Refresh Data"))
+        self.refresh_btn.setIcon(QIcon.fromTheme("view-refresh"))
         self.refresh_btn.clicked.connect(self.manager.request_diagnostics)
 
         self.delete_btn = QPushButton(self.tr("Delete Registration"))
@@ -255,6 +261,7 @@ class SettingsDialog(QDialog):
 
         btn_layout = QHBoxLayout()
         self.dev_refresh_btn = QPushButton(self.tr("Refresh"))
+        self.dev_refresh_btn.setIcon(QIcon.fromTheme("view-refresh"))
         self.dev_refresh_btn.clicked.connect(self.manager.request_diagnostics)
 
         self.leave_org_btn = QPushButton(self.tr("Leave Organization"))
@@ -335,7 +342,9 @@ class SettingsDialog(QDialog):
         conn_layout.addWidget(sep2)
 
         trusted_header = QLabel(self.tr("Trusted Networks:"))
-        trusted_header.setStyleSheet("font-weight: bold;")
+        trusted_font = trusted_header.font()
+        trusted_font.setBold(True)
+        trusted_header.setFont(trusted_font)
         conn_layout.addWidget(trusted_header)
 
         self.trust_eth_cb = QCheckBox(self.tr("Auto-disconnect on Ethernet"))
@@ -369,7 +378,9 @@ class SettingsDialog(QDialog):
 
         def _add_section(title: str) -> QFormLayout:
             lbl = QLabel(title)
-            lbl.setStyleSheet("font-weight: bold;")
+            sec_font = lbl.font()
+            sec_font.setBold(True)
+            lbl.setFont(sec_font)
             diag_layout.addWidget(lbl)
             fl = QFormLayout()
             diag_layout.addLayout(fl)
@@ -419,6 +430,7 @@ class SettingsDialog(QDialog):
 
         diag_layout.addSpacing(10)
         self.diag_refresh_btn = QPushButton(self.tr("Refresh"))
+        self.diag_refresh_btn.setIcon(QIcon.fromTheme("view-refresh"))
         self.diag_refresh_btn.clicked.connect(self._refresh_diagnostics_tab)
         diag_layout.addWidget(self.diag_refresh_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
 

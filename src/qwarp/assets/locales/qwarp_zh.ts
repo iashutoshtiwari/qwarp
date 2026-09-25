@@ -9,551 +9,551 @@
         <translation>设置</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="97" />
+        <location filename="../../ui/settings.py" line="102" />
         <source>Start QWarp on login</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="103" />
+        <location filename="../../ui/settings.py" line="108" />
         <source>Start minimized to system tray</source>
         <translation>启动时最小化到系统托盘</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="118" />
+        <location filename="../../ui/settings.py" line="123" />
         <source>Language:</source>
         <translation>语言:</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="122" />
+        <location filename="../../ui/settings.py" line="127" />
         <source>System Default</source>
         <translation>系统默认</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="144" />
+        <location filename="../../ui/settings.py" line="149" />
         <source>Hide official Cloudflare tray icon</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="147" />
+        <location filename="../../ui/settings.py" line="152" />
         <source>Prevents the official Cloudflare client from showing its own tray icon while QWarp is running.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="153" />
+        <location filename="../../ui/settings.py" line="158" />
         <source>(Requires application restart to take effect)</source>
         <translation>(需要重启应用才能生效)</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="159" />
+        <location filename="../../ui/settings.py" line="164" />
         <source>General</source>
         <translation>常规</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="412" />
-        <location filename="../../ui/settings.py" line="411" />
-        <location filename="../../ui/settings.py" line="410" />
-        <location filename="../../ui/settings.py" line="409" />
+        <location filename="../../ui/settings.py" line="423" />
+        <location filename="../../ui/settings.py" line="422" />
+        <location filename="../../ui/settings.py" line="421" />
+        <location filename="../../ui/settings.py" line="420" />
+        <location filename="../../ui/settings.py" line="403" />
+        <location filename="../../ui/settings.py" line="402" />
+        <location filename="../../ui/settings.py" line="394" />
+        <location filename="../../ui/settings.py" line="393" />
         <location filename="../../ui/settings.py" line="392" />
-        <location filename="../../ui/settings.py" line="391" />
-        <location filename="../../ui/settings.py" line="383" />
-        <location filename="../../ui/settings.py" line="382" />
-        <location filename="../../ui/settings.py" line="381" />
-        <location filename="../../ui/settings.py" line="239" />
-        <location filename="../../ui/settings.py" line="238" />
-        <location filename="../../ui/settings.py" line="172" />
-        <location filename="../../ui/settings.py" line="171" />
-        <location filename="../../ui/settings.py" line="170" />
-        <location filename="../../ui/settings.py" line="169" />
+        <location filename="../../ui/settings.py" line="245" />
+        <location filename="../../ui/settings.py" line="244" />
+        <location filename="../../ui/settings.py" line="177" />
+        <location filename="../../ui/settings.py" line="176" />
+        <location filename="../../ui/settings.py" line="175" />
+        <location filename="../../ui/settings.py" line="174" />
         <source>Loading...</source>
         <translation>加载中...</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="180" />
+        <location filename="../../ui/settings.py" line="185" />
         <source>Account Type:</source>
         <translation>账户类型:</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="1014" />
-        <location filename="../../ui/settings.py" line="1008" />
-        <location filename="../../ui/settings.py" line="201" />
-        <location filename="../../ui/settings.py" line="184" />
+        <location filename="../../ui/settings.py" line="1026" />
+        <location filename="../../ui/settings.py" line="1020" />
+        <location filename="../../ui/settings.py" line="206" />
+        <location filename="../../ui/settings.py" line="189" />
         <source>Show</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="190" />
+        <location filename="../../ui/settings.py" line="195" />
         <source>License Key:</source>
         <translation>许可证密钥:</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="191" />
+        <location filename="../../ui/settings.py" line="196" />
         <source>Data Quota:</source>
         <translation>数据配额:</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="192" />
+        <location filename="../../ui/settings.py" line="197" />
         <source>Daemon Status:</source>
         <translation>Daemon 状态:</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="199" />
+        <location filename="../../ui/settings.py" line="204" />
         <source>Enter WARP+ License Key</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="204" />
+        <location filename="../../ui/settings.py" line="209" />
         <source>Apply</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="218" />
+        <location filename="../../ui/settings.py" line="223" />
         <source>Refresh Data</source>
         <translation>刷新数据</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="814" />
-        <location filename="../../ui/settings.py" line="221" />
+        <location filename="../../ui/settings.py" line="826" />
+        <location filename="../../ui/settings.py" line="227" />
         <source>Delete Registration</source>
         <translation>删除注册</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="230" />
+        <location filename="../../ui/settings.py" line="236" />
         <source>Account</source>
         <translation>账户</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="247" />
+        <location filename="../../ui/settings.py" line="253" />
         <source>Registration Status:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="248" />
+        <location filename="../../ui/settings.py" line="254" />
         <source>Device ID:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="250" />
+        <location filename="../../ui/settings.py" line="256" />
         <source>Organization:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="421" />
-        <location filename="../../ui/settings.py" line="257" />
+        <location filename="../../ui/settings.py" line="432" />
+        <location filename="../../ui/settings.py" line="263" />
         <source>Refresh</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="801" />
-        <location filename="../../ui/settings.py" line="260" />
+        <location filename="../../ui/settings.py" line="813" />
+        <location filename="../../ui/settings.py" line="267" />
         <source>Leave Organization</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="270" />
+        <location filename="../../ui/settings.py" line="277" />
         <source>Device</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="279" />
+        <location filename="../../ui/settings.py" line="286" />
         <source>Loading connection settings…</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="283" />
+        <location filename="../../ui/settings.py" line="290" />
         <source>Routing Mode:</source>
         <translation>路由模式:</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="286" />
+        <location filename="../../ui/settings.py" line="293" />
         <source>1.1.1.1 with WARP</source>
         <translation>1.1.1.1 配合 WARP</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="287" />
+        <location filename="../../ui/settings.py" line="294" />
         <source>1.1.1.1 (DNS over DoH)</source>
         <translation>1.1.1.1 (DNS over DoH)</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="288" />
+        <location filename="../../ui/settings.py" line="295" />
         <source>WARP + DoH</source>
         <translation>WARP + DoH</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="289" />
+        <location filename="../../ui/settings.py" line="296" />
         <source>1.1.1.1 (DNS over DoT)</source>
         <translation>1.1.1.1 (DNS over DoT)</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="290" />
+        <location filename="../../ui/settings.py" line="297" />
         <source>WARP + DoT</source>
         <translation>WARP + DoT</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="291" />
+        <location filename="../../ui/settings.py" line="298" />
         <source>Local Proxy</source>
         <translation>本地代理 (Proxy)</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="292" />
+        <location filename="../../ui/settings.py" line="299" />
         <source>Tunnel Only</source>
         <translation>仅隧道 (Tunnel)</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="300" />
+        <location filename="../../ui/settings.py" line="307" />
         <source>DNS Content Filtering:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="303" />
+        <location filename="../../ui/settings.py" line="310" />
         <source>Off (No Filtering)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="304" />
+        <location filename="../../ui/settings.py" line="311" />
         <source>Malware Only</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="305" />
+        <location filename="../../ui/settings.py" line="312" />
         <source>Malware + Adult Content</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="315" />
+        <location filename="../../ui/settings.py" line="322" />
         <source>Tunnel Protocol:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="787" />
-        <location filename="../../ui/settings.py" line="317" />
+        <location filename="../../ui/settings.py" line="799" />
+        <location filename="../../ui/settings.py" line="324" />
         <source>MASQUE (Default)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="788" />
-        <location filename="../../ui/settings.py" line="318" />
+        <location filename="../../ui/settings.py" line="800" />
+        <location filename="../../ui/settings.py" line="325" />
         <source>WireGuard (Legacy)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="323" />
+        <location filename="../../ui/settings.py" line="330" />
         <source>Proxy Port:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="337" />
+        <location filename="../../ui/settings.py" line="344" />
         <source>Trusted Networks:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="341" />
+        <location filename="../../ui/settings.py" line="350" />
         <source>Auto-disconnect on Ethernet</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="345" />
+        <location filename="../../ui/settings.py" line="354" />
         <source>Auto-disconnect on Wi-Fi</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="349" />
+        <location filename="../../ui/settings.py" line="358" />
         <source>(Consumer only — managed by organization policy in Zero Trust mode)</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="356" />
+        <location filename="../../ui/settings.py" line="365" />
         <source>Connection</source>
         <translation>连接</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="380" />
+        <location filename="../../ui/settings.py" line="391" />
         <source>Network Information</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="386" />
+        <location filename="../../ui/settings.py" line="397" />
         <source>Interface:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="387" />
+        <location filename="../../ui/settings.py" line="398" />
         <source>Gateway:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="388" />
+        <location filename="../../ui/settings.py" line="399" />
         <source>DNS Servers:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="390" />
+        <location filename="../../ui/settings.py" line="401" />
         <source>Connection Statistics</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="395" />
+        <location filename="../../ui/settings.py" line="406" />
         <source>Tunnel Status:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="396" />
+        <location filename="../../ui/settings.py" line="407" />
         <source>Override:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="398" />
+        <location filename="../../ui/settings.py" line="409" />
         <source>Tunnel and DNS Statistics</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="400" />
-        <location filename="../../ui/settings.py" line="399" />
+        <location filename="../../ui/settings.py" line="411" />
+        <location filename="../../ui/settings.py" line="410" />
         <source>Loading on request…</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="405" />
+        <location filename="../../ui/settings.py" line="416" />
         <source>Tunnel:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="406" />
+        <location filename="../../ui/settings.py" line="417" />
         <source>DNS:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="408" />
+        <location filename="../../ui/settings.py" line="419" />
         <source>Split Tunnel</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="415" />
+        <location filename="../../ui/settings.py" line="426" />
         <source>Mode:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="416" />
+        <location filename="../../ui/settings.py" line="427" />
         <source>IP Rules:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="417" />
+        <location filename="../../ui/settings.py" line="428" />
         <source>Host Rules:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="418" />
+        <location filename="../../ui/settings.py" line="429" />
         <source>Fallback Domains:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="426" />
+        <location filename="../../ui/settings.py" line="438" />
         <source>Diagnostics</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="432" />
+        <location filename="../../ui/settings.py" line="444" />
         <source>Choose traffic that should follow a different route from the WARP tunnel.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="436" />
+        <location filename="../../ui/settings.py" line="448" />
         <source>Split-tunnel changes are available for personal registrations only.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="442" />
+        <location filename="../../ui/settings.py" line="454" />
         <source>IP addresses and networks</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="444" />
+        <location filename="../../ui/settings.py" line="456" />
         <source>Split tunnel IP rules</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="448" />
+        <location filename="../../ui/settings.py" line="460" />
         <source>Split tunnel IP or network</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="449" />
+        <location filename="../../ui/settings.py" line="461" />
         <source>Example: 192.168.1.0/24</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="470" />
-        <location filename="../../ui/settings.py" line="450" />
+        <location filename="../../ui/settings.py" line="482" />
+        <location filename="../../ui/settings.py" line="462" />
         <source>Add</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="512" />
-        <location filename="../../ui/settings.py" line="471" />
-        <location filename="../../ui/settings.py" line="451" />
+        <location filename="../../ui/settings.py" line="524" />
+        <location filename="../../ui/settings.py" line="483" />
+        <location filename="../../ui/settings.py" line="463" />
         <source>Remove</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="462" />
+        <location filename="../../ui/settings.py" line="474" />
         <source>Hostnames</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="464" />
+        <location filename="../../ui/settings.py" line="476" />
         <source>Split tunnel hostname rules</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="468" />
+        <location filename="../../ui/settings.py" line="480" />
         <source>Split tunnel hostname</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="469" />
+        <location filename="../../ui/settings.py" line="481" />
         <source>Example: internal.example.com</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="484" />
+        <location filename="../../ui/settings.py" line="496" />
         <source>Restore defaults</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="488" />
+        <location filename="../../ui/settings.py" line="500" />
         <source>Split Tunneling</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="493" />
+        <location filename="../../ui/settings.py" line="505" />
         <source>Use the local DNS resolver for these fallback domains.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="498" />
+        <location filename="../../ui/settings.py" line="510" />
         <source>Local domain fallback changes are available for personal registrations only.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="505" />
+        <location filename="../../ui/settings.py" line="517" />
         <source>Local domain fallback rules</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="509" />
+        <location filename="../../ui/settings.py" line="521" />
         <source>Local fallback domain</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="510" />
+        <location filename="../../ui/settings.py" line="522" />
         <source>Example: corp.example.com</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="511" />
+        <location filename="../../ui/settings.py" line="523" />
         <source>Add domain</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="524" />
+        <location filename="../../ui/settings.py" line="536" />
         <source>DNS</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="544" />
+        <location filename="../../ui/settings.py" line="556" />
         <source>Restore split-tunnel defaults</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="545" />
+        <location filename="../../ui/settings.py" line="557" />
         <source>Restore the official default IP and hostname split-tunnel rules?</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="580" />
+        <location filename="../../ui/settings.py" line="592" />
         <source>Active</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="582" />
+        <location filename="../../ui/settings.py" line="594" />
         <source>Inactive</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="745" />
-        <location filename="../../ui/settings.py" line="610" />
+        <location filename="../../ui/settings.py" line="757" />
+        <location filename="../../ui/settings.py" line="622" />
         <source>Unavailable</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="615" />
+        <location filename="../../ui/settings.py" line="627" />
         <source>No supported counters were returned.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="640" />
+        <location filename="../../ui/settings.py" line="652" />
         <source>A Qt6-based alternative desktop client for Cloudflare® WARP®.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="658" />
+        <location filename="../../ui/settings.py" line="670" />
         <source>QWarp is independently developed and is not affiliated with, authorized, sponsored, or endorsed by Cloudflare, Inc. It requires a separately installed official client and does not distribute Cloudflare software.&lt;br&gt;&lt;br&gt;Cloudflare, 1.1.1.1, WARP, and WARP+ are trademarks and/or registered trademarks of Cloudflare, Inc. in the United States and other jurisdictions.&lt;br&gt;&lt;br&gt;&lt;a href='https://www.cloudflare.com/trademark/'&gt;Trademark Guidelines&lt;/a&gt; | &lt;a href='https://www.cloudflare.com/application/terms/'&gt;Application Terms&lt;/a&gt; | &lt;a href='https://www.cloudflare.com/application/privacypolicy/'&gt;Application Privacy Policy&lt;/a&gt;</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="677" />
+        <location filename="../../ui/settings.py" line="689" />
         <source>About</source>
         <translation>关于</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="744" />
+        <location filename="../../ui/settings.py" line="756" />
         <source>Registered</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="744" />
+        <location filename="../../ui/settings.py" line="756" />
         <source>Not registered</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="766" />
+        <location filename="../../ui/settings.py" line="778" />
         <source>Installed client version: %s</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="773" />
+        <location filename="../../ui/settings.py" line="785" />
         <source>Managed by your organization. This setting is controlled by your organization's Zero Trust policy.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="802" />
+        <location filename="../../ui/settings.py" line="814" />
         <source>Are you sure you want to leave this organization?</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="815" />
+        <location filename="../../ui/settings.py" line="827" />
         <source>Delete this WARP registration? You will need to register again before reconnecting.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="864" />
+        <location filename="../../ui/settings.py" line="876" />
         <source>Connection settings are unavailable.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="985" />
-        <location filename="../../ui/settings.py" line="959" />
+        <location filename="../../ui/settings.py" line="997" />
+        <location filename="../../ui/settings.py" line="971" />
         <source>The requested action failed.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="1014" />
-        <location filename="../../ui/settings.py" line="1008" />
+        <location filename="../../ui/settings.py" line="1026" />
+        <location filename="../../ui/settings.py" line="1020" />
         <source>Hide</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="1019" />
+        <location filename="../../ui/settings.py" line="1031" />
         <source>Unknown</source>
         <translation type="unfinished" />
     </message>
@@ -568,237 +568,237 @@
 </context><context>
     <name>WarpTrayIcon</name>
     <message>
-        <location filename="../../ui/tray.py" line="43" />
+        <location filename="../../ui/tray.py" line="49" />
         <source>Checking WARP status…</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="48" />
+        <location filename="../../ui/tray.py" line="54" />
         <source>Connect</source>
         <translation>连接</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="52" />
+        <location filename="../../ui/tray.py" line="58" />
         <source>Disconnect</source>
         <translation>断开连接</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="56" />
+        <location filename="../../ui/tray.py" line="62" />
         <source>Mode</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="61" />
+        <location filename="../../ui/tray.py" line="67" />
         <source>WARP</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="62" />
+        <location filename="../../ui/tray.py" line="68" />
         <source>DNS over HTTPS</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="63" />
+        <location filename="../../ui/tray.py" line="69" />
         <source>DNS over TLS</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="64" />
+        <location filename="../../ui/tray.py" line="70" />
         <source>WARP + DNS over HTTPS</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="65" />
+        <location filename="../../ui/tray.py" line="71" />
         <source>WARP + DNS over TLS</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="66" />
+        <location filename="../../ui/tray.py" line="72" />
         <source>Local proxy</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="67" />
+        <location filename="../../ui/tray.py" line="73" />
         <source>Tunnel only</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="78" />
+        <location filename="../../ui/tray.py" line="84" />
         <source>Show/Hide Window</source>
         <translation>显示/隐藏窗口</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="82" />
+        <location filename="../../ui/tray.py" line="88" />
         <source>Quit</source>
         <translation>退出</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="117" />
+        <location filename="../../ui/tray.py" line="123" />
         <source>QWarp: %s</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="119" />
+        <location filename="../../ui/tray.py" line="125" />
         <source>Zero Trust enrolled</source>
         <translation type="unfinished" />
     </message>
 </context><context>
     <name>WarpWindow</name>
     <message>
-        <location filename="../../ui/window.py" line="130" />
+        <location filename="../../ui/window.py" line="151" />
         <source>Agree to the Cloudflare Application Terms and acknowledge the Application Privacy Policy</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="133" />
+        <location filename="../../ui/window.py" line="154" />
         <source>I agree to the &lt;a href='https://www.cloudflare.com/application/terms/'&gt;Cloudflare Application Terms&lt;/a&gt; and acknowledge the &lt;a href='https://www.cloudflare.com/application/privacypolicy/'&gt;Application Privacy Policy&lt;/a&gt;.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="143" />
+        <location filename="../../ui/window.py" line="164" />
         <source>Cloudflare Application Terms and Application Privacy Policy</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="291" />
-        <location filename="../../ui/window.py" line="148" />
+        <location filename="../../ui/window.py" line="316" />
+        <location filename="../../ui/window.py" line="169" />
         <source>Continue</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="290" />
-        <location filename="../../ui/window.py" line="153" />
+        <location filename="../../ui/window.py" line="315" />
+        <location filename="../../ui/window.py" line="174" />
         <source>Connect to an organization</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="164" />
-        <location filename="../../ui/window.py" line="162" />
-        <location filename="../../ui/window.py" line="161" />
+        <location filename="../../ui/window.py" line="185" />
+        <location filename="../../ui/window.py" line="183" />
+        <location filename="../../ui/window.py" line="182" />
         <source>Organization name</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="191" />
+        <location filename="../../ui/window.py" line="212" />
         <source>Official Cloudflare client not found</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="200" />
+        <location filename="../../ui/window.py" line="221" />
         <source>QWarp requires the official warp-cli to be installed to function properly. Please install it and restart QWarp.&lt;br&gt;&lt;br&gt;&lt;a href='https://pkg.cloudflareclient.com/'&gt;Installation Instructions&lt;/a&gt;</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="222" />
+        <location filename="../../ui/window.py" line="244" />
         <source>Cloudflare WARP connection</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="223" />
+        <location filename="../../ui/window.py" line="245" />
         <source>Connect or disconnect Cloudflare WARP</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="225" />
+        <location filename="../../ui/window.py" line="247" />
         <source>Enable service</source>
         <translation>启用服务</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="231" />
+        <location filename="../../ui/window.py" line="253" />
         <source>UNKNOWN</source>
         <translation>未知</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="238" />
+        <location filename="../../ui/window.py" line="261" />
         <source>Connecting to daemon...</source>
         <translation>正在连接到 daemon...</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="260" />
+        <location filename="../../ui/window.py" line="285" />
         <source>Complete organization sign-in</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="266" />
+        <location filename="../../ui/window.py" line="291" />
         <source>Complete authentication in your browser to enroll this device.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="286" />
+        <location filename="../../ui/window.py" line="311" />
         <source>Connect to your organization</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="287" />
+        <location filename="../../ui/window.py" line="312" />
         <source>Enter the organization name provided by your administrator.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="288" />
+        <location filename="../../ui/window.py" line="313" />
         <source>Use personal setup</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="304" />
-        <location filename="../../ui/window.py" line="303" />
+        <location filename="../../ui/window.py" line="329" />
+        <location filename="../../ui/window.py" line="328" />
         <source>Settings</source>
         <translation type="unfinished">设置</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="308" />
+        <location filename="../../ui/window.py" line="334" />
         <source>Preferences</source>
         <translation>偏好设置</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="311" />
+        <location filename="../../ui/window.py" line="337" />
         <source>Exit</source>
         <translation>退出</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="356" />
+        <location filename="../../ui/window.py" line="382" />
         <source>Connected to %s</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="356" />
+        <location filename="../../ui/window.py" line="382" />
         <source>Zero Trust enrolled</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="369" />
+        <location filename="../../ui/window.py" line="395" />
         <source>Accept the terms before continuing.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="375" />
+        <location filename="../../ui/window.py" line="401" />
         <source>Please enter an organization name.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="487" />
-        <location filename="../../ui/window.py" line="391" />
+        <location filename="../../ui/window.py" line="513" />
+        <location filename="../../ui/window.py" line="417" />
         <source>CONNECTING</source>
         <translation>连接中</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="487" />
-        <location filename="../../ui/window.py" line="391" />
+        <location filename="../../ui/window.py" line="513" />
+        <location filename="../../ui/window.py" line="417" />
         <source>DISCONNECTING</source>
         <translation>正在断开连接</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="489" />
-        <location filename="../../ui/window.py" line="392" />
+        <location filename="../../ui/window.py" line="515" />
+        <location filename="../../ui/window.py" line="418" />
         <source>Please wait...</source>
         <translation>请稍候...</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="403" />
+        <location filename="../../ui/window.py" line="429" />
         <source>Registration failed.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="406" />
+        <location filename="../../ui/window.py" line="432" />
         <source>The requested action failed.</source>
         <translation type="unfinished" />
     </message>

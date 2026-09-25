@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 from qwarp.core.engine import CliCapabilities, WarpState
 from qwarp.core.state import WarpStateManager
 from qwarp.ui.presentation import presentation_for
-from qwarp.utils.system import load_symbolic_icon, tray_icon_tint
+from qwarp.utils.system import load_symbolic_icon
 
 logger = logging.getLogger(__name__)
 
@@ -24,18 +24,24 @@ class WarpTrayIcon(QSystemTrayIcon):
         self._setup_signals()
         self._update_ui_state(self.manager.current_state)
 
-        # The app stays dark, but the tray must follow the desktop/panel scheme.
+        # The tray must follow the desktop/panel palette and color scheme dynamically.
         app = QApplication.instance()
         if app:
+            if hasattr(app, "paletteChanged"):
+                app.paletteChanged.connect(self._on_palette_changed)
             app.styleHints().colorSchemeChanged.connect(self._on_color_scheme_changed)
 
-    def _on_color_scheme_changed(self, color_scheme) -> None:
-        """Redraw the tray icon when the desktop switches light/dark mode."""
-        self._update_ui_state(self.manager.current_state, color_scheme)
+    def _on_palette_changed(self, palette=None) -> None:
+        """Redraw the tray icon when the desktop/application palette changes."""
+        self._update_ui_state(self.manager.current_state, palette=palette)
+
+    def _on_color_scheme_changed(self, _color_scheme=None) -> None:
+        """Redraw the tray icon when the platform reports a color scheme change."""
+        self._on_palette_changed()
 
     @staticmethod
-    def _load_icon(icon_name: str, color_scheme=None):
-        return load_symbolic_icon(icon_name, tint_color=tray_icon_tint(color_scheme))
+    def _load_icon(icon_name: str, palette=None):
+        return load_symbolic_icon(icon_name, palette=palette)
 
     def _setup_menu(self):
         self.menu = QMenu()
@@ -110,9 +116,9 @@ class WarpTrayIcon(QSystemTrayIcon):
         else:
             self._update_ui_state(self.manager.current_state)
 
-    def _update_ui_state(self, state: WarpState, color_scheme=None):
+    def _update_ui_state(self, state: WarpState, palette=None):
         presentation = presentation_for(state, self.manager.current_settings, self._capabilities)
-        self.setIcon(self._load_icon(presentation.icon_name, color_scheme))
+        self.setIcon(self._load_icon(presentation.icon_name, palette))
 
         tooltip = self.tr("QWarp: %s") % presentation.tray_label
         if self._capabilities and self._capabilities.is_zero_trust:

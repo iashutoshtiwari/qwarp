@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from PyQt6.QtCore import QEvent, QPoint, QSize, Qt, pyqtSignal
+from PyQt6.QtCore import QEvent, QObject, QPoint, QSize, Qt, pyqtSignal
 from PyQt6.QtGui import QCloseEvent, QIcon
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -57,18 +57,39 @@ class WarpWindow(QWidget):
         if self.manager.current_capabilities is not None:
             self._on_capabilities_detected(self.manager.current_capabilities)
 
+    def event(self, event: QEvent) -> bool:
+        if event.type() == QEvent.Type.ApplicationPaletteChange:
+            self.changeEvent(event)
+        return super().event(event)
+
     def changeEvent(self, event: QEvent) -> None:
-        """Intercepts system theme changes and forces an icon redraw."""
+        """Intercepts system theme changes and forces an icon and custom widget redraw."""
         super().changeEvent(event)
         if event.type() in (QEvent.Type.PaletteChange, QEvent.Type.ApplicationPaletteChange):
             if hasattr(self, "settings_btn"):
                 self._update_icons()
             else:
                 self.setWindowIcon(load_asset_icon("app-icon.svg"))
+            if hasattr(self, "toggle"):
+                self.toggle.update()
+            if hasattr(self, "header_label"):
+                self.header_label.update()
+            if hasattr(self, "status_title"):
+                self.status_title.style().unpolish(self.status_title)
+                self.status_title.style().polish(self.status_title)
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
+        if watched is getattr(self, "settings_btn", None) and event.type() in (
+            QEvent.Type.PaletteChange,
+            QEvent.Type.ApplicationPaletteChange,
+        ):
+            self._update_icons()
+        return super().eventFilter(watched, event)
 
     def _update_icons(self) -> None:
-        """Reload the desktop settings icon and unmodified application artwork."""
-        settings_icon = load_symbolic_icon("gear.svg", self.palette())
+        """Reload the bundled settings icon and application artwork."""
+        palette = self.settings_btn.palette() if hasattr(self, "settings_btn") else self.palette()
+        settings_icon = load_symbolic_icon("gear.svg", palette)
         self.settings_btn.setIcon(settings_icon)
         self.settings_btn.setText("⋮" if settings_icon.isNull() else "")
         self.setWindowIcon(load_asset_icon("app-icon.svg"))
@@ -76,7 +97,7 @@ class WarpWindow(QWidget):
     def _setup_ui(self) -> None:
         """Fully boots the visual DOM equivalent of the application."""
         self.main_layout = QVBoxLayout(self)
-        self.main_layout.setContentsMargins(20, 30, 20, 20)
+        self.main_layout.setContentsMargins(20, 24, 20, 20)
 
         self._build_header()
         self.main_layout.addStretch()
@@ -216,6 +237,7 @@ class WarpWindow(QWidget):
         # Flow 2: Primary Connectivity State Driven View
         self.page2 = QWidget()
         p2_layout = QVBoxLayout(self.page2)
+        p2_layout.setContentsMargins(0, 0, 0, 0)
         p2_layout.setSpacing(10)
 
         self.toggle = AnimatedToggle()
@@ -234,13 +256,16 @@ class WarpWindow(QWidget):
         title_font.setBold(True)
         self.status_title.setFont(title_font)
         self.status_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.status_title.setWordWrap(True)
 
         self.status_desc = QLabel(self.tr("Connecting to daemon..."))
         self.status_desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.status_desc.setWordWrap(True)
         self.status_desc.setProperty("styleClass", "desc_default")
 
         self.status_mode = QLabel()
         self.status_mode.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.status_mode.setWordWrap(True)
         self.status_mode.setProperty("styleClass", "status_mode")
 
         p2_layout.addStretch()
@@ -302,6 +327,7 @@ class WarpWindow(QWidget):
         self.settings_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.settings_btn.setAccessibleName(self.tr("Settings"))
         self.settings_btn.setToolTip(self.tr("Settings"))
+        self.settings_btn.installEventFilter(self)
         self._update_icons()
 
         self.settings_menu = QMenu(self)

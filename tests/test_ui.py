@@ -3,8 +3,8 @@ from unittest.mock import patch
 
 import pytest
 from PyQt6 import sip
-from PyQt6.QtCore import QCoreApplication, QSize, Qt, QThread
-from PyQt6.QtGui import QCloseEvent, QIcon
+from PyQt6.QtCore import QCoreApplication, QEvent, QSize, Qt, QThread
+from PyQt6.QtGui import QCloseEvent, QColor, QIcon, QPalette
 from PyQt6.QtTest import QTest
 from PyQt6.QtWidgets import QDialog, QLabel, QMessageBox
 
@@ -15,6 +15,7 @@ from qwarp.ui.combobox import AccentComboBox
 from qwarp.ui.styles import ACCENT_COLOR, ACCENT_GRADIENT_COLOR
 from qwarp.ui.tray import WarpTrayIcon
 from qwarp.ui.window import SettingsDialog, WarpWindow
+from qwarp.utils.system import load_symbolic_icon
 from tests.test_state import FakeEngine
 
 
@@ -103,7 +104,8 @@ def test_settings_dropdowns_use_consistent_accent_chevrons(qapp, manager):
             for x in range(image.width() - 28, image.width())
             for y in range(image.height())
         }
-        assert {"#909090", "#c7c7c7", ACCENT_GRADIENT_COLOR} & arrow_colors
+        expected_color = combo.palette().color(QPalette.ColorRole.Text).name()
+        assert expected_color in arrow_colors
 
     dialog.reject()
 
@@ -284,24 +286,69 @@ def test_tray_uses_the_symbolic_icon_for_each_state(qapp, manager, state, icon_n
         tray.deleteLater()
 
 
-@pytest.mark.parametrize(
-    ("color_scheme", "tint_color"),
-    [
-        (Qt.ColorScheme.Light, "#222222"),
-        (Qt.ColorScheme.Dark, "#f1f1f1"),
-        (Qt.ColorScheme.Unknown, ACCENT_COLOR),
-    ],
-)
-def test_tray_icon_contrast_follows_desktop_not_application_palette(qapp, manager, color_scheme, tint_color):
-    with patch("qwarp.ui.tray.load_symbolic_icon", return_value=QIcon()) as load_icon:
+def test_tray_icon_derives_tint_from_palette(qapp, manager):
+    catppuccin = QPalette()
+    catppuccin.setColor(QPalette.ColorRole.Window, QColor("#181825"))
+    catppuccin.setColor(QPalette.ColorRole.WindowText, QColor("#cdd6f4"))
+
+    breeze_light = QPalette()
+    breeze_light.setColor(QPalette.ColorRole.Window, QColor("#eff0f1"))
+    breeze_light.setColor(QPalette.ColorRole.WindowText, QColor("#232629"))
+
+    with patch("qwarp.ui.tray.load_symbolic_icon", wraps=load_symbolic_icon) as mock_symbolic:
         tray = WarpTrayIcon(manager, lambda _position: None)
-        load_icon.reset_mock()
 
-        tray._update_ui_state(WarpState.CONNECTED, color_scheme)
+        # 1. Update with Catppuccin palette
+        mock_symbolic.reset_mock()
+        tray._update_ui_state(WarpState.CONNECTED, palette=catppuccin)
+        mock_symbolic.assert_called_with("tray-connected.svg", palette=catppuccin)
 
-        assert load_icon.call_args.args[0] == "tray-connected.svg"
-        assert load_icon.call_args.kwargs["tint_color"] == tint_color
+        # 2. Update with Breeze Light palette
+        mock_symbolic.reset_mock()
+        tray._update_ui_state(WarpState.CONNECTED, palette=breeze_light)
+        mock_symbolic.assert_called_with("tray-connected.svg", palette=breeze_light)
+
         tray.deleteLater()
+
+
+def test_tray_icon_updates_on_runtime_palette_change_between_dark_schemes(qapp, manager):
+    palette_a = QPalette()
+    palette_a.setColor(QPalette.ColorRole.Window, QColor("#181825"))
+    palette_a.setColor(QPalette.ColorRole.WindowText, QColor("#cdd6f4"))
+    qapp.setPalette(palette_a)
+
+    tray = WarpTrayIcon(manager, lambda _pos: None)
+
+    pixmap_a = tray.icon().pixmap(QSize(24, 24))
+    image_a = pixmap_a.toImage()
+    found_a = any(
+        image_a.pixelColor(x, y).alpha() > 100
+        and (image_a.pixelColor(x, y).red(), image_a.pixelColor(x, y).green(), image_a.pixelColor(x, y).blue())
+        == (0xCD, 0xD6, 0xF4)
+        for x in range(image_a.width())
+        for y in range(image_a.height())
+    )
+    assert found_a, "Initial tray icon did not render with palette A tint #cdd6f4"
+
+    # Switch to Dark scheme B
+    palette_b = QPalette()
+    palette_b.setColor(QPalette.ColorRole.Window, QColor("#24283b"))
+    palette_b.setColor(QPalette.ColorRole.WindowText, QColor("#a9b1d6"))
+    qapp.setPalette(palette_b)
+    qapp.processEvents()
+
+    pixmap_b = tray.icon().pixmap(QSize(24, 24))
+    image_b = pixmap_b.toImage()
+    found_b = any(
+        image_b.pixelColor(x, y).alpha() > 100
+        and (image_b.pixelColor(x, y).red(), image_b.pixelColor(x, y).green(), image_b.pixelColor(x, y).blue())
+        == (0xA9, 0xB1, 0xD6)
+        for x in range(image_b.width())
+        for y in range(image_b.height())
+    )
+    assert found_b, "Tray icon did not update with palette B tint #a9b1d6 after dark A -> dark B switch"
+
+    tray.deleteLater()
 
 
 def test_window_without_tray_quits_on_close(qapp, manager):
@@ -532,4 +579,119 @@ def test_split_tunnel_and_fallback_action_results_in_settings_dialog(qapp, manag
     assert dialog.fallback_input.accessibleName() == "Local fallback domain"
 
     dialog.deleteLater()
+    window.deleteLater()
+
+
+def test_settings_button_uses_bundled_gear_asset_deterministically(qapp, manager):
+    with (
+        patch("PyQt6.QtGui.QIcon.fromTheme", wraps=QIcon.fromTheme) as mock_theme,
+        patch("qwarp.ui.window.load_symbolic_icon", wraps=load_symbolic_icon) as mock_symbolic,
+    ):
+        window = WarpWindow(manager)
+        mock_symbolic.assert_called_with("gear.svg", window.settings_btn.palette())
+
+        theme_args = [call.args[0] for call in mock_theme.call_args_list if call.args]
+        assert "preferences-system" not in theme_args
+        assert not window.settings_btn.icon().isNull()
+
+        # Dynamic PaletteChange must update via load_symbolic_icon without querying preferences-system
+        mock_symbolic.reset_mock()
+        mock_theme.reset_mock()
+        pal_event = QEvent(QEvent.Type.PaletteChange)
+        QCoreApplication.sendEvent(window, pal_event)
+
+        mock_symbolic.assert_called_with("gear.svg", window.settings_btn.palette())
+        theme_args_after = [call.args[0] for call in mock_theme.call_args_list if call.args]
+        assert "preferences-system" not in theme_args_after
+
+        # Dynamic ApplicationPaletteChange must also update via load_symbolic_icon
+        mock_symbolic.reset_mock()
+        mock_theme.reset_mock()
+        app_pal_event = QEvent(QEvent.Type.ApplicationPaletteChange)
+        QCoreApplication.sendEvent(window, app_pal_event)
+
+        mock_symbolic.assert_called_with("gear.svg", window.settings_btn.palette())
+        theme_args_after_app = [call.args[0] for call in mock_theme.call_args_list if call.args]
+        assert "preferences-system" not in theme_args_after_app
+
+        # Settings button's own event filter catches PaletteChange directly
+        mock_symbolic.reset_mock()
+        btn_event = QEvent(QEvent.Type.PaletteChange)
+        QCoreApplication.sendEvent(window.settings_btn, btn_event)
+        mock_symbolic.assert_called_with("gear.svg", window.settings_btn.palette())
+
+        # Disabled state preserves icon
+        window.settings_btn.setEnabled(False)
+        assert not window.settings_btn.icon().isNull()
+
+        window.deleteLater()
+
+
+def test_settings_button_icon_recolors_from_palette_not_authored_svg_fill(qapp):
+    palette = QPalette()
+    palette.setColor(QPalette.ColorRole.WindowText, QColor("#123456"))
+    icon = load_symbolic_icon("gear.svg", palette)
+    assert not icon.isNull()
+    pixmap = icon.pixmap(QSize(24, 24))
+    assert not pixmap.isNull()
+    image = pixmap.toImage()
+
+    found_tint = False
+    for x in range(image.width()):
+        for y in range(image.height()):
+            c = image.pixelColor(x, y)
+            if c.alpha() > 100:
+                if (c.red(), c.green(), c.blue()) == (0x12, 0x34, 0x56):
+                    found_tint = True
+                    break
+        if found_tint:
+            break
+    assert found_tint, "Rendered pixels did not match the palette WindowText tint #123456"
+
+
+def test_status_description_layout_word_wraps_without_overlap(qapp, manager):
+    window = WarpWindow(manager)
+    window.show()
+
+    test_states = [
+        (WarpState.DAEMON_ERROR, None),
+        (WarpState.CONNECTED, {"mode": "doh"}),
+        (WarpState.CONNECTED, {"mode": "warp"}),
+        (WarpState.SERVICE_STARTING, None),
+        (WarpState.SERVICE_STOPPED, None),
+        (WarpState.TRANSIENT_ERROR, None),
+        (WarpState.POLICY_RESTRICTED, None),
+        (WarpState.NO_NETWORK, None),
+        (WarpState.DISCONNECTED, None),
+        (WarpState.CONNECTING, None),
+    ]
+
+    for state, settings in test_states:
+        manager.current_settings = settings or {}
+        window._update_ui_state(state)
+        qapp.processEvents()
+
+        assert window.status_desc.wordWrap() is True
+        assert bool(window.status_desc.alignment() & Qt.AlignmentFlag.AlignHCenter)
+        assert window.page2.layout().contentsMargins().left() == 0
+        assert window.page2.layout().contentsMargins().right() == 0
+        assert window.width() == 340
+        assert window.height() == 480
+        assert window.status_desc.width() == 300
+
+        visible_widgets = [
+            w
+            for w in (window.toggle, window.status_title, window.status_mode, window.status_desc, window.repair_btn)
+            if w.isVisible()
+        ]
+        for i in range(len(visible_widgets)):
+            for j in range(i + 1, len(visible_widgets)):
+                w1 = visible_widgets[i]
+                w2 = visible_widgets[j]
+                assert not w1.geometry().intersects(w2.geometry()), f"Overlap between {w1} and {w2} in {state}"
+
+        desc_bottom = window.page2.mapTo(window, window.status_desc.geometry().bottomLeft()).y()
+        settings_top = window.settings_btn.geometry().top()
+        assert desc_bottom < settings_top, f"status_desc overlaps footer: {desc_bottom} >= {settings_top}"
+
     window.deleteLater()

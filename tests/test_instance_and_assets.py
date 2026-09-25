@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 from xml.etree import ElementTree
 
 from PyQt6.QtCore import QCoreApplication, QSettings, QSize
-from PyQt6.QtGui import QPalette
+from PyQt6.QtGui import QColor, QPalette
 
 from qwarp import __version__
 from qwarp.core.engine import WarpState
@@ -18,7 +18,7 @@ from qwarp.main import (
     remember_terms_acceptance,
     status_payload,
 )
-from qwarp.ui.styles import ACCENT_COLOR, apply_application_theme
+from qwarp.ui.styles import apply_application_theme
 from qwarp.utils.system import get_asset_dir, load_symbolic_icon, tray_icon_tint
 
 
@@ -124,24 +124,53 @@ def test_high_dpi_symbolic_icon_keeps_transparent_padding(qapp):
     assert not any(edge_alpha)
 
 
-def test_tray_icon_tint_contrasts_with_desktop_color_scheme():
-    from PyQt6.QtCore import Qt
+def test_tray_icon_tint_derives_from_desktop_palette():
+    # KDE-like dark (e.g. Catppuccin Mocha)
+    kde_dark = QPalette()
+    kde_dark.setColor(QPalette.ColorRole.Window, QColor("#181825"))
+    kde_dark.setColor(QPalette.ColorRole.WindowText, QColor("#cdd6f4"))
+    assert tray_icon_tint(kde_dark) == "#cdd6f4"
 
-    assert tray_icon_tint(Qt.ColorScheme.Light) == "#222222"
-    assert tray_icon_tint(Qt.ColorScheme.Dark) == "#f1f1f1"
-    assert tray_icon_tint(Qt.ColorScheme.Unknown) == ACCENT_COLOR
+    # KDE-like light (e.g. Breeze Light)
+    kde_light = QPalette()
+    kde_light.setColor(QPalette.ColorRole.Window, QColor("#eff0f1"))
+    kde_light.setColor(QPalette.ColorRole.WindowText, QColor("#232629"))
+    assert tray_icon_tint(kde_light) == "#232629"
+
+    # Another distinct dark palette (different WindowText)
+    another_dark = QPalette()
+    another_dark.setColor(QPalette.ColorRole.Window, QColor("#24283b"))
+    another_dark.setColor(QPalette.ColorRole.WindowText, QColor("#a9b1d6"))
+    assert tray_icon_tint(another_dark) == "#a9b1d6"
+
+    # Palette absent -> fallback
+    with patch("PyQt6.QtGui.QGuiApplication.instance", return_value=None):
+        assert tray_icon_tint(None) == "#f1f1f1"
 
 
-def test_application_theme_is_fixed_dark_fusion_with_qwarp_accent():
+def test_application_theme_preserves_desktop_style_and_palette():
     app = Mock()
+    app.style.return_value = Mock()
+    app.palette.return_value = QPalette()
+    apply_application_theme(app)
+
+    app.setStyle.assert_not_called()
+    app.setPalette.assert_not_called()
+    app.setStyleSheet.assert_called_once()
+    stylesheet = app.setStyleSheet.call_args.args[0]
+    assert "QWidget {" not in stylesheet
+    assert "#222222" not in stylesheet
+
+
+def test_application_theme_falls_back_to_fusion_when_no_style():
+    app = Mock()
+    app.style.return_value = None
+    app.palette.return_value = QPalette()
     apply_application_theme(app)
 
     app.setStyle.assert_called_once_with("Fusion")
-    palette = app.setPalette.call_args.args[0]
-    assert palette.color(QPalette.ColorRole.Window).name() == "#222222"
-    assert palette.color(QPalette.ColorRole.Base).name() == "#2c2c2c"
-    assert palette.color(QPalette.ColorRole.Button).name() == "#323232"
-    assert palette.color(QPalette.ColorRole.Highlight).name() == ACCENT_COLOR
+    app.setPalette.assert_not_called()
+    app.setStyleSheet.assert_called_once()
 
 
 def test_version_option_has_no_qt_or_daemon_side_effect(capsys):

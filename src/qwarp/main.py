@@ -1,14 +1,9 @@
 import argparse
 import json
-import os
-import sys
-
-# Set xdgdesktopportal as fallback for GNOME theme support before QApplication starts.
-# KDE Plasma overrides this natively, so setdefault ensures zero regressions on KDE.
-os.environ.setdefault("QT_QPA_PLATFORMTHEME", "xdgdesktopportal")
-
 import logging
+import os
 import signal
+import sys
 import traceback
 
 from PyQt6.QtCore import PYQT_VERSION_STR, QT_VERSION_STR, QLocale, QPoint, QSettings, QTimer, QTranslator
@@ -180,6 +175,7 @@ def main() -> None:
     app.setOrganizationName("qwarp")
     app.setApplicationName("qwarp")
     apply_application_theme(app)
+    app.styleHints().colorSchemeChanged.connect(lambda _scheme: apply_application_theme(app))
     settings = QSettings()
 
     # Localized runtime translation instantiation
