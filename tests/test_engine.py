@@ -572,29 +572,31 @@ def test_json_settings_normalizes_typed_mode_name(mock_run):
 # -----------------------------------------------------------------------
 
 
-@patch("subprocess.run")
-def test_diagnostics_json_parsing(mock_run):
-    """Diagnostics via JSON registration show + JSON status."""
-    mock_run.side_effect = [
-        json_output({"account_type": "Unlimited", "license": "masked-value", "quota": "Unlimited"}),
-        json_output({"organization": ""}),  # org check
-        json_output({"status": "Connected"}),
-    ]
-    diag = WarpEngine().get_diagnostics()
+def test_diagnostics_json_parsing(warp_router):
+    """Diagnostics via JSON registration show + JSON status routed by command."""
+    warp_router.on(
+        ["registration", "show"],
+        json_data={"account_type": "Unlimited", "license": "masked-value", "quota": "Unlimited"},
+    )
+    warp_router.on(["registration", "organization"], json_data={"organization": ""})
+    warp_router.on(["status"], json_data={"status": "Connected"})
+    with patch("subprocess.run", warp_router):
+        diag = WarpEngine().get_diagnostics()
     assert diag["type"] == "Unlimited"
     assert diag["license"] == "masked-value"
     assert diag["status"] == "Connected"
 
 
-@patch("subprocess.run")
-def test_diagnostics_with_organization(mock_run):
+def test_diagnostics_with_organization(warp_router):
     """Diagnostics includes organization name for Zero Trust."""
-    mock_run.side_effect = [
-        json_output({"account_type": "Teams", "device_id": "dev-123"}),
-        json_output({"organization": "my-corp"}),
-        json_output({"status": "Connected"}),
-    ]
-    diag = WarpEngine().get_diagnostics()
+    warp_router.on(
+        ["registration", "show"],
+        json_data={"account_type": "Teams", "device_id": "dev-123"},
+    )
+    warp_router.on(["registration", "organization"], json_data={"organization": "my-corp"})
+    warp_router.on(["status"], json_data={"status": "Connected"})
+    with patch("subprocess.run", warp_router):
+        diag = WarpEngine().get_diagnostics()
     assert diag["type"] == "Teams"
     assert diag["device_id"] == "dev-123"
     assert diag["organization"] == "my-corp"
@@ -628,16 +630,17 @@ def test_diagnostics_current_registration_shape_and_single_accept_tos(mock_run):
     ]
 
 
-@patch("subprocess.run")
-def test_diagnostics_fallback_to_text(mock_run):
+def test_diagnostics_fallback_to_text(warp_router):
     """When JSON returns None, fall back to text parsing."""
-    mock_run.side_effect = [
-        FileNotFoundError,  # JSON registration show fails
-        process(stdout="Account type: Unlimited\nLicense: masked-value\nQuota: Unlimited"),  # text fallback
-        json_output({"error": "not found"}, returncode=1),  # org check
-        json_output({"status": "Connected"}),  # JSON status
-    ]
-    diag = WarpEngine().get_diagnostics()
+    warp_router.on(["--json", "registration", "show"], side_effect=FileNotFoundError)
+    warp_router.on(
+        ["registration", "show"],
+        text="Account type: Unlimited\nLicense: masked-value\nQuota: Unlimited",
+    )
+    warp_router.on(["registration", "organization"], json_data={"error": "not found"}, returncode=1)
+    warp_router.on(["status"], json_data={"status": "Connected"})
+    with patch("subprocess.run", warp_router):
+        diag = WarpEngine().get_diagnostics()
     assert diag["type"] == "Unlimited"
     assert diag["license"] == "masked-value"
     assert diag["status"] == "Connected"
@@ -648,18 +651,17 @@ def test_diagnostics_fallback_to_text(mock_run):
 # -----------------------------------------------------------------------
 
 
-@patch("subprocess.run")
 @patch("shutil.which", return_value="/usr/bin/warp-cli")
-def test_capability_detection(mock_which, mock_run):
-    mock_run.side_effect = [
-        process(stdout="warp-cli 2026.6.880.0"),  # version
-        process(stdout="  - MASQUE: default\n  - WireGuard: legacy"),  # protocol help
-        process(stdout="Commands:\n  list\n  add\n"),  # split tunnel help
-        process(stdout="Commands:\n  list\n  add\n"),  # fallback help
-        json_output({"allowed": True}),  # mode-switch-allowed
-        json_output({"error": "No org"}, returncode=1),  # org check
-    ]
-    caps = WarpEngine().detect_capabilities()
+def test_capability_detection(mock_which, warp_router):
+    warp_router.on(["warp-cli", "--version"], text="warp-cli 2026.6.880.0")
+    warp_router.on(["tunnel", "protocol", "--help"], text="  - MASQUE: default\n  - WireGuard: legacy")
+    warp_router.on(["tunnel", "ip", "--help"], text="Commands:\n  list\n  add\n")
+    warp_router.on(["dns", "fallback", "--help"], text="Commands:\n  list\n  add\n")
+    warp_router.on(["mode-switch-allowed"], json_data={"allowed": True})
+    warp_router.on(["registration", "organization"], json_data={"error": "No org"}, returncode=1)
+
+    with patch("subprocess.run", warp_router):
+        caps = WarpEngine().detect_capabilities()
     assert caps.cli_found is True
     assert caps.version == "warp-cli 2026.6.880.0"
     assert caps.has_json is True
@@ -670,18 +672,17 @@ def test_capability_detection(mock_which, mock_run):
     assert caps.is_zero_trust is False
 
 
-@patch("subprocess.run")
 @patch("shutil.which", return_value="/usr/bin/warp-cli")
-def test_capability_detection_zero_trust(mock_which, mock_run):
-    mock_run.side_effect = [
-        process(stdout="warp-cli 2026.6.880.0"),
-        process(stdout="  - MASQUE: default\n  - WireGuard: legacy"),
-        process(stdout="Commands:\n  list\n  add\n"),
-        process(stdout="Commands:\n  list\n  add\n"),
-        json_output({"allowed": False}),  # mode locked by org
-        json_output({"organization": "my-corp"}),
-    ]
-    caps = WarpEngine().detect_capabilities()
+def test_capability_detection_zero_trust(mock_which, warp_router):
+    warp_router.on(["warp-cli", "--version"], text="warp-cli 2026.6.880.0")
+    warp_router.on(["tunnel", "protocol", "--help"], text="  - MASQUE: default\n  - WireGuard: legacy")
+    warp_router.on(["tunnel", "ip", "--help"], text="Commands:\n  list\n  add\n")
+    warp_router.on(["dns", "fallback", "--help"], text="Commands:\n  list\n  add\n")
+    warp_router.on(["mode-switch-allowed"], json_data={"allowed": False})
+    warp_router.on(["registration", "organization"], json_data={"organization": "my-corp"})
+
+    with patch("subprocess.run", warp_router):
+        caps = WarpEngine().detect_capabilities()
     assert caps.is_zero_trust is True
     assert caps.organization == "my-corp"
     assert caps.has_split_tunnel is True
@@ -689,19 +690,17 @@ def test_capability_detection_zero_trust(mock_which, mock_run):
     assert caps.mode_switch_allowed is False
 
 
-@patch("subprocess.run")
 @patch("shutil.which", return_value="/usr/bin/warp-cli")
-def test_capability_detection_accepts_scalar_json(mock_which, mock_run):
-    mock_run.side_effect = [
-        process(stdout="warp-cli 2026.7.1377.0"),
-        process(stdout="  - MASQUE: default\n  - WireGuard: legacy"),
-        process(stdout="Commands:\n  list\n  add\n"),
-        process(stdout="Commands:\n  list\n  add\n"),
-        json_output(False),
-        json_output("synthetic-org"),
-    ]
+def test_capability_detection_accepts_scalar_json(mock_which, warp_router):
+    warp_router.on(["warp-cli", "--version"], text="warp-cli 2026.7.1377.0")
+    warp_router.on(["tunnel", "protocol", "--help"], text="  - MASQUE: default\n  - WireGuard: legacy")
+    warp_router.on(["tunnel", "ip", "--help"], text="Commands:\n  list\n  add\n")
+    warp_router.on(["dns", "fallback", "--help"], text="Commands:\n  list\n  add\n")
+    warp_router.on(["mode-switch-allowed"], json_data=False)
+    warp_router.on(["registration", "organization"], json_data="synthetic-org")
 
-    caps = WarpEngine().detect_capabilities()
+    with patch("subprocess.run", warp_router):
+        caps = WarpEngine().detect_capabilities()
 
     assert caps.has_json is True
     assert caps.has_split_tunnel is True
@@ -813,9 +812,78 @@ def test_safe_cli_message_redacts_secrets_adversarially():
     assert "<redacted URL>" in engine._safe_cli_message(f"Navigate to {auth_url} to authenticate")
     assert "supersecret123" not in engine._safe_cli_message(f"Navigate to {auth_url} to authenticate")
 
+    bearer = "syntheticBearerToken0123456789ABCDEF"
+    assert bearer not in engine._safe_cli_message(f"Request failed with Bearer {bearer}")
+
+    private_key = "-----BEGIN PRIVATE KEY-----\nSYNTHETICKEYMATERIAL0123456789\n-----END PRIVATE KEY-----"
+    assert "SYNTHETICKEYMATERIAL" not in engine._safe_cli_message(private_key)
+
+    opaque = "syntheticOpaqueToken0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"
+    assert opaque not in engine._safe_cli_message(f"Handshake rejected {opaque}")
+
     assert "<redacted>" in engine._safe_cli_message(
         "warp-cli override unlock mysecretcode", sensitive_values=("mysecretcode",)
     )
     assert "mysecretcode" not in engine._safe_cli_message(
         "warp-cli override unlock mysecretcode", sensitive_values=("mysecretcode",)
     )
+
+
+# -----------------------------------------------------------------------
+# Command router & parser contract tests
+# -----------------------------------------------------------------------
+
+
+def test_router_dispatches_by_command_shape_independent_of_order(warp_router):
+    """Router delivers matching responses regardless of invocation sequence."""
+    warp_router.on(["status"], json_data={"status": "Connecting"})
+    warp_router.on(["settings"], json_data={"settings": {"operation_mode": "warp"}})
+    warp_router.on(["registration", "show"], json_data={"account": {"type": "Free"}})
+
+    with patch("subprocess.run", warp_router):
+        engine = WarpEngine()
+        settings = engine.get_settings()
+        diag = engine.get_diagnostics()
+        status = engine.status()
+
+    assert settings["mode"] == "warp"
+    assert diag["type"] == "Free"
+    assert status == WarpState.CONNECTING
+
+
+def test_status_with_unknown_and_nested_fields(warp_router):
+    """Unknown or future fields in JSON status payload do not break parsing."""
+    warp_router.on(
+        ["status"],
+        json_data={
+            "status": "Connected",
+            "future_flag": True,
+            "extra_metadata": {"version": 3, "tags": ["a", "b"]},
+        },
+    )
+    with patch("subprocess.run", warp_router):
+        assert WarpEngine().status() == WarpState.CONNECTED
+
+
+def test_settings_with_malformed_and_scalar_json(warp_router):
+    """Scalar or malformed JSON in settings falls back gracefully without crashing."""
+    warp_router.on(["--json", "settings"], json_data="scalar string")
+    warp_router.on(["settings"], text="Mode: Warp\nFamilies mode: Off")
+    with patch("subprocess.run", warp_router):
+        settings = WarpEngine().get_settings()
+    assert settings["mode"] == "warp"
+    assert settings["families"] == "off"
+
+
+def test_diagnostics_with_unknown_fields_and_empty_sections(warp_router):
+    """Diagnostics safely handles unexpected fields or empty sections."""
+    warp_router.on(
+        ["registration", "show"],
+        json_data={"account": {}, "unknown_section": {"x": 1}},
+    )
+    warp_router.on(["registration", "organization"], json_data={"error": "none"}, returncode=1)
+    warp_router.on(["status"], json_data={"status": "Disconnected"})
+    with patch("subprocess.run", warp_router):
+        diag = WarpEngine().get_diagnostics()
+    assert diag["status"] == "Disconnected"
+    assert diag["type"] == "Unknown"

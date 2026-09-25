@@ -32,9 +32,11 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             libasound2 libdbus-1-3 libegl1 libfontconfig1 libgl1 \
             libxcomposite1 libxcursor1 libxi6 libxkbcommon-x11-0 \
-            libxrandr2 libxrender1 libxtst6
+            libxrandr2 libxrender1 libxtst6 qt6-l10n-tools
       - name: Install project
         run: python -m pip install -c requirements/ci.txt -e '.[dev]'
+      - name: Localization QA
+        run: python3 scripts/check_locales.py
       - name: Ruff
         run: |
           ruff check src/ tests/ --output-format=github
@@ -96,6 +98,7 @@ jobs:
         run: bash scripts/build_artifacts.sh
       - name: Verify locales and release metadata
         run: |
+          python3 scripts/check_locales.py
           git diff --exit-code -- 'src/qwarp/assets/locales/*.ts'
           python scripts/check_release.py --version 0.10.0 --artifacts dist/release
       - name: Verify standalone binary
@@ -145,6 +148,27 @@ jobs:
           grep -q '^usr/share/licenses/qwarp/Glyphs-Poly-MIT.txt$' /tmp/package-files
           grep -q 'cloudflare-warp-bin' .SRCINFO
           ! grep -Eq '^\s*(conflicts|install)\s*=' .SRCINFO
+      - name: Test pacman installation transaction
+        run: |
+          mkdir -p /tmp/dummy-warp
+          cat << 'EOF' > /tmp/dummy-warp/PKGBUILD
+          pkgname=cloudflare-warp-bin
+          pkgver=1.0.0
+          pkgrel=1
+          arch=('any')
+          pkgdesc="Dummy package to satisfy dependency in CI"
+          package() {
+            mkdir -p "$pkgdir/usr/bin"
+            touch "$pkgdir/usr/bin/warp-cli"
+            chmod +x "$pkgdir/usr/bin/warp-cli"
+          }
+          EOF
+          chown -R builder:builder /tmp/dummy-warp
+          su builder -c "cd /tmp/dummy-warp && makepkg --cleanbuild --noconfirm"
+          package_file=$(find . -maxdepth 1 -name 'qwarp-*.pkg.tar.zst' -print -quit)
+          pacman -U --noconfirm /tmp/dummy-warp/cloudflare-warp-bin-*.pkg.tar.zst "$package_file"
+          /usr/bin/qwarp --version | grep -Fx 'QWarp 0.10.0'
+          pacman -Qo /usr/bin/qwarp
 
   debian-package:
     name: Build Debian package
@@ -186,6 +210,21 @@ jobs:
           dpkg-deb --extract qwarp_0.10.0-1_all.deb /tmp/qwarp-deb-root
           PYTHONPATH=/tmp/qwarp-deb-root/usr/lib/python3/dist-packages \
             python3 -m qwarp.main --version | grep -Fx 'QWarp 0.10.0'
+      - name: Test apt installation transaction
+        run: |
+          mkdir -p /tmp/dummy-warp-deb/DEBIAN
+          cat << 'EOF' > /tmp/dummy-warp-deb/DEBIAN/control
+          Package: cloudflare-warp
+          Version: 1.0.0
+          Architecture: all
+          Maintainer: CI <ci@example.com>
+          Description: Dummy package for CI dependency satisfaction
+          EOF
+          dpkg-deb --build /tmp/dummy-warp-deb /tmp/cloudflare-warp_1.0.0_all.deb
+          sudo dpkg -i /tmp/cloudflare-warp_1.0.0_all.deb
+          sudo apt-get install -y --no-install-recommends ./qwarp_0.10.0-1_all.deb
+          /usr/bin/qwarp --version | grep -Fx 'QWarp 0.10.0'
+          dpkg -S /usr/bin/qwarp
       - name: Upload .deb
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
@@ -230,6 +269,25 @@ jobs:
           grep -q '/usr/share/licenses/qwarp/Glyphs-Poly-MIT.txt$' /tmp/qwarp-rpm-files
           ! grep -Eq '/(warp-cli|warp-svc|warp-svc\.service)$' /tmp/qwarp-rpm-files
           rpm -qp --requires "$rpm_file" | grep -q 'cloudflare-warp'
+      - name: Test dnf installation transaction
+        run: |
+          cat << 'EOF' > ~/rpmbuild/SPECS/dummy-warp.spec
+          Name: cloudflare-warp
+          Version: 1.0.0
+          Release: 1
+          Summary: Dummy package for CI
+          License: MIT
+          BuildArch: noarch
+          %description
+          Dummy package for CI dependency satisfaction
+          %files
+          EOF
+          rpmbuild -bb ~/rpmbuild/SPECS/dummy-warp.spec
+          dummy_rpm=$(find ~/rpmbuild/RPMS -name 'cloudflare-warp-1.0.0-1*.rpm' -print -quit)
+          rpm_file=$(find ~/rpmbuild/RPMS -name 'qwarp-0.10.0-1*.rpm' -print -quit)
+          dnf install -y "$dummy_rpm" "$rpm_file"
+          /usr/bin/qwarp --version | grep -Fx 'QWarp 0.10.0'
+          rpm -qf /usr/bin/qwarp
       - name: Upload .rpm
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
