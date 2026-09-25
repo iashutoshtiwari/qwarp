@@ -67,6 +67,7 @@ jobs:
         run: bash scripts/build_artifacts.sh
       - name: Validate catalogs, metadata, checksums, and release notes
         run: |
+          python3 scripts/check_locales.py
           git diff --exit-code -- 'src/qwarp/assets/locales/*.ts'
           python scripts/check_release.py \
             --version "$RELEASE_VERSION" \
