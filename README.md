@@ -23,9 +23,8 @@ States and other jurisdictions.
 ## Screenshots
 
 <div align="center">
-  <img src="screenshots/disconnected.png" width="32%" alt="Disconnected State">
-  <img src="screenshots/connected.png" width="32%" alt="Connected State">
-  <img src="screenshots/kde-tray.png" width="32%" alt="System Tray Menu">
+  <img src="screenshots/disconnected.png" width="30%" alt="Disconnected State">
+  <img src="screenshots/connected.png" width="30%" alt="Connected State">
 </div>
 
 ## Features
@@ -107,14 +106,14 @@ sudo systemctl enable --now warp-svc
 
 ### Command-line options
 
-| Option | Description |
-| --- | --- |
-| `-h`, `--help` | Show CLI options and exit |
-| `--version` | Show program version number and exit |
-| `--status-json` | Output machine-readable JSON status and exit |
-| `--start-minimized` | Start minimized to system tray |
-| `--debug` | Enable sanitized diagnostic logging |
-| `--log-level` | Set terminal log verbosity (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
+| Option              | Description                                                      |
+| ------------------- | ---------------------------------------------------------------- |
+| `-h`, `--help`      | Show CLI options and exit                                        |
+| `--version`         | Show program version number and exit                             |
+| `--status-json`     | Output machine-readable JSON status and exit                     |
+| `--start-minimized` | Start minimized to system tray                                   |
+| `--debug`           | Enable sanitized diagnostic logging                              |
+| `--log-level`       | Set terminal log verbosity (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
 
 ## Development and contributing
 
