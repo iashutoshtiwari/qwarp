@@ -153,6 +153,13 @@ def test_version_option_has_no_qt_or_daemon_side_effect(capsys):
     assert f"QWarp {__version__}" in capsys.readouterr().out
 
 
+def test_debug_and_log_level_arguments_are_side_effect_free():
+    args = parse_cli_args(["--debug", "--log-level", "warning"])
+
+    assert args.debug is True
+    assert args.log_level == "WARNING"
+
+
 def test_terms_acceptance_is_persisted_only_after_success(qapp):
     settings = QSettings()
     settings.remove(TERMS_CONSENT_KEY)

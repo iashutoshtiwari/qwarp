@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 import shutil
 import subprocess
 import threading
@@ -19,8 +20,14 @@ class WarpState(Enum):
     DISCONNECTED = auto()
     CONNECTING = auto()
     UNREGISTERED = auto()
+    TERMS_REQUIRED = auto()
+    AUTHENTICATION_REQUIRED = auto()
+    CLI_MISSING = auto()
     SERVICE_STOPPED = auto()
+    SERVICE_STARTING = auto()
     DAEMON_ERROR = auto()
+    POLICY_RESTRICTED = auto()
+    TRANSIENT_ERROR = auto()
     UNKNOWN = auto()
 
 
@@ -34,6 +41,7 @@ class CliCapabilities:
     organization: str = ""
     mode_switch_allowed: bool = True
     has_tunnel_protocol: bool = True
+    tunnel_protocols: tuple[str, ...] = ()
     has_trusted_networks: bool = True
     cli_found: bool = False
 
@@ -62,14 +70,16 @@ class WarpEngine:
     polling, diagnostics, settings reads, and mutations never invoke the
     WARP CLI concurrently.
 
-    Starting with Cloudflare One Client 2026.x, this engine uses the
-    ``--json`` flag for structured output, eliminating brittle text parsing.
+    Current Cloudflare One Client versions support ``--json``, but their
+    pre-Terms response is deliberately plain text.  JSON is therefore the
+    preferred transport rather than an unconditional parser assumption.
     """
 
     CLI_PATH = "warp-cli"
     SYSTEMCTL_PATH = "systemctl"
     SVC_NAME = "warp-svc"
     PKEXEC_PATH = "pkexec"
+    _TEXT_RESPONSE_MARKER = "_qwarp_text_response"
 
     # Canonical mode identifiers used by the JSON settings output.
     # The text-based aliases are kept for backward compatibility with
@@ -98,6 +108,9 @@ class WarpEngine:
         self._process_lock = threading.Lock()
         self._active_process: Optional[subprocess.Popen[str]] = None
         self._capabilities: Optional[CliCapabilities] = None
+        self._last_cli_failure = ""
+        self._last_cli_warning = ""
+        self._last_status_warning = ""
 
     # ------------------------------------------------------------------
     # Redaction
@@ -110,6 +123,65 @@ class WarpEngine:
             if secret:
                 redacted = redacted.replace(secret, "<redacted>")
         return redacted
+
+    @classmethod
+    def _safe_cli_message(cls, value: str, sensitive_values: tuple[str, ...] = ()) -> str:
+        """Keep command diagnostics useful without surfacing credentials or auth URLs."""
+        message = cls._redact(value, sensitive_values).strip()
+        message = re.sub(r"https?://\S+", "<redacted URL>", message, flags=re.IGNORECASE)
+        message = re.sub(
+            r"(?im)^(.*(?:license|token|authorization|device id|organization).{0,80}):\s*.*$",
+            r"\1: <redacted>",
+            message,
+        )
+        return message[:500]
+
+    @staticmethod
+    def _known_error_response(value: str) -> Optional[dict[str, str]]:
+        """Map stable CLI error categories without retaining sensitive output."""
+        normalized = value.lower()
+        if any(marker in normalized for marker in ("terms of service", "terms acceptance", "accept-tos")):
+            return {"code": "TermsRequired", "error": "Terms acceptance is required."}
+        if "registration" in normalized and (
+            "missing" in normalized or "not registered" in normalized or "no registration" in normalized
+        ):
+            return {"code": "MissingRegistration", "error": "No WARP registration was found."}
+        if any(marker in normalized for marker in ("authentication required", "reauth", "log in", "login required")):
+            return {"code": "AuthenticationRequired", "error": "WARP authentication is required."}
+        if any(marker in normalized for marker in ("policy", "managed by", "not permitted", "not allowed")):
+            return {"code": "PolicyRestricted", "error": "This action is restricted by your organization policy."}
+        if any(marker in normalized for marker in ("daemon", "ipc", "communicate with warp", "service unavailable")):
+            return {"code": "DaemonUnavailable", "error": "The WARP daemon is unavailable."}
+        return None
+
+    @classmethod
+    def _text_error_response(cls, value: str) -> Optional[dict[str, Any]]:
+        response = cls._known_error_response(value)
+        if response is None:
+            return None
+        return {**response, cls._TEXT_RESPONSE_MARKER: True}
+
+    @classmethod
+    def _is_json_response(cls, result: Any) -> bool:
+        return result is not None and not (isinstance(result, dict) and result.get(cls._TEXT_RESPONSE_MARKER) is True)
+
+    @staticmethod
+    def _json_object(result: Any) -> Optional[dict[str, Any]]:
+        return result if isinstance(result, dict) else None
+
+    @classmethod
+    def _is_error_response(cls, result: Any) -> bool:
+        return isinstance(result, dict) and "error" in result
+
+    def _log_cli_warning_once(self, key: str, message: str, *args: Any) -> None:
+        if self._last_cli_warning == key:
+            logger.debug(message, *args)
+            return
+        self._last_cli_warning = key
+        logger.warning(message, *args)
+
+    def _clear_cli_warning(self) -> None:
+        self._last_cli_warning = ""
 
     # ------------------------------------------------------------------
     # Low-level subprocess interface
@@ -124,7 +196,10 @@ class WarpEngine:
         sensitive_values: tuple[str, ...] = (),
     ) -> tuple[bool, str]:
         safe_command = " ".join(self._redact(arg, sensitive_values) for arg in command)
-        if not quiet:
+        started = time.monotonic()
+        if quiet:
+            logger.debug("Executing: %s", safe_command)
+        else:
             logger.info("Executing: %s", safe_command)
 
         if self._cancel_event.is_set():
@@ -140,11 +215,18 @@ class WarpEngine:
                     timeout=self.timeout if timeout is None else timeout,
                 )
 
-            if not quiet:
-                logger.info("Command '%s' returned code %d", safe_command, result.returncode)
+            elapsed_ms = (time.monotonic() - started) * 1000
+            logger.debug("Command '%s' returned code %d in %.0fms", safe_command, result.returncode, elapsed_ms)
 
             output = result.stdout.strip() if result.returncode == 0 else result.stderr.strip() or result.stdout.strip()
-            output = self._redact(output, sensitive_values)
+            if result.returncode == 0:
+                # Successful read-only commands may return values that callers
+                # intentionally display (for example, masked account data).
+                # They are not logged here, so only redact explicitly supplied
+                # command secrets without altering the response schema.
+                output = self._redact(output, sensitive_values)
+            else:
+                output = self._safe_cli_message(output, sensitive_values)
             if result.returncode != 0 and not quiet:
                 logger.error("Command failed (code %d): %s", result.returncode, output or "No error output")
             return result.returncode == 0, output
@@ -158,7 +240,7 @@ class WarpEngine:
                 logger.error("Command '%s' timed out", safe_command)
             return False, "Command timeout"
         except Exception as exc:
-            message = self._redact(str(exc), sensitive_values)
+            message = self._safe_cli_message(str(exc), sensitive_values)
             if not quiet:
                 logger.error("Unexpected command error for '%s': %s", safe_command, message)
             return False, message
@@ -252,13 +334,13 @@ class WarpEngine:
         sensitive_values: tuple[str, ...] = (),
         quiet: Optional[bool] = None,
         timeout: Optional[float] = None,
-    ) -> Optional[dict[str, Any]]:
+    ) -> Any:
         """Run a warp-cli command with --json and parse the JSON output.
 
-        Returns the parsed dict on success, or a dict with 'error' and
-        optionally 'code' keys on CLI failure.  Returns ``None`` only
-        when the binary is missing, times out, or produces unparsable
-        output.
+        Returns any valid JSON value on success. Known plain-text CLI errors
+        become marked dictionaries so callers can classify them safely.
+        Returns ``None`` for missing executables, timeouts, cancellation, empty
+        failures, or unrecognized malformed output.
         """
         if self.accept_tos:
             full_args = ("--accept-tos", "--json", *args)
@@ -269,14 +351,17 @@ class WarpEngine:
             quiet = bool(args and args[-1] in {"status", "list", "show"})
 
         safe_command = " ".join(self._redact(a, sensitive_values) for a in (self.CLI_PATH, *full_args))
-        if not quiet:
+        started = time.monotonic()
+        if quiet:
+            logger.debug("Executing: %s", safe_command)
+        else:
             logger.info("Executing: %s", safe_command)
 
-        if self._cancel_event.is_set():
-            return None
         try:
             with self._command_lock:
+                self._last_cli_failure = ""
                 if self._cancel_event.is_set():
+                    self._last_cli_failure = "cancelled"
                     return None
                 result = subprocess.run(
                     [self.CLI_PATH, *full_args],
@@ -284,38 +369,58 @@ class WarpEngine:
                     text=True,
                     timeout=self.timeout if timeout is None else timeout,
                 )
-            if not quiet:
-                logger.info("Command '%s' returned code %d", safe_command, result.returncode)
+            elapsed_ms = (time.monotonic() - started) * 1000
+            logger.debug("Command '%s' returned code %d in %.0fms", safe_command, result.returncode, elapsed_ms)
 
             text = result.stdout.strip() or result.stderr.strip()
-            text = self._redact(text, sensitive_values)
 
             if not text:
                 if result.returncode == 0:
+                    self._clear_cli_warning()
                     return {}
+                self._last_cli_failure = "empty_response"
+                self._log_cli_warning_once(
+                    f"empty:{safe_command}", "Empty response from '%s' (exit %d)", safe_command, result.returncode
+                )
                 return None
 
             try:
                 data = json.loads(text)
             except json.JSONDecodeError:
-                if not quiet:
-                    logger.warning("Non-JSON output from '%s': %s", safe_command, text[:200])
+                safe_text = self._safe_cli_message(text, sensitive_values)
+                known_error = self._text_error_response(safe_text)
+                if known_error is not None:
+                    self._clear_cli_warning()
+                    return known_error
+                self._last_cli_failure = "malformed_response"
+                self._log_cli_warning_once(
+                    f"malformed:{safe_command}",
+                    "Unexpected non-JSON response from '%s' (exit %d)",
+                    safe_command,
+                    result.returncode,
+                )
                 return None
 
+            self._clear_cli_warning()
             return data
 
         except FileNotFoundError:
-            if not quiet:
-                logger.error("Executable '%s' not found", self.CLI_PATH)
+            self._last_cli_failure = "missing_cli"
+            self._log_cli_warning_once("missing_cli", "Executable '%s' not found", self.CLI_PATH)
             return None
         except subprocess.TimeoutExpired:
-            if not quiet:
-                logger.error("Command '%s' timed out", safe_command)
+            self._last_cli_failure = "timeout"
+            self._log_cli_warning_once(f"timeout:{safe_command}", "Command '%s' timed out", safe_command)
             return None
         except Exception as exc:
-            message = self._redact(str(exc), sensitive_values)
-            if not quiet:
-                logger.error("Unexpected command error for '%s': %s", safe_command, message)
+            self._last_cli_failure = "command_error"
+            message = self._safe_cli_message(str(exc), sensitive_values)
+            self._log_cli_warning_once(
+                f"error:{safe_command}:{type(exc).__name__}",
+                "Unexpected command error for '%s': %s",
+                safe_command,
+                message,
+            )
             return None
 
     # ------------------------------------------------------------------
@@ -329,31 +434,59 @@ class WarpEngine:
         # Check CLI exists and get version
         cli_path = shutil.which(self.CLI_PATH)
         if not cli_path:
+            logger.warning("warp-cli was not found on PATH")
             return caps
         caps.cli_found = True
 
         success, output = self._run_process([self.CLI_PATH, "--version"], timeout=5, quiet=True)
         if success:
             caps.version = output.strip()
+            logger.info("Detected %s", caps.version)
+        else:
+            logger.warning("warp-cli was found but its version could not be read")
+
+        protocol_help_ok, protocol_help = self._run_process(
+            [self.CLI_PATH, "tunnel", "protocol", "set", "--help"], timeout=5, quiet=True
+        )
+        if protocol_help_ok:
+            caps.tunnel_protocols = tuple(
+                match.group(1) for match in re.finditer(r"^\s*-\s+([^:\s]+):", protocol_help, re.MULTILINE)
+            )
+            caps.has_tunnel_protocol = bool(caps.tunnel_protocols)
 
         # Check mode-switch permission
         result = self._run_json_command("settings", "mode-switch-allowed", quiet=True)
-        caps.has_json = result is not None
-        if result and "error" not in result:
-            caps.mode_switch_allowed = result.get("allowed", True)
+        caps.has_json = self._is_json_response(result)
+        if not self._is_error_response(result):
+            if isinstance(result, bool):
+                caps.mode_switch_allowed = result
+            elif isinstance(result, str) and result.lower() in {"true", "false"}:
+                caps.mode_switch_allowed = result.lower() == "true"
+            elif isinstance(result, dict):
+                caps.mode_switch_allowed = self._bool_setting(result, "allowed", default=True)
 
         # Check Zero Trust status
         result = self._run_json_command("registration", "organization", quiet=True)
-        caps.has_json = caps.has_json or result is not None
-        if result and "error" not in result:
-            org_name = ""
+        caps.has_json = caps.has_json or self._is_json_response(result)
+        if not self._is_error_response(result):
             if isinstance(result, dict):
-                org_name = result.get("organization", result.get("name", ""))
+                org_name = str(result.get("organization", result.get("name", "")))
+            elif isinstance(result, str):
+                org_name = result
+            else:
+                org_name = ""
             if org_name:
                 caps.is_zero_trust = True
                 caps.organization = org_name
 
         self._capabilities = caps
+        logger.info(
+            "WARP CLI capabilities: json=%s mode_switch_allowed=%s zero_trust=%s protocols=%s",
+            caps.has_json,
+            caps.mode_switch_allowed,
+            caps.is_zero_trust,
+            ",".join(caps.tunnel_protocols) or "unknown",
+        )
         return caps
 
     @property
@@ -368,15 +501,26 @@ class WarpEngine:
 
     def is_service_active(self) -> Optional[bool]:
         """Return True/False for a known service state, or None if inspection failed."""
+        state = self.service_state()
+        if state == "active":
+            return True
+        if state == "stopped":
+            return False
+        return None
+
+    def service_state(self) -> Optional[str]:
+        """Return a normalized systemd service state without treating activation as failure."""
         success, output = self._run_process(
             [self.SYSTEMCTL_PATH, "is-active", self.SVC_NAME],
             quiet=True,
         )
         state = output.strip().lower()
         if success and state == "active":
-            return True
+            return "active"
         if state in {"inactive", "failed", "dead", "deactivating"}:
-            return False
+            return "stopped"
+        if state in {"activating", "reloading"}:
+            return "starting"
         return None
 
     def is_service_enabled(self) -> Optional[bool]:
@@ -416,52 +560,95 @@ class WarpEngine:
     # Status
     # ------------------------------------------------------------------
 
-    def status(self) -> WarpState:
-        """Query daemon connection status using JSON output."""
-        result = self._run_json_command("status", quiet=True)
+    def _state_for_service_condition(self, fallback: WarpState) -> WarpState:
+        service_state = self.service_state()
+        if service_state == "stopped":
+            return WarpState.SERVICE_STOPPED
+        if service_state == "starting":
+            return WarpState.SERVICE_STARTING
+        return fallback
 
+    def _state_from_cli_error(self, code: str, error: str) -> WarpState:
+        details = f"{code} {error}".lower()
+        normalized_code = self._normalize_setting(code)
+        if normalized_code in {"termsrequired", "tosrequired"} or any(
+            marker in details for marker in ("terms of service", "terms acceptance", "accept-tos")
+        ):
+            return WarpState.TERMS_REQUIRED
+        if normalized_code in {"authenticationrequired", "reauthenticationrequired", "loginrequired"} or any(
+            marker in details for marker in ("authentication required", "reauth", "login required")
+        ):
+            return WarpState.AUTHENTICATION_REQUIRED
+        if normalized_code in {"missingregistration", "registrationmissing"} or any(
+            marker in details for marker in ("missing registration", "registration missing", "no registration")
+        ):
+            return WarpState.UNREGISTERED
+        if "policy" in details or "restricted" in details:
+            return WarpState.POLICY_RESTRICTED
+        fallback = WarpState.DAEMON_ERROR if "daemon" in details else WarpState.TRANSIENT_ERROR
+        return self._state_for_service_condition(fallback)
+
+    def _state_from_unable_reason(self, reason: Any) -> WarpState:
+        details = str(reason).lower()
+        if any(marker in details for marker in ("terms of service", "terms acceptance", "accept-tos")):
+            return WarpState.TERMS_REQUIRED
+        if any(marker in details for marker in ("authenticationrequired", "reauth", "loginrequired")):
+            return WarpState.AUTHENTICATION_REQUIRED
+        if any(marker in details for marker in ("registrationmissing", "missingregistration", "no registration")):
+            return WarpState.UNREGISTERED
+        if "policy" in details or "restricted" in details:
+            return WarpState.POLICY_RESTRICTED
+        return self._state_for_service_condition(WarpState.DAEMON_ERROR)
+
+    def _interpret_status(self, result: Any, failure: str) -> WarpState:
         if result is None:
-            # Binary missing, timeout, or unparsable — check service
-            service_active = self.is_service_active()
-            return WarpState.SERVICE_STOPPED if service_active is False else WarpState.DAEMON_ERROR
+            if failure == "missing_cli":
+                return WarpState.CLI_MISSING
+            return self._state_for_service_condition(WarpState.TRANSIENT_ERROR)
 
-        # Handle error responses
-        if "error" in result:
-            error_str = str(result.get("error", "")).lower()
-            code = str(result.get("code", "")).lower()
-            if "registration" in error_str or "registration" in code:
-                return WarpState.UNREGISTERED
-            if "tos" in error_str or "terms" in error_str:
-                return WarpState.UNREGISTERED
-            service_active = self.is_service_active()
-            return WarpState.SERVICE_STOPPED if service_active is False else WarpState.DAEMON_ERROR
+        if not isinstance(result, dict):
+            self._warn_unknown_status(f"json-{type(result).__name__}")
+            return WarpState.UNKNOWN
 
-        status_str = result.get("status", "").lower()
+        if self._is_error_response(result):
+            return self._state_from_cli_error(str(result.get("code", "")), str(result.get("error", "")))
+
+        status_str = str(result.get("status", result.get("connection_status", result.get("connection", "")))).lower()
 
         if status_str == "connected":
+            self._last_status_warning = ""
             return WarpState.CONNECTED
         if status_str == "disconnected":
+            self._last_status_warning = ""
             return WarpState.DISCONNECTED
         if status_str == "connecting":
+            self._last_status_warning = ""
             return WarpState.CONNECTING
 
         # "Unable" status with structured reason
         if status_str == "unable":
-            reason = result.get("reason", {})
-            if isinstance(reason, dict) and "RegistrationMissing" in reason:
-                return WarpState.UNREGISTERED
-            # Check for terms-related unable states
-            reason_str = str(reason).lower()
-            if "registration" in reason_str:
-                return WarpState.UNREGISTERED
-            service_active = self.is_service_active()
-            return WarpState.SERVICE_STOPPED if service_active is False else WarpState.DAEMON_ERROR
+            return self._state_from_unable_reason(result.get("reason", {}))
 
         if status_str:
+            self._warn_unknown_status(f"value:{self._safe_cli_message(status_str)}")
             return WarpState.UNKNOWN
 
-        # Fallback for unexpected shapes
+        self._warn_unknown_status("missing-status")
         return WarpState.UNKNOWN
+
+    def _warn_unknown_status(self, shape: str) -> None:
+        if self._last_status_warning == shape:
+            logger.debug("Repeated unknown WARP status shape: %s", shape)
+            return
+        self._last_status_warning = shape
+        logger.warning("Unknown WARP status shape: %s", shape)
+
+    def status(self) -> WarpState:
+        """Query daemon connection status and preserve actionable CLI states."""
+        with self._command_lock:
+            result = self._run_json_command("status", quiet=True)
+            failure = self._last_cli_failure
+            return self._interpret_status(result, failure)
 
     # ------------------------------------------------------------------
     # Connection actions
@@ -486,27 +673,35 @@ class WarpEngine:
         acceptance.  Never replace that registration merely to complete
         onboarding.
         """
-        self.accept_tos = True
+        with self._command_lock:
+            self.accept_tos = True
 
-        # Check current registration via JSON
-        result = self._run_json_command("registration", "show", quiet=True)
-        if result is not None and "error" not in result:
-            # Valid registration exists — keep it
-            return True, ""
+            result = self._run_json_command("registration", "show", quiet=True)
+            response = self._json_object(result)
+            if response is None:
+                failure_messages = {
+                    "missing_cli": "warp-cli not installed",
+                    "timeout": "Command timeout",
+                    "cancelled": "Command cancelled",
+                }
+                return False, failure_messages.get(self._last_cli_failure, "Registration check failed")
 
-        # Check if it's actually missing
-        if result is not None:
-            error_code = str(result.get("code", "")).lower()
-            error_msg = str(result.get("error", "")).lower()
-            is_missing = "missing" in error_code or "missing" in error_msg or "no registration" in error_msg
+            if not self._is_error_response(response):
+                # Any successful object means a registration exists; preserve it.
+                return True, ""
+
+            error_code = self._normalize_setting(str(response.get("code", "")))
+            error_message = str(response.get("error", "")).lower()
+            is_missing = error_code in {"missingregistration", "registrationmissing"} or any(
+                marker in error_message
+                for marker in ("missing registration", "registration missing", "no registration")
+            )
             if not is_missing:
-                # Unexpected error — do not create a new registration
-                return False, result.get("error", "Registration check failed")
+                return False, self._safe_cli_message(str(response.get("error", "Registration check failed")))
 
-        # Registration is missing — create new one
-        if organization:
-            return self._run_command("registration", "new", organization)
-        return self._run_command("registration", "new")
+            if organization:
+                return self._run_command("registration", "new", organization, sensitive_values=(organization,))
+            return self._run_command("registration", "new")
 
     def delete_registration(self) -> tuple[bool, str]:
         return self._run_command("registration", "delete")
@@ -514,19 +709,23 @@ class WarpEngine:
     def get_organization(self) -> tuple[bool, str]:
         """Get the current Zero Trust organization name."""
         result = self._run_json_command("registration", "organization", quiet=True)
-        if result is None:
+        if isinstance(result, str):
+            return bool(result), result
+        response = self._json_object(result)
+        if response is None:
             return False, ""
-        if "error" in result:
-            return False, result.get("error", "")
-        org = result.get("organization", result.get("name", ""))
+        if self._is_error_response(response):
+            return False, self._safe_cli_message(str(response.get("error", "")))
+        org = response.get("organization", response.get("name", ""))
         return bool(org), org
 
     def get_registration_info(self) -> dict[str, Any]:
         """Get structured registration info via JSON."""
         result = self._run_json_command("registration", "show", quiet=True)
-        if result is None or "error" in result:
+        response = self._json_object(result)
+        if response is None or self._is_error_response(response):
             return {}
-        return result
+        return response
 
     # ------------------------------------------------------------------
     # License
@@ -607,25 +806,47 @@ class WarpEngine:
         return default
 
     @classmethod
-    def _bool_setting(cls, settings: dict[str, Any], *names: str) -> bool:
-        value = cls._setting_value(settings, *names, default=False)
+    def _bool_setting(cls, settings: dict[str, Any], *names: str, default: bool = False) -> bool:
+        value = cls._setting_value(settings, *names, default=default)
         if isinstance(value, bool):
             return value
         if isinstance(value, str):
             return value.strip().lower() in {"1", "true", "yes", "enabled", "on"}
         return bool(value)
 
+    @classmethod
+    def _families_setting(cls, settings: dict[str, Any]) -> str:
+        """Normalize current and legacy Families keys from one settings response."""
+        value = cls._setting_value(settings, "families_mode", "dns_families", "families", default="")
+        normalized = cls._normalize_setting(str(value))
+        if "full" in normalized or "adult" in normalized or "family" in normalized:
+            return "full"
+        if "malware" in normalized or "security" in normalized:
+            return "malware"
+        if normalized in {"off", "none", "disabled"}:
+            return "off"
+        return ""
+
     def get_settings(self) -> WarpSettings:
         """Fetch current settings via JSON, falling back to text parsing."""
         result = self._run_json_command("settings", "list", quiet=True)
-        if result is not None and "error" not in result:
-            settings_data = result.get("settings", {})
-            sources = result.get("sources", {})
-            mode = settings_data.get("operation_mode", "")
-            mode = self.MODE_ALIASES.get(mode, mode)
+        response = self._json_object(result)
+        if response is not None and not self._is_error_response(response):
+            settings_data = response.get("settings", {})
+            sources = response.get("sources", {})
+            if not isinstance(settings_data, dict):
+                logger.warning("Unexpected settings JSON shape: settings is not an object")
+                settings_data = {}
+            if not isinstance(sources, dict):
+                sources = {}
+            raw_mode = str(self._setting_value(settings_data, "operation_mode", "mode", default=""))
+            mode = self.MODE_ALIASES.get(
+                raw_mode.lower(), self.MODE_ALIASES.get(self._normalize_setting(raw_mode), raw_mode)
+            )
 
-            # Families mode is not in settings list JSON — query separately
-            families = self._query_families_mode()
+            # Older clients omit Families from JSON, so only then issue the
+            # supplementary text query.  Most current schemas use one call.
+            families = self._families_setting(settings_data) or self._query_families_mode()
 
             protocol = self._setting_value(
                 settings_data,
@@ -657,9 +878,9 @@ class WarpEngine:
                 "proxy_port": proxy_port,
                 "trust_wifi": self._bool_setting(settings_data, "disable_for_wifi"),
                 "trust_ethernet": self._bool_setting(settings_data, "disable_for_ethernet"),
-                "always_on": settings_data.get("always_on", False),
-                "switch_locked": settings_data.get("switch_locked", False),
-                "split_tunnel_mode": settings_data.get("split_tunnel_mode", "exclude"),
+                "always_on": self._bool_setting(settings_data, "always_on"),
+                "switch_locked": self._bool_setting(settings_data, "switch_locked", "switch_lock"),
+                "split_tunnel_mode": str(settings_data.get("split_tunnel_mode", "exclude")),
                 "sources": sources,
             }
 
@@ -734,27 +955,28 @@ class WarpEngine:
 
         # Registration info via JSON
         result = self._run_json_command("registration", "show", quiet=True)
-        if result is not None and "error" not in result:
+        response = self._json_object(result)
+        if response is not None and not self._is_error_response(response):
             # JSON registration output — extract fields
-            account = result.get("account", {})
+            account = response.get("account", {})
             account = account if isinstance(account, dict) else {}
-            data["type"] = result.get(
+            data["type"] = response.get(
                 "account_type",
-                result.get("type", account.get("type", "Unknown")),
+                response.get("type", account.get("type", "Unknown")),
             )
             if isinstance(data["type"], dict):
                 data["type"] = str(data["type"])
-            data["device_id"] = result.get("device_id", result.get("id", ""))
+            data["device_id"] = response.get("device_id", response.get("id", ""))
 
             # License and quota may be in various locations
             data["license"] = account.get("license", data["license"])
             data["quota"] = account.get("quota", account.get("premium_data", data["quota"]))
 
             # Direct fields
-            if "license" in result:
-                data["license"] = result["license"]
-            if "quota" in result:
-                data["quota"] = result["quota"]
+            if "license" in response:
+                data["license"] = response["license"]
+            if "quota" in response:
+                data["quota"] = response["quota"]
         elif result is None:
             # Fallback to text parsing
             success, registration = self._run_command("registration", "show", quiet=True)
@@ -773,16 +995,20 @@ class WarpEngine:
 
         # Organization
         org_result = self._run_json_command("registration", "organization", quiet=True)
-        if org_result is not None and "error" not in org_result:
-            data["organization"] = org_result.get("organization", org_result.get("name", ""))
+        org_response = self._json_object(org_result)
+        if org_response is not None and not self._is_error_response(org_response):
+            data["organization"] = org_response.get("organization", org_response.get("name", ""))
+        elif isinstance(org_result, str):
+            data["organization"] = org_result
 
         # Status
         status_result = self._run_json_command("status", quiet=True)
-        if status_result is not None:
-            if "error" not in status_result:
-                data["status"] = status_result.get("status", "Unknown")
+        status_response = self._json_object(status_result)
+        if status_response is not None:
+            if not self._is_error_response(status_response):
+                data["status"] = status_response.get("status", "Unknown")
             else:
-                data["status"] = status_result.get("error", "Unknown")
+                data["status"] = self._safe_cli_message(str(status_response.get("error", "Unknown")))
         else:
             success, status_text = self._run_command("status", quiet=True)
             if success:
@@ -793,42 +1019,46 @@ class WarpEngine:
     def get_network_info(self) -> dict[str, Any]:
         """Get network diagnostics via ``debug network``."""
         result = self._run_json_command("debug", "network", quiet=True, timeout=5)
-        if result is None or "error" in result:
+        response = self._json_object(result)
+        if response is None or self._is_error_response(response):
             return {}
 
         # Cloudflare WARP 2026.7 reports separate IPv4/IPv6 interface
         # objects.  Preserve the raw fields while providing the stable,
         # display-oriented keys consumed by the UI.
-        interfaces = [value for key in ("v4_iface", "v6_iface") if isinstance((value := result.get(key)), dict)]
+        interfaces = [value for key in ("v4_iface", "v6_iface") if isinstance((value := response.get(key)), dict)]
         names = list(dict.fromkeys(iface.get("name", "") for iface in interfaces if iface.get("name")))
         gateways = [iface.get("gateway", "") for iface in interfaces if iface.get("gateway")]
 
-        info = dict(result)
+        info = dict(response)
         info["interface"] = ", ".join(names)
         info["gateway"] = gateways[0] if gateways else ""
-        info["dns"] = result.get("dns_servers", [])
+        info["dns"] = response.get("dns_servers", [])
         return info
 
     def get_tunnel_stats(self) -> dict[str, Any]:
         """Get tunnel connection statistics."""
         result = self._run_json_command("tunnel", "stats", quiet=True, timeout=5)
-        if result is None or "error" in result:
+        response = self._json_object(result)
+        if response is None or self._is_error_response(response):
             return {}
-        return result
+        return response
 
     def get_dns_stats(self) -> dict[str, Any]:
         """Get DNS proxy statistics."""
         result = self._run_json_command("dns", "stats", quiet=True, timeout=5)
-        if result is None or "error" in result:
+        response = self._json_object(result)
+        if response is None or self._is_error_response(response):
             return {}
-        return result
+        return response
 
     def get_override_status(self) -> dict[str, Any]:
         """Get current admin override status."""
         result = self._run_json_command("override", "show", quiet=True, timeout=5)
-        if result is None or "error" in result:
+        response = self._json_object(result)
+        if response is None or self._is_error_response(response):
             return {}
-        info = dict(result)
+        info = dict(response)
         if "status" not in info and isinstance(info.get("set"), bool):
             info["status"] = "Active" if info["set"] else "Inactive"
         return info
@@ -837,8 +1067,11 @@ class WarpEngine:
         """Get split tunnel routing summary."""
         info: dict[str, Any] = {}
         result = self._run_json_command("settings", "list", quiet=True)
-        if result and "error" not in result:
-            settings = result.get("settings", {})
+        response = self._json_object(result)
+        if response and not self._is_error_response(response):
+            settings = response.get("settings", {})
+            if not isinstance(settings, dict):
+                return info
             info["mode"] = settings.get("split_tunnel_mode", "")
             info["ip_count"] = len(settings.get("split_tunnel_ips", []))
             info["host_count"] = len(settings.get("split_tunnel_hosts", []))

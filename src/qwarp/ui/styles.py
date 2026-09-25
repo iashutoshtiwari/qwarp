@@ -75,6 +75,13 @@ QPushButton:hover {
 QPushButton:focus, QLineEdit:focus, QComboBox:focus {
     border: 1px solid #2f80ed;
 }
+QCheckBox:focus {
+    color: #ffffff;
+}
+QLabel[styleClass="legal_text"]:focus {
+    border: 1px solid #2f80ed;
+    border-radius: 3px;
+}
 QPushButton:disabled {
     background-color: #2c2c2c;
     border-color: #363636;
@@ -131,6 +138,15 @@ QLabel[styleClass="title_error"] {
 QLabel[styleClass="desc_default"] {
     color: #c7c7c7;
     font-size: 13px;
+}
+QLabel[styleClass="status_mode"] {
+    color: #56ccf2;
+    font-size: 13px;
+    font-weight: bold;
+}
+QLabel[styleClass="legal_text"] {
+    color: #c7c7c7;
+    font-size: 12px;
 }
 QLabel[styleClass="org_badge"] {
     color: #56ccf2;

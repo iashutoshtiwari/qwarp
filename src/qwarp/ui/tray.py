@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 from qwarp.core.engine import CliCapabilities, WarpState
 from qwarp.core.state import WarpStateManager
+from qwarp.ui.presentation import presentation_for
 from qwarp.utils.system import load_symbolic_icon, tray_icon_tint
 
 logger = logging.getLogger(__name__)
@@ -64,9 +65,13 @@ class WarpTrayIcon(QSystemTrayIcon):
         self.manager.state_changed.connect(self._update_ui_state)
         self.manager.busy_changed.connect(self._on_busy_changed)
         self.manager.capabilities_detected.connect(self._on_capabilities_detected)
+        self.manager.settings_updated.connect(self._on_settings_updated)
 
     def _on_capabilities_detected(self, capabilities: CliCapabilities) -> None:
         self._capabilities = capabilities
+        self._update_ui_state(self.manager.current_state)
+
+    def _on_settings_updated(self, _settings: dict) -> None:
         self._update_ui_state(self.manager.current_state)
 
     def _on_activated(self, reason: QSystemTrayIcon.ActivationReason):
@@ -81,52 +86,13 @@ class WarpTrayIcon(QSystemTrayIcon):
             self._update_ui_state(self.manager.current_state)
 
     def _update_ui_state(self, state: WarpState, color_scheme=None):
-        tooltip = self.tr("QWarp: Unknown")
-        icon = self._load_icon("tray-connecting.svg", color_scheme)
+        presentation = presentation_for(state, self.manager.current_settings, self._capabilities)
+        self.setIcon(self._load_icon(presentation.icon_name, color_scheme))
 
-        if state == WarpState.CONNECTED:
-            icon = self._load_icon("tray-connected.svg", color_scheme)
-            tooltip = self.tr("QWarp: Connected")
-            self.action_connect.setEnabled(False)
-            self.action_disconnect.setEnabled(True)
-        elif state == WarpState.DISCONNECTED:
-            icon = self._load_icon("tray-disconnected.svg", color_scheme)
-            tooltip = self.tr("QWarp: Disconnected")
-            self.action_connect.setEnabled(True)
-            self.action_disconnect.setEnabled(False)
-        elif state == WarpState.CONNECTING:
-            icon = self._load_icon("tray-connecting.svg", color_scheme)
-            tooltip = self.tr("QWarp: Connecting...")
-            self.action_connect.setEnabled(False)
-            self.action_disconnect.setEnabled(False)
-        elif state == WarpState.UNREGISTERED:
-            icon = self._load_icon("tray-unregistered.svg", color_scheme)
-            tooltip = self.tr("QWarp: Registration Missing")
-            self.action_connect.setEnabled(False)
-            self.action_disconnect.setEnabled(False)
-        elif state == WarpState.DAEMON_ERROR:
-            icon = self._load_icon("tray-error.svg", color_scheme)
-            tooltip = self.tr("QWarp: Daemon Error")
-            self.action_connect.setEnabled(False)
-            self.action_disconnect.setEnabled(False)
-        elif state == WarpState.SERVICE_STOPPED:
-            icon = self._load_icon("tray-error.svg", color_scheme)
-            tooltip = self.tr("QWarp: Service Stopped")
-            self.action_connect.setEnabled(False)
-            self.action_disconnect.setEnabled(False)
-        else:
-            icon = self._load_icon("tray-connecting.svg", color_scheme)
-            tooltip = self.tr("QWarp: ") + state.name
-            self.action_connect.setEnabled(False)
-            self.action_disconnect.setEnabled(False)
-
-        self.setIcon(icon)
-
-        if self._capabilities and self._capabilities.is_zero_trust and self._capabilities.organization:
-            tooltip += f" ({self._capabilities.organization})"
-
+        tooltip = self.tr("QWarp: %s") % presentation.tray_label
+        if self._capabilities and self._capabilities.is_zero_trust:
+            enrollment_label = self.tr("Zero Trust enrolled")
+            tooltip += f" · {enrollment_label}"
         self.setToolTip(tooltip)
-
-        if self.manager.is_busy:
-            self.action_connect.setEnabled(False)
-            self.action_disconnect.setEnabled(False)
+        self.action_connect.setEnabled(presentation.connect_enabled and not self.manager.is_busy)
+        self.action_disconnect.setEnabled(presentation.disconnect_enabled and not self.manager.is_busy)

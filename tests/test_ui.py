@@ -52,6 +52,45 @@ def test_settings_loads_mode_asynchronously_and_masks_license(qapp, wait_until, 
     assert dialog.license_input.text() == ""
 
 
+def test_terms_required_uses_specific_onboarding_copy(qapp, manager):
+    window = WarpWindow(manager)
+    window._update_ui_state(WarpState.TERMS_REQUIRED)
+
+    assert window.stack.currentIndex() == 0
+    assert window.setup_heading.text() == "Before you continue"
+    assert "official Cloudflare WARP client" in window.setup_description.text()
+    assert window.registration_error.isHidden()
+    assert window.settings_btn.isEnabled()
+
+
+def test_missing_cli_uses_dedicated_installation_view(qapp, manager):
+    window = WarpWindow(manager)
+    window._update_ui_state(WarpState.CLI_MISSING)
+
+    assert window.stack.currentIndex() == 1
+    assert not window.settings_btn.isEnabled()
+
+
+def test_window_recovers_from_missing_cli_view(qapp, manager):
+    window = WarpWindow(manager)
+    window._update_ui_state(WarpState.CLI_MISSING)
+
+    window._update_ui_state(WarpState.DISCONNECTED)
+
+    assert window.stack.currentIndex() == 2
+    assert window.settings_btn.isEnabled()
+    assert window.status_title.text() == "Disconnected"
+
+
+def test_authentication_required_has_actionable_status(qapp, manager):
+    window = WarpWindow(manager)
+    window._update_ui_state(WarpState.AUTHENTICATION_REQUIRED)
+
+    assert window.stack.currentIndex() == 3
+    assert window.auth_heading.text() == "Complete organization sign-in"
+    assert "browser" in window.auth_description.text()
+
+
 def test_settings_dropdowns_use_consistent_accent_chevrons(qapp, manager):
     dialog = SettingsDialog(manager)
 
@@ -118,7 +157,7 @@ def test_failed_connect_restores_toggle_and_shows_contextual_error(qapp, wait_un
     manager.request_connect()
     wait_until(lambda: manager.is_busy is False)
     assert window.toggle.isEnabled()
-    assert window.status_title.text() == "DISCONNECTED"
+    assert window.status_title.text() == "Disconnected"
     assert window.status_desc.text() == "simulated failure"
     window.deleteLater()
     manager.shutdown()
@@ -136,22 +175,29 @@ def test_single_toggle_click_stays_connecting_until_daemon_catches_up(qapp, wait
     assert engine.connect_calls == 1
     assert window.toggle.isChecked()
     assert not window.toggle.isEnabled()
-    assert window.status_title.text() == "CONNECTING"
+    assert window.status_title.text() == "Connecting…"
 
     manager._on_status_result(WarpState.CONNECTED)
     assert window.toggle.isEnabled()
-    assert window.status_title.text() == "CONNECTED"
+    assert window.status_title.text() == "Connected"
     window.deleteLater()
     manager.shutdown()
 
 
-def test_onboarding_copy_does_not_claim_existing_registration_is_missing(qapp, manager):
+def test_registration_required_copy_and_organization_flow_are_specific(qapp, manager):
     window = WarpWindow(manager)
     manager._on_status_result(WarpState.UNREGISTERED)
 
     assert window.register_btn.text() == "Continue"
     assert not window.register_btn.isEnabled()
-    assert "Setup required" in {label.text() for label in window.page0.findChildren(QLabel)}
+    assert window.setup_heading.text() == "Registration required"
+    assert "Register this device" in window.setup_description.text()
+    assert window.org_toggle_btn.text() == "Connect to an organization"
+    window._toggle_org_input()
+    assert window.setup_heading.text() == "Connect to your organization"
+    assert "provided by your administrator" in window.setup_description.text()
+    assert not window.org_input.isHidden()
+    assert window.org_toggle_btn.text() == "Use personal setup"
     window.deleteLater()
 
 
@@ -167,7 +213,8 @@ def test_onboarding_requires_linked_terms_consent_for_every_registration_path(qa
     assert window.register_btn.isEnabled()
 
     window._toggle_org_input()
-    assert window.register_btn.text() == "Join organization"
+    assert window.register_btn.text() == "Continue"
+    assert window.org_toggle_btn.text() == "Use personal setup"
     assert window.register_btn.isEnabled()
 
     manager.active_action = "register"
@@ -189,8 +236,14 @@ def test_onboarding_requires_linked_terms_consent_for_every_registration_path(qa
         (WarpState.DISCONNECTED, True, False),
         (WarpState.CONNECTING, False, False),
         (WarpState.UNREGISTERED, False, False),
+        (WarpState.TERMS_REQUIRED, False, False),
+        (WarpState.CLI_MISSING, False, False),
         (WarpState.SERVICE_STOPPED, False, False),
+        (WarpState.SERVICE_STARTING, False, False),
         (WarpState.DAEMON_ERROR, False, False),
+        (WarpState.POLICY_RESTRICTED, False, False),
+        (WarpState.AUTHENTICATION_REQUIRED, False, False),
+        (WarpState.TRANSIENT_ERROR, False, False),
         (WarpState.UNKNOWN, False, False),
     ],
 )
@@ -209,8 +262,14 @@ def test_tray_actions_match_every_state(qapp, manager, state, connect_enabled, d
         (WarpState.DISCONNECTED, "tray-disconnected.svg"),
         (WarpState.CONNECTING, "tray-connecting.svg"),
         (WarpState.UNREGISTERED, "tray-unregistered.svg"),
+        (WarpState.TERMS_REQUIRED, "tray-unregistered.svg"),
+        (WarpState.CLI_MISSING, "tray-error.svg"),
         (WarpState.SERVICE_STOPPED, "tray-error.svg"),
+        (WarpState.SERVICE_STARTING, "tray-connecting.svg"),
         (WarpState.DAEMON_ERROR, "tray-error.svg"),
+        (WarpState.POLICY_RESTRICTED, "tray-error.svg"),
+        (WarpState.AUTHENTICATION_REQUIRED, "tray-error.svg"),
+        (WarpState.TRANSIENT_ERROR, "tray-error.svg"),
         (WarpState.UNKNOWN, "tray-connecting.svg"),
     ],
 )
@@ -289,13 +348,15 @@ def test_zero_trust_shows_org_badge_and_disables_consumer_settings(qapp, manager
     manager.capabilities_detected.emit(caps)
 
     assert not window.org_badge.isHidden()
-    assert window.org_badge.text() == "My Corp"
+    assert window.org_badge.text() == "Connected to My Corp"
 
     # Settings Dialog
     assert not dialog.families_combo.isEnabled()
     assert not dialog.protocol_combo.isEnabled()
     assert not dialog.trust_eth_cb.isEnabled()
     assert not dialog.trust_wifi_cb.isEnabled()
+    assert not dialog.zt_note_lbl.isHidden()
+    assert "controlled by your organization's Zero Trust policy" in dialog.zt_note_lbl.text()
 
     manager.busy_changed.emit(True)
     manager.busy_changed.emit(False)
@@ -304,6 +365,60 @@ def test_zero_trust_shows_org_badge_and_disables_consumer_settings(qapp, manager
     assert not dialog.protocol_combo.isEnabled()
 
     window.deleteLater()
+    dialog.deleteLater()
+
+
+def test_zero_trust_controls_remain_available_without_a_reported_policy_lock(qapp, manager):
+    dialog = SettingsDialog(manager)
+    dialog._on_settings_updated({"available": True, "mode": "warp", "families": "off"})
+    dialog._on_capabilities_updated(CliCapabilities(cli_found=True, is_zero_trust=True, mode_switch_allowed=True))
+
+    assert dialog.mode_combo.isEnabled()
+    assert dialog.families_combo.isEnabled()
+    assert dialog.zt_note_lbl.isHidden()
+    dialog.deleteLater()
+
+
+def test_main_window_and_tray_share_dns_only_presentation(qapp, manager):
+    window = WarpWindow(manager)
+    tray = WarpTrayIcon(manager, lambda _position: None)
+    manager._on_settings_result({"available": True, "mode": "doh", "families": "off"})
+    manager._on_status_result(WarpState.CONNECTED)
+
+    assert window.status_title.text() == "Active"
+    assert window.status_mode.text() == "DNS only"
+    assert "without routing traffic through WARP" in window.status_desc.text()
+    assert tray.toolTip() == "QWarp: Active · DNS only"
+    tray.deleteLater()
+    window.deleteLater()
+
+
+def test_unadvertised_settings_values_are_shown_without_applying_changes(qapp, manager):
+    dialog = SettingsDialog(manager)
+    settings = {
+        "available": True,
+        "mode": "future-mode",
+        "families": "future-filter",
+        "tunnel_protocol": "FutureProtocol",
+        "proxy_port": 40000,
+        "trust_ethernet": False,
+        "trust_wifi": False,
+    }
+
+    with (
+        patch.object(manager, "request_set_mode") as set_mode,
+        patch.object(manager, "request_set_families_mode") as set_families,
+        patch.object(manager, "request_set_tunnel_protocol") as set_protocol,
+    ):
+        dialog._on_settings_updated(settings)
+        dialog._on_capabilities_updated(CliCapabilities(cli_found=True, tunnel_protocols=("MASQUE", "WireGuard")))
+
+    assert dialog.mode_combo.currentData() == "future-mode"
+    assert dialog.families_combo.currentData() == "future-filter"
+    assert dialog.protocol_combo.currentData() == "FutureProtocol"
+    set_mode.assert_not_called()
+    set_families.assert_not_called()
+    set_protocol.assert_not_called()
     dialog.deleteLater()
 
 
@@ -382,4 +497,7 @@ def test_accessible_names_exist_for_icon_and_custom_controls(qapp, manager):
     assert window.settings_btn.accessibleName()
     assert window.toggle.accessibleName()
     assert window.terms_checkbox.accessibleName()
+    assert window.terms_label.accessibleName()
+    assert window.terms_label.focusPolicy() == Qt.FocusPolicy.StrongFocus
+    assert window.org_input.accessibleName() == "Organization name"
     window.deleteLater()

@@ -65,16 +65,18 @@ class StatusWorker(QThread):
     def interval_for(self, state: WarpState) -> float:
         with self._state_lock:
             visible = self._visible
-        if state == WarpState.CONNECTING:
+        if state in {WarpState.CONNECTING, WarpState.SERVICE_STARTING, WarpState.TRANSIENT_ERROR}:
             return self.transition_interval_seconds
         return self.interval_seconds if visible else self.hidden_interval_seconds
 
     def run(self) -> None:
+        logger.info("WARP status worker started")
         while not self.isInterruptionRequested():
             state = self.engine.status()
             self.signals.result_ready.emit(state)
             self._wake_event.wait(self.interval_for(state))
             self._wake_event.clear()
+        logger.info("WARP status worker stopped")
 
 
 class QueryWorkerSignals(QObject):
@@ -233,6 +235,7 @@ class WarpStateManager(QObject):
         self.thread_pool = self.query_pool
         self.active_action: Optional[str] = None
         self.current_capabilities: Optional[CliCapabilities] = None
+        self.current_settings: dict[str, Any] = {}
         self._pending_action_result: Optional[tuple[str, bool, str]] = None
         self._diagnostics_pending = False
         self._network_diagnostics_pending = False
@@ -336,7 +339,14 @@ class WarpStateManager(QObject):
     def _on_capabilities_result(self, result: object) -> None:
         self._capabilities_pending = False
         if isinstance(result, CliCapabilities):
+            previous_zero_trust = bool(self.current_capabilities and self.current_capabilities.is_zero_trust)
             self.current_capabilities = result
+            if previous_zero_trust != result.is_zero_trust:
+                logger.info(
+                    "Enrollment context: %s -> %s",
+                    "Zero Trust" if previous_zero_trust else "personal or unknown",
+                    "Zero Trust" if result.is_zero_trust else "personal or unknown",
+                )
             self.capabilities_detected.emit(result)
 
     # ------------------------------------------------------------------
@@ -463,6 +473,8 @@ class WarpStateManager(QObject):
 
         if success and action in {"register", "delete_registration", "set_license"}:
             self.request_diagnostics()
+        if success and action in {"register", "delete_registration"}:
+            self.request_capabilities()
         if success and action in {
             "set_mode",
             "set_families_mode",
@@ -570,6 +582,11 @@ class WarpStateManager(QObject):
     def _on_settings_result(self, result: object) -> None:
         self._settings_pending = False
         if isinstance(result, dict):
+            previous_mode = str(self.current_settings.get("mode", ""))
+            current_mode = str(result.get("mode", ""))
+            self.current_settings = result
+            if previous_mode != current_mode:
+                logger.info("Operating mode: %s -> %s", previous_mode or "unknown", current_mode or "unknown")
             self.settings_updated.emit(result)
 
     @pyqtSlot()

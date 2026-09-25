@@ -10,7 +10,7 @@ import logging
 import signal
 import traceback
 
-from PyQt6.QtCore import QLocale, QPoint, QSettings, QTimer, QTranslator
+from PyQt6.QtCore import PYQT_VERSION_STR, QT_VERSION_STR, QLocale, QPoint, QSettings, QTimer, QTranslator
 from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
 
 from qwarp import __version__
@@ -20,7 +20,7 @@ from qwarp.core.state import WarpStateManager
 from qwarp.ui.styles import apply_application_theme
 from qwarp.ui.tray import WarpTrayIcon
 from qwarp.ui.window import WarpWindow
-from qwarp.utils.system import get_asset_dir, load_asset_icon
+from qwarp.utils.system import get_asset_dir, is_x11, load_asset_icon
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +40,12 @@ def unhandled_exception_hook(exc_type, exc_value, exc_traceback):
     sys.__excepthook__(exc_type, exc_value, exc_traceback)
 
 
-def setup_logging() -> None:
+def setup_logging(level_name: str = "INFO") -> None:
     """Initialize system-wide logging configuration."""
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s - %(message)s")
+    logging.basicConfig(
+        level=getattr(logging, level_name.upper(), logging.INFO),
+        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+    )
 
 
 def parse_cli_args(arguments: list[str]) -> argparse.Namespace:
@@ -53,6 +56,14 @@ def parse_cli_args(arguments: list[str]) -> argparse.Namespace:
         "--start-minimized",
         action="store_true",
         help="Start minimized in system tray",
+    )
+    parser.add_argument("--debug", action="store_true", help="Enable sanitized diagnostic logging")
+    parser.add_argument(
+        "--log-level",
+        choices=("DEBUG", "INFO", "WARNING", "ERROR"),
+        default="INFO",
+        type=str.upper,
+        help="Set terminal log verbosity (default: INFO)",
     )
     args, _ = parser.parse_known_args(arguments)
     return args
@@ -92,7 +103,15 @@ def main() -> None:
     Application entry point. Bootstraps Qt, IPC, background workers, and signals.
     """
     cli_args = parse_cli_args(sys.argv[1:])
-    setup_logging()
+    setup_logging("DEBUG" if cli_args.debug else cli_args.log_level)
+    logger.info(
+        "Starting QWarp %s (Python %s, PyQt %s, Qt %s, %s session)",
+        __version__,
+        sys.version.split()[0],
+        PYQT_VERSION_STR,
+        QT_VERSION_STR,
+        "X11" if is_x11() else "Wayland or non-X11",
+    )
 
     # Configure global exception trapping
     sys.excepthook = unhandled_exception_hook
@@ -146,6 +165,7 @@ def main() -> None:
 
     # Detect CLI capabilities on startup
     manager.request_capabilities()
+    manager.request_settings()
 
     manager.action_finished.connect(
         lambda action, success, _message: remember_terms_acceptance(settings, action, success)
@@ -198,7 +218,7 @@ def main() -> None:
 
     app.aboutToQuit.connect(gracefully_shutdown)
 
-    logger.info("QWarp started successfully.")
+    logger.info("QWarp startup complete (system tray available: %s)", tray_available)
     sys.exit(app.exec())
 
 

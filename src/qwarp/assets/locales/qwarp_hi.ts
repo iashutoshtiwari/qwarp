@@ -49,15 +49,15 @@
         <translation>सामान्य</translation>
     </message>
     <message>
+        <location filename="../../ui/settings.py" line="390" />
         <location filename="../../ui/settings.py" line="389" />
         <location filename="../../ui/settings.py" line="388" />
         <location filename="../../ui/settings.py" line="387" />
-        <location filename="../../ui/settings.py" line="386" />
+        <location filename="../../ui/settings.py" line="380" />
         <location filename="../../ui/settings.py" line="379" />
-        <location filename="../../ui/settings.py" line="378" />
+        <location filename="../../ui/settings.py" line="371" />
         <location filename="../../ui/settings.py" line="370" />
         <location filename="../../ui/settings.py" line="369" />
-        <location filename="../../ui/settings.py" line="368" />
         <location filename="../../ui/settings.py" line="234" />
         <location filename="../../ui/settings.py" line="233" />
         <location filename="../../ui/settings.py" line="167" />
@@ -73,8 +73,8 @@
         <translation>खाता प्रकार:</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="770" />
-        <location filename="../../ui/settings.py" line="764" />
+        <location filename="../../ui/settings.py" line="803" />
+        <location filename="../../ui/settings.py" line="797" />
         <location filename="../../ui/settings.py" line="196" />
         <location filename="../../ui/settings.py" line="179" />
         <source>Show</source>
@@ -111,7 +111,7 @@
         <translation>डेटा रीफ्रेश करें</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="612" />
+        <location filename="../../ui/settings.py" line="641" />
         <location filename="../../ui/settings.py" line="216" />
         <source>Delete Registration</source>
         <translation>पंजीकरण हटाएं</translation>
@@ -137,13 +137,13 @@
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="398" />
+        <location filename="../../ui/settings.py" line="399" />
         <location filename="../../ui/settings.py" line="252" />
         <source>Refresh</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="599" />
+        <location filename="../../ui/settings.py" line="628" />
         <location filename="../../ui/settings.py" line="255" />
         <source>Leave Organization</source>
         <translation type="unfinished" />
@@ -224,11 +224,13 @@
         <translation type="unfinished" />
     </message>
     <message>
+        <location filename="../../ui/settings.py" line="614" />
         <location filename="../../ui/settings.py" line="312" />
         <source>MASQUE (Default)</source>
         <translation type="unfinished" />
     </message>
     <message>
+        <location filename="../../ui/settings.py" line="615" />
         <location filename="../../ui/settings.py" line="313" />
         <source>WireGuard (Legacy)</source>
         <translation type="unfinished" />
@@ -259,414 +261,355 @@
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="350" />
+        <location filename="../../ui/settings.py" line="351" />
         <source>Connection</source>
         <translation>कनेक्शन</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="367" />
+        <location filename="../../ui/settings.py" line="368" />
         <source>Network Information</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="373" />
+        <location filename="../../ui/settings.py" line="374" />
         <source>Interface:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="374" />
+        <location filename="../../ui/settings.py" line="375" />
         <source>Gateway:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="375" />
+        <location filename="../../ui/settings.py" line="376" />
         <source>DNS Servers:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="377" />
+        <location filename="../../ui/settings.py" line="378" />
         <source>Connection Statistics</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="382" />
+        <location filename="../../ui/settings.py" line="383" />
         <source>Tunnel Status:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="383" />
+        <location filename="../../ui/settings.py" line="384" />
         <source>Override:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="385" />
+        <location filename="../../ui/settings.py" line="386" />
         <source>Split Tunnel</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="392" />
+        <location filename="../../ui/settings.py" line="393" />
         <source>Mode:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="393" />
+        <location filename="../../ui/settings.py" line="394" />
         <source>IP Rules:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="394" />
+        <location filename="../../ui/settings.py" line="395" />
         <source>Host Rules:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="395" />
+        <location filename="../../ui/settings.py" line="396" />
         <source>Fallback Domains:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="403" />
+        <location filename="../../ui/settings.py" line="404" />
         <source>Diagnostics</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="430" />
+        <location filename="../../ui/settings.py" line="431" />
         <source>Active</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="432" />
+        <location filename="../../ui/settings.py" line="433" />
         <source>Inactive</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="468" />
+        <location filename="../../ui/settings.py" line="469" />
         <source>A Qt6-based alternative desktop client for Cloudflare® WARP®.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="486" />
+        <location filename="../../ui/settings.py" line="487" />
         <source>QWarp is independently developed and is not affiliated with, authorized, sponsored, or endorsed by Cloudflare, Inc. It requires a separately installed official client and does not distribute Cloudflare software.&lt;br&gt;&lt;br&gt;Cloudflare, 1.1.1.1, WARP, and WARP+ are trademarks and/or registered trademarks of Cloudflare, Inc. in the United States and other jurisdictions.&lt;br&gt;&lt;br&gt;&lt;a href='https://www.cloudflare.com/trademark/'&gt;Trademark Guidelines&lt;/a&gt; | &lt;a href='https://www.cloudflare.com/application/terms/'&gt;Application Terms&lt;/a&gt; | &lt;a href='https://www.cloudflare.com/application/privacypolicy/'&gt;Application Privacy Policy&lt;/a&gt;</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="505" />
+        <location filename="../../ui/settings.py" line="506" />
         <source>About</source>
         <translation>अबाउट</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="572" />
+        <location filename="../../ui/settings.py" line="573" />
         <source>Registered</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="572" />
+        <location filename="../../ui/settings.py" line="573" />
         <source>Not registered</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="573" />
+        <location filename="../../ui/settings.py" line="574" />
         <source>Unavailable</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="593" />
+        <location filename="../../ui/settings.py" line="595" />
         <source>Installed client version: %s</source>
         <translation type="unfinished" />
     </message>
     <message>
         <location filename="../../ui/settings.py" line="600" />
+        <source>Managed by your organization. This setting is controlled by your organization's Zero Trust policy.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../../ui/settings.py" line="629" />
         <source>Are you sure you want to leave this organization?</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="613" />
+        <location filename="../../ui/settings.py" line="642" />
         <source>Delete this WARP registration? You will need to register again before reconnecting.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="662" />
+        <location filename="../../ui/settings.py" line="691" />
         <source>Connection settings are unavailable.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="747" />
-        <location filename="../../ui/settings.py" line="728" />
+        <location filename="../../ui/settings.py" line="780" />
+        <location filename="../../ui/settings.py" line="761" />
         <source>The requested action failed.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="770" />
-        <location filename="../../ui/settings.py" line="764" />
+        <location filename="../../ui/settings.py" line="803" />
+        <location filename="../../ui/settings.py" line="797" />
         <source>Hide</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="775" />
+        <location filename="../../ui/settings.py" line="808" />
         <source>Unknown</source>
         <translation type="unfinished" />
     </message>
 </context><context>
     <name>WarpStateManager</name>
     <message>
-        <location filename="../../core/state.py" line="480" />
-        <location filename="../../core/state.py" line="402" />
+        <location filename="../../core/state.py" line="492" />
+        <location filename="../../core/state.py" line="412" />
         <source>Another WARP action is already in progress.</source>
         <translation type="unfinished" />
     </message>
 </context><context>
     <name>WarpTrayIcon</name>
     <message>
-        <location filename="../../ui/tray.py" line="42" />
+        <location filename="../../ui/tray.py" line="43" />
         <source>Connect</source>
         <translation>कनेक्ट करें</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="46" />
+        <location filename="../../ui/tray.py" line="47" />
         <source>Disconnect</source>
         <translation>डिस्कनेक्ट करें</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="52" />
+        <location filename="../../ui/tray.py" line="53" />
         <source>Show/Hide Window</source>
         <translation>विंडो दिखाएं/छिपाएं</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="56" />
+        <location filename="../../ui/tray.py" line="57" />
         <source>Quit</source>
         <translation>बाहर निकलें</translation>
     </message>
     <message>
-        <location filename="../../ui/tray.py" line="84" />
-        <source>QWarp: Unknown</source>
-        <translation>QWarp: अज्ञात</translation>
-    </message>
-    <message>
-        <location filename="../../ui/tray.py" line="89" />
-        <source>QWarp: Connected</source>
-        <translation>QWarp: कनेक्टेड</translation>
+        <location filename="../../ui/tray.py" line="92" />
+        <source>QWarp: %s</source>
+        <translation type="unfinished" />
     </message>
     <message>
         <location filename="../../ui/tray.py" line="94" />
-        <source>QWarp: Disconnected</source>
-        <translation>QWarp: डिस्कनेक्टेड</translation>
-    </message>
-    <message>
-        <location filename="../../ui/tray.py" line="99" />
-        <source>QWarp: Connecting...</source>
-        <translation>QWarp: कनेक्ट हो रहा है...</translation>
-    </message>
-    <message>
-        <location filename="../../ui/tray.py" line="104" />
-        <source>QWarp: Registration Missing</source>
-        <translation>QWarp: पंजीकरण मौजूद नहीं है</translation>
-    </message>
-    <message>
-        <location filename="../../ui/tray.py" line="109" />
-        <source>QWarp: Daemon Error</source>
-        <translation>QWarp: डेमन त्रुटि</translation>
-    </message>
-    <message>
-        <location filename="../../ui/tray.py" line="114" />
-        <source>QWarp: Service Stopped</source>
-        <translation>QWarp: सर्विस बंद है</translation>
-    </message>
-    <message>
-        <location filename="../../ui/tray.py" line="119" />
-        <source>QWarp: </source>
-        <translation>QWarp: </translation>
+        <source>Zero Trust enrolled</source>
+        <translation type="unfinished" />
     </message>
 </context><context>
     <name>WarpWindow</name>
     <message>
-        <location filename="../../ui/window.py" line="113" />
-        <source>Setup required</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="../../ui/window.py" line="120" />
-        <source>Review the official client's terms before continuing.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="../../ui/window.py" line="127" />
+        <location filename="../../ui/window.py" line="130" />
         <source>Agree to the Cloudflare Application Terms and acknowledge the Application Privacy Policy</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="130" />
+        <location filename="../../ui/window.py" line="133" />
         <source>I agree to the &lt;a href='https://www.cloudflare.com/application/terms/'&gt;Cloudflare Application Terms&lt;/a&gt; and acknowledge the &lt;a href='https://www.cloudflare.com/application/privacypolicy/'&gt;Application Privacy Policy&lt;/a&gt;.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="252" />
-        <location filename="../../ui/window.py" line="142" />
+        <location filename="../../ui/window.py" line="143" />
+        <source>Cloudflare Application Terms and Application Privacy Policy</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../../ui/window.py" line="291" />
+        <location filename="../../ui/window.py" line="148" />
         <source>Continue</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="251" />
-        <location filename="../../ui/window.py" line="147" />
-        <source>Have an organization?</source>
+        <location filename="../../ui/window.py" line="290" />
+        <location filename="../../ui/window.py" line="153" />
+        <source>Connect to an organization</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="155" />
+        <location filename="../../ui/window.py" line="164" />
+        <location filename="../../ui/window.py" line="162" />
+        <location filename="../../ui/window.py" line="161" />
         <source>Organization name</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="181" />
+        <location filename="../../ui/window.py" line="191" />
         <source>Official Cloudflare client not found</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="190" />
+        <location filename="../../ui/window.py" line="200" />
         <source>QWarp requires the official warp-cli to be installed to function properly. Please install it and restart QWarp.&lt;br&gt;&lt;br&gt;&lt;a href='https://pkg.cloudflareclient.com/'&gt;Installation Instructions&lt;/a&gt;</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="212" />
+        <location filename="../../ui/window.py" line="222" />
         <source>Cloudflare WARP connection</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="213" />
+        <location filename="../../ui/window.py" line="223" />
         <source>Connect or disconnect Cloudflare WARP</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="215" />
+        <location filename="../../ui/window.py" line="225" />
         <source>Enable service</source>
         <translation>सर्विस चालू करें</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="221" />
+        <location filename="../../ui/window.py" line="231" />
         <source>UNKNOWN</source>
         <translation>अज्ञात</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="228" />
+        <location filename="../../ui/window.py" line="238" />
         <source>Connecting to daemon...</source>
         <translation>डेमन से कनेक्ट हो रहा है...</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="246" />
-        <source>Use personal account instead</source>
+        <location filename="../../ui/window.py" line="260" />
+        <source>Complete organization sign-in</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="247" />
-        <source>Join organization</source>
+        <location filename="../../ui/window.py" line="266" />
+        <source>Complete authentication in your browser to enroll this device.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="265" />
-        <location filename="../../ui/window.py" line="264" />
-        <source>Application menu</source>
+        <location filename="../../ui/window.py" line="286" />
+        <source>Connect to your organization</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="269" />
+        <location filename="../../ui/window.py" line="287" />
+        <source>Enter the organization name provided by your administrator.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../../ui/window.py" line="288" />
+        <source>Use personal setup</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../../ui/window.py" line="304" />
+        <location filename="../../ui/window.py" line="303" />
+        <source>Settings</source>
+        <translation type="unfinished">सेटिंग्स</translation>
+    </message>
+    <message>
+        <location filename="../../ui/window.py" line="308" />
         <source>Preferences</source>
         <translation>प्राथमिकताएं</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="272" />
+        <location filename="../../ui/window.py" line="311" />
         <source>Exit</source>
         <translation>बाहर निकलें</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="322" />
+        <location filename="../../ui/window.py" line="356" />
+        <source>Connected to %s</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../../ui/window.py" line="356" />
+        <source>Zero Trust enrolled</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../../ui/window.py" line="369" />
         <source>Accept the terms before continuing.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="328" />
+        <location filename="../../ui/window.py" line="375" />
         <source>Please enter an organization name.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="448" />
-        <location filename="../../ui/window.py" line="419" />
-        <location filename="../../ui/window.py" line="344" />
+        <location filename="../../ui/window.py" line="487" />
+        <location filename="../../ui/window.py" line="391" />
         <source>CONNECTING</source>
         <translation>कनेक्ट हो रहा है</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="448" />
-        <location filename="../../ui/window.py" line="344" />
+        <location filename="../../ui/window.py" line="487" />
+        <location filename="../../ui/window.py" line="391" />
         <source>DISCONNECTING</source>
         <translation>डिस्कनेक्ट हो रहा है</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="450" />
-        <location filename="../../ui/window.py" line="345" />
+        <location filename="../../ui/window.py" line="489" />
+        <location filename="../../ui/window.py" line="392" />
         <source>Please wait...</source>
         <translation>कृपया प्रतीक्षा करें...</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="356" />
+        <location filename="../../ui/window.py" line="403" />
         <source>Registration failed.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="359" />
+        <location filename="../../ui/window.py" line="406" />
         <source>The requested action failed.</source>
         <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="../../ui/window.py" line="406" />
-        <source>CONNECTED</source>
-        <translation>कनेक्टेड</translation>
-    </message>
-    <message>
-        <location filename="../../ui/window.py" line="408" />
-        <source>Your Internet is private.</source>
-        <translation>आपका इंटरनेट प्राइवेट है।</translation>
-    </message>
-    <message>
-        <location filename="../../ui/window.py" line="413" />
-        <source>DISCONNECTED</source>
-        <translation>डिस्कनेक्टेड</translation>
-    </message>
-    <message>
-        <location filename="../../ui/window.py" line="415" />
-        <source>Your Internet is not private.</source>
-        <translation>आपका इंटरनेट प्राइवेट नहीं है।</translation>
-    </message>
-    <message>
-        <location filename="../../ui/window.py" line="421" />
-        <source>Securing connection...</source>
-        <translation>कनेक्शन सुरक्षित किया जा रहा है...</translation>
-    </message>
-    <message>
-        <location filename="../../ui/window.py" line="426" />
-        <source>ERROR</source>
-        <translation>त्रुटि</translation>
-    </message>
-    <message>
-        <location filename="../../ui/window.py" line="428" />
-        <source>Unable to communicate with Cloudflare WARP.</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="../../ui/window.py" line="433" />
-        <source>SERVICE OFF</source>
-        <translation>सर्विस बंद</translation>
-    </message>
-    <message>
-        <location filename="../../ui/window.py" line="435" />
-        <source>Cloudflare WARP service is not running.</source>
-        <translation>क्लाउडफ्लेयर WARP सर्विस नहीं चल रही है।</translation>
-    </message>
-    <message>
-        <location filename="../../ui/window.py" line="439" />
-        <source>WAIT</source>
-        <translation>प्रतीक्षा करें</translation>
-    </message>
-    <message>
-        <location filename="../../ui/window.py" line="440" />
-        <source>Checking status...</source>
-        <translation>स्थिति जांची जा रही है...</translation>
     </message>
 </context></TS>

@@ -344,6 +344,7 @@ class SettingsDialog(QDialog):
         self.zt_note_lbl = QLabel(self.tr("(Consumer only — managed by organization policy in Zero Trust mode)"))
         self.zt_note_lbl.setProperty("styleClass", "desc_default")
         self.zt_note_lbl.setWordWrap(True)
+        self.zt_note_lbl.hide()
         conn_layout.addWidget(self.zt_note_lbl)
 
         conn_layout.addStretch()
@@ -589,9 +590,37 @@ class SettingsDialog(QDialog):
 
     def _on_capabilities_updated(self, caps: CliCapabilities) -> None:
         self._capabilities = caps
+        self._set_protocol_options(caps.tunnel_protocols)
         version_text = caps.version.replace("warp-cli ", "") if caps.version else "Unknown"
         self.cli_version_label.setText(self.tr("Installed client version: %s") % version_text)
+        managed = caps.is_zero_trust and not caps.mode_switch_allowed
+        self.zt_note_lbl.setVisible(managed)
+        if managed:
+            self.zt_note_lbl.setText(
+                self.tr(
+                    "Managed by your organization. This setting is controlled by your organization's Zero Trust policy."
+                )
+            )
         self._apply_control_state()
+
+    def _set_protocol_options(self, protocols: tuple[str, ...]) -> None:
+        """Use the installed CLI's advertised protocol values when available."""
+        if not protocols:
+            return
+        current = self.protocol_combo.currentData()
+        if self._settings_loaded and current and current not in protocols:
+            protocols = (*protocols, current)
+        labels = {
+            "MASQUE": self.tr("MASQUE (Default)"),
+            "WireGuard": self.tr("WireGuard (Legacy)"),
+        }
+        self.protocol_combo.blockSignals(True)
+        self.protocol_combo.clear()
+        for protocol in protocols:
+            self.protocol_combo.addItem(labels.get(protocol, protocol), protocol)
+        index = self.protocol_combo.findData(current)
+        self.protocol_combo.setCurrentIndex(max(index, 0))
+        self.protocol_combo.blockSignals(False)
 
     def _on_leave_org_clicked(self) -> None:
         answer = QMessageBox.question(
@@ -667,6 +696,12 @@ class SettingsDialog(QDialog):
             (self.protocol_combo, settings.get("tunnel_protocol", "")),
         ):
             index = combo.findData(value)
+            if value and index < 0:
+                logger.warning("Installed WARP CLI reported an unadvertised setting value: %s", value)
+                combo.blockSignals(True)
+                combo.addItem(str(value), value)
+                combo.blockSignals(False)
+                index = combo.findData(value)
             if index >= 0:
                 combo.blockSignals(True)
                 combo.setCurrentIndex(index)
@@ -692,9 +727,7 @@ class SettingsDialog(QDialog):
 
     def _apply_control_state(self) -> None:
         busy = self.manager.is_busy
-        consumer_allowed = (
-            self._settings_loaded and not self._capabilities.is_zero_trust and self._capabilities.mode_switch_allowed
-        )
+        consumer_allowed = self._settings_loaded and self._capabilities.mode_switch_allowed
         for widget in (self.license_apply_btn, self.delete_btn, self.leave_org_btn):
             widget.setEnabled(not busy)
         for widget in (
