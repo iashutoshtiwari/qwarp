@@ -812,6 +812,15 @@ def test_safe_cli_message_redacts_secrets_adversarially():
     assert "<redacted URL>" in engine._safe_cli_message(f"Navigate to {auth_url} to authenticate")
     assert "supersecret123" not in engine._safe_cli_message(f"Navigate to {auth_url} to authenticate")
 
+    bearer = "syntheticBearerToken0123456789ABCDEF"
+    assert bearer not in engine._safe_cli_message(f"Request failed with Bearer {bearer}")
+
+    private_key = "-----BEGIN PRIVATE KEY-----\nSYNTHETICKEYMATERIAL0123456789\n-----END PRIVATE KEY-----"
+    assert "SYNTHETICKEYMATERIAL" not in engine._safe_cli_message(private_key)
+
+    opaque = "syntheticOpaqueToken0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef"
+    assert opaque not in engine._safe_cli_message(f"Handshake rejected {opaque}")
+
     assert "<redacted>" in engine._safe_cli_message(
         "warp-cli override unlock mysecretcode", sensitive_values=("mysecretcode",)
     )

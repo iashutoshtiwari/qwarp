@@ -135,6 +135,7 @@ class WarpEngine:
         message = re.sub(r"https?://\S+", "<redacted URL>", message, flags=re.IGNORECASE)
         message = re.sub(r"-----BEGIN [A-Z ]+-----[\s\S]*?-----END [A-Z ]+-----", "<redacted certificate/key>", message)
         message = re.sub(r"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]+", "<redacted token>", message)
+        message = re.sub(r"(?i)\b(Bearer\s+)[A-Za-z0-9._~+/-]+=*", r"\1<redacted>", message)
         message = re.sub(
             r"(?im)^(.*(?:license|token|authorization|device id|organization|unlock code|private key).{0,80}):\s*.*$",
             r"\1: <redacted>",
@@ -143,6 +144,11 @@ class WarpEngine:
         message = re.sub(r"(?i)\b(license(?:\s+key)?\s*[:=]?\s*)[A-Za-z0-9-]+", r"\1<redacted>", message)
         message = re.sub(r"(?i)\b(token\s*[:=]?\s*)[A-Za-z0-9_.-]+", r"\1<redacted>", message)
         message = re.sub(r"(?i)\b(unlock(?:\s+code)?\s*[:=]?\s*)[A-Za-z0-9-]+", r"\1<redacted>", message)
+        message = re.sub(
+            r"(?<![A-Za-z0-9._~+/-])[A-Za-z0-9._~+/-]{48,}={0,2}(?![A-Za-z0-9._~+/-])",
+            "<redacted token>",
+            message,
+        )
         return message[:500]
 
     @staticmethod
