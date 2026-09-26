@@ -100,7 +100,10 @@ jobs:
         run: |
           python3 scripts/check_locales.py
           git diff --exit-code -- 'src/qwarp/assets/locales/*.ts'
-          python scripts/check_release.py --version 0.10.0 --artifacts dist/release
+          # Normal CI validates the current tree, which may legitimately differ
+          # from an already-published immutable release asset.
+          python scripts/check_release.py --version 0.10.0
+          (cd dist/release && sha256sum --check SHA256SUMS)
       - name: Verify standalone binary
         run: bash scripts/smoke_frozen.sh dist/qwarp-build/qwarp 0.10.0
       - name: Upload package inputs
@@ -133,11 +136,20 @@ jobs:
           useradd --create-home builder
           chown -R builder:builder "$GITHUB_WORKSPACE"
           cp dist/release/qwarp-0.10.0-source.tar.gz .
+          # PKGBUILD tracks the immutable published release asset. For normal CI,
+          # use the checksum of the just-built current-tree archive only in this
+          # ephemeral checkout so packaging smoke tests exercise the PR/commit.
+          source_hash=$(sha256sum qwarp-0.10.0-source.tar.gz | awk '{print $1}')
+          sed -E -i "s/^sha256sums=.*/sha256sums=('${source_hash}')/" PKGBUILD
           su builder -c "cd '$GITHUB_WORKSPACE' && makepkg --nodeps --cleanbuild --clean --noconfirm"
       - name: Verify metadata and owned files
         run: |
           su builder -c "cd '$GITHUB_WORKSPACE' && makepkg --printsrcinfo" > /tmp/generated.SRCINFO
-          diff -u .SRCINFO /tmp/generated.SRCINFO
+          source_hash=$(sha256sum qwarp-0.10.0-source.tar.gz | awk '{print $1}')
+          grep -Fq "sha256sums = ${source_hash}" /tmp/generated.SRCINFO
+          grep -v '^[[:space:]]*sha256sums = ' .SRCINFO > /tmp/committed-normalized.SRCINFO
+          grep -v '^[[:space:]]*sha256sums = ' /tmp/generated.SRCINFO > /tmp/generated-normalized.SRCINFO
+          diff -u /tmp/committed-normalized.SRCINFO /tmp/generated-normalized.SRCINFO
           package_file=$(find . -maxdepth 1 -name 'qwarp-*.pkg.tar.zst' -print -quit)
           test -n "$package_file"
           bsdtar -tf "$package_file" > /tmp/package-files
