@@ -11,7 +11,7 @@ QWarp has a comparatively small and well-contained attack surface. It does not i
 
 The subprocess boundary is generally strong: commands are passed as explicit argument vectors without a shell, WARP operations are serialized, timeouts are bounded, privileged service repair resolves `pkexec` and `systemctl` from trusted system paths, and known sensitive values are redacted from command/error diagnostics. License keys are masked by default in the UI and cleared from dialog fields when the dialog closes.
 
-One concrete bug was identified and fixed in the accompanying audit branch: the current `master` source archive checksum no longer matched `PKGBUILD` / `.SRCINFO`, causing the package/release CI gate to fail.
+One concrete tooling bug was identified and fixed in the accompanying audit branch: normal CI compared a source archive built from the post-release `master` tree against the checksum of the already-published immutable `v0.10.0` source asset. A README-only post-release commit therefore made CI fail even though the published package metadata was correct.
 
 The remaining findings below are intentionally **report-only** because addressing them would change compatibility, execution policy, or startup/locking semantics rather than merely correct an unambiguous defect.
 
@@ -23,23 +23,32 @@ The audit did **not** perform live registration, live Zero Trust enrollment, a r
 
 ## Fixed finding
 
-### BUG-01 — stale Arch source checksum blocks release/package validation
+### BUG-01 — normal CI conflates current-tree artifacts with immutable release metadata
 
-**Severity:** Medium (release reliability / package integrity)  
+**Severity:** Medium (release reliability / package-integrity tooling)  
 **Status:** Fixed in audit branch  
-**Affected:** `PKGBUILD`, `.SRCINFO`
+**Affected:** `.github/workflows/ci.yml`
 
-The deterministic source archive generated from the current `master` hashes to:
-
-`66800ee48cea39612fe3cdde9312768109f5e3dfeaa9a26bfb7f8a379d571319`
-
-but both Arch metadata files still contained:
+The published `v0.10.0` source asset has GitHub-recorded digest:
 
 `8477bdf4322a6b0459aaa7ba2a5a7184ce6ab25db817fe1de8a42bd5e472b53c`
 
-GitHub Actions run `36126257026` therefore failed in **Verify locales and release metadata** with a source checksum mismatch. Python 3.11, Python 3.14, and the minimum-supported-Qt test jobs passed in the same run.
+That digest correctly matches the committed `PKGBUILD` and `.SRCINFO`. The later README/screenshot commit on `master` changed the deterministic archive produced from the **current tree** to:
 
-**Fix:** synchronized `PKGBUILD` and `.SRCINFO` to the current deterministic source archive SHA-256. No application behavior is changed.
+`66800ee48cea39612fe3cdde9312768109f5e3dfeaa9a26bfb7f8a379d571319`
+
+GitHub Actions run `36126257026` then failed because normal CI passed the current-tree archive to `check_release.py --artifacts`, which intentionally checks that archive against the published-release `PKGBUILD` checksum. Python 3.11, Python 3.14, and minimum-supported-Qt tests all passed in the same run.
+
+Blindly updating `PKGBUILD` to the current-tree hash would have been incorrect: its source URL points to the immutable `v0.10.0` release asset, whose real digest is still `8477bd...`.
+
+**Fix:** keep published-release metadata unchanged. Normal CI now:
+
+- validates synchronized version/release metadata without asserting that a post-release current-tree source archive equals the old published asset;
+- verifies the current CI artifact bundle against its own generated `SHA256SUMS`;
+- patches the Arch checksum only inside the ephemeral CI checkout so `makepkg` tests the current commit;
+- compares generated and committed Arch metadata with only the intentionally ephemeral checksum normalized out.
+
+The stricter release workflow remains unchanged and still requires the release candidate archive to match committed release metadata before publication. No application/runtime behavior is changed.
 
 ## Security findings
 
@@ -180,10 +189,10 @@ Strong controls already present:
 - CI tests Python 3.11 and 3.14 plus the minimum supported PyQt6 binding.
 - Ruff includes Bandit-style `S` rules along with correctness/performance rules.
 
-At the audited baseline, application/unit tests passed; the overall current `master` CI failure was caused by **BUG-01**, not by a runtime test failure.
+At the audited baseline, application/unit tests passed; the overall `master` CI failure was caused by **BUG-01**, not by a runtime test failure. The audit branch fixes that normal-CI/release-state mismatch without changing the immutable `v0.10.0` checksum.
 
 ## Final assessment
 
 For a desktop wrapper around a privileged networking client, QWarp's boundaries are sensibly designed. The application itself does not enlarge the network attack surface much beyond the official WARP client, and it avoids several common desktop-wrapper mistakes: shell execution, blocking GUI subprocess calls, raw credential logging, hidden telemetry, and broad CI permissions.
 
-After the checksum repair, the remaining items are best treated as future hardening work rather than immediate behavior-changing patches. The highest-value future engineering item is the single-instance ownership protocol, followed by executable-path hardening and hash-locked release dependencies.
+After the CI repair, the remaining items are best treated as future hardening work rather than immediate behavior-changing patches. The highest-value future engineering item is the single-instance ownership protocol, followed by executable-path hardening and hash-locked release dependencies.
