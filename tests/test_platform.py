@@ -36,7 +36,7 @@ class TestAutostart:
         from qwarp.platform.autostart import DESKTOP_FILENAME, set_autostart_enabled
 
         monkeypatch.setattr("qwarp.platform.autostart.AUTOSTART_DIR", tmp_path)
-        with patch("shutil.which", return_value="/usr/bin/qwarp"):
+        with patch("qwarp.platform.autostart.resolve_executable", return_value="/usr/bin/qwarp"):
             success, _msg = set_autostart_enabled(True)
         assert success
         desktop_file = tmp_path / DESKTOP_FILENAME
@@ -50,7 +50,7 @@ class TestAutostart:
         from qwarp.platform.autostart import DESKTOP_FILENAME, set_autostart_enabled
 
         monkeypatch.setattr("qwarp.platform.autostart.AUTOSTART_DIR", tmp_path)
-        with patch("shutil.which", return_value="/usr/bin/qwarp"):
+        with patch("qwarp.platform.autostart.resolve_executable", return_value="/usr/bin/qwarp"):
             success, _ = set_autostart_enabled(True, minimize=True)
         assert success
         content = (tmp_path / DESKTOP_FILENAME).read_text()
@@ -99,21 +99,20 @@ class TestAutostart:
         desktop_file.write_text("[Desktop Entry]\nType=Application\nExec=qwarp\n")
         assert is_autostart_enabled() is True
 
-    def test_autostart_missing_executable_fallback(self, tmp_path, monkeypatch):
+    def test_autostart_missing_executable_fails_safely(self, tmp_path, monkeypatch):
         from qwarp.platform.autostart import DESKTOP_FILENAME, set_autostart_enabled
 
         monkeypatch.setattr("qwarp.platform.autostart.AUTOSTART_DIR", tmp_path)
-        with patch("shutil.which", return_value=None):
+        with patch("qwarp.platform.autostart.resolve_executable", side_effect=FileNotFoundError):
             success, _msg = set_autostart_enabled(True)
-        assert success is True
-        content = (tmp_path / DESKTOP_FILENAME).read_text()
-        assert 'Exec="qwarp"' in content
+        assert success is False
+        assert not (tmp_path / DESKTOP_FILENAME).exists()
 
     def test_autostart_idempotent_enable(self, tmp_path, monkeypatch):
         from qwarp.platform.autostart import DESKTOP_FILENAME, set_autostart_enabled
 
         monkeypatch.setattr("qwarp.platform.autostart.AUTOSTART_DIR", tmp_path)
-        with patch("shutil.which", return_value="/usr/bin/qwarp"):
+        with patch("qwarp.platform.autostart.resolve_executable", return_value="/usr/bin/qwarp"):
             set_autostart_enabled(True)
             success, _ = set_autostart_enabled(True)
         assert success
@@ -123,7 +122,7 @@ class TestAutostart:
 class TestTaskbar:
     """Tests for warp-taskbar systemd user-service suppression."""
 
-    @patch("subprocess.run")
+    @patch("qwarp.utils.process.run_command")
     def test_is_taskbar_masked_true(self, mock_run):
         from qwarp.platform.taskbar import is_taskbar_masked
 
@@ -132,7 +131,7 @@ class TestTaskbar:
         )
         assert is_taskbar_masked() is True
 
-    @patch("subprocess.run")
+    @patch("qwarp.utils.process.run_command")
     def test_is_taskbar_masked_false(self, mock_run):
         from qwarp.platform.taskbar import is_taskbar_masked
 
@@ -141,7 +140,7 @@ class TestTaskbar:
         )
         assert is_taskbar_masked() is False
 
-    @patch("subprocess.run")
+    @patch("qwarp.utils.process.run_command")
     def test_is_taskbar_running(self, mock_run):
         from qwarp.platform.taskbar import is_taskbar_running
 
@@ -150,7 +149,7 @@ class TestTaskbar:
         )
         assert is_taskbar_running() is True
 
-    @patch("subprocess.run")
+    @patch("qwarp.utils.process.run_command")
     def test_suppress_when_not_masked(self, mock_run):
         from qwarp.platform.taskbar import suppress_taskbar
 
@@ -166,7 +165,7 @@ class TestTaskbar:
             "warp-taskbar.service",
         ]
 
-    @patch("subprocess.run")
+    @patch("qwarp.utils.process.run_command")
     def test_suppress_idempotent_when_already_masked(self, mock_run):
         from qwarp.platform.taskbar import suppress_taskbar
 
@@ -176,7 +175,7 @@ class TestTaskbar:
         assert "suppressed" in msg.lower()
         assert mock_run.call_count == 1
 
-    @patch("subprocess.run")
+    @patch("qwarp.utils.process.run_command")
     def test_restore_when_masked(self, mock_run):
         from qwarp.platform.taskbar import restore_taskbar
 
@@ -185,7 +184,7 @@ class TestTaskbar:
         assert success
         assert "restored" in msg.lower()
 
-    @patch("subprocess.run")
+    @patch("qwarp.utils.process.run_command")
     def test_restore_restarts_previously_running_taskbar(self, mock_run):
         from qwarp.platform.taskbar import restore_taskbar
 
@@ -202,7 +201,7 @@ class TestTaskbar:
             "warp-taskbar.service",
         ]
 
-    @patch("subprocess.run")
+    @patch("qwarp.utils.process.run_command")
     def test_restore_idempotent_when_not_masked(self, mock_run):
         from qwarp.platform.taskbar import restore_taskbar
 
@@ -212,7 +211,7 @@ class TestTaskbar:
         assert "restored" in msg.lower()
         assert mock_run.call_count == 1
 
-    @patch("subprocess.run", side_effect=FileNotFoundError)
+    @patch("qwarp.utils.process.run_command", side_effect=FileNotFoundError)
     def test_taskbar_operations_handle_missing_systemctl(self, _mock_run):
         from qwarp.platform.taskbar import is_taskbar_masked, suppress_taskbar
 
@@ -221,7 +220,7 @@ class TestTaskbar:
         assert success is False
         assert "exception" in msg.lower()
 
-    @patch("subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="systemctl", timeout=10))
+    @patch("qwarp.utils.process.run_command", side_effect=subprocess.TimeoutExpired(cmd="systemctl", timeout=10))
     def test_taskbar_handles_timeout(self, _mock_run):
         from qwarp.platform.taskbar import is_taskbar_masked
 

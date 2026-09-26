@@ -1,7 +1,6 @@
 import ipaddress
 import json
 import logging
-import os
 import re
 import shutil
 import subprocess
@@ -10,6 +9,8 @@ import time
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Any, ClassVar, NotRequired, Optional, TypedDict
+
+from qwarp.utils import process as command_process
 
 logger = logging.getLogger(__name__)
 
@@ -109,8 +110,6 @@ class WarpEngine:
         self.accept_tos = accept_tos
         self._command_lock = threading.RLock()
         self._cancel_event = threading.Event()
-        self._process_lock = threading.Lock()
-        self._active_process: Optional[subprocess.Popen[str]] = None
         self._capabilities: Optional[CliCapabilities] = None
         self._last_cli_failure = ""
         self._last_cli_warning = ""
@@ -125,7 +124,7 @@ class WarpEngine:
         redacted = value
         for secret in sensitive_values:
             if secret:
-                redacted = redacted.replace(secret, "<redacted>")
+                redacted = re.sub(re.escape(secret), "<redacted>", redacted, flags=re.IGNORECASE)
         return redacted
 
     @classmethod
@@ -211,6 +210,7 @@ class WarpEngine:
         timeout: Optional[float] = None,
         quiet: bool = False,
         sensitive_values: tuple[str, ...] = (),
+        privileged: bool = False,
     ) -> tuple[bool, str]:
         safe_command = " ".join(self._redact(arg, sensitive_values) for arg in command)
         started = time.monotonic()
@@ -225,8 +225,10 @@ class WarpEngine:
             with self._command_lock:
                 if self._cancel_event.is_set():
                     return False, "Command cancelled"
-                result = subprocess.run(
+                result = command_process.run_command(
                     command,
+                    cancel_event=self._cancel_event,
+                    privileged=privileged,
                     capture_output=True,
                     text=True,
                     timeout=self.timeout if timeout is None else timeout,
@@ -257,77 +259,14 @@ class WarpEngine:
                 logger.error("Command '%s' timed out", safe_command)
             return False, "Command timeout"
         except Exception as exc:
-            message = self._safe_cli_message(str(exc), sensitive_values)
+            message = str(exc) if isinstance(exc, command_process.CommandError) else "Command execution failed"
             if not quiet:
                 logger.error("Unexpected command error for '%s': %s", safe_command, message)
             return False, message
 
-    def _run_interruptible_process(
-        self,
-        command: list[str],
-        *,
-        timeout: float,
-    ) -> tuple[bool, str]:
-        """Run a long-lived command that shutdown can terminate promptly."""
-        safe_command = " ".join(command)
-        if self._cancel_event.is_set():
-            return False, "Command cancelled"
-        try:
-            with self._command_lock:
-                if self._cancel_event.is_set():
-                    return False, "Command cancelled"
-                process = subprocess.Popen(
-                    command,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                )
-                with self._process_lock:
-                    self._active_process = process
-                deadline = time.monotonic() + timeout
-                while True:
-                    if self._cancel_event.is_set():
-                        process.terminate()
-                        try:
-                            process.wait(timeout=1)
-                        except subprocess.TimeoutExpired:
-                            process.kill()
-                            process.wait()
-                        return False, "Command cancelled"
-                    remaining = deadline - time.monotonic()
-                    if remaining <= 0:
-                        process.kill()
-                        process.wait()
-                        logger.error("Command '%s' timed out", safe_command)
-                        return False, "Command timeout"
-                    try:
-                        stdout, stderr = process.communicate(timeout=min(0.1, remaining))
-                        if self._cancel_event.is_set():
-                            return False, "Command cancelled"
-                        output = stdout.strip() if process.returncode == 0 else stderr.strip() or stdout.strip()
-                        return process.returncode == 0, output
-                    except subprocess.TimeoutExpired:
-                        continue
-                    finally:
-                        if process.poll() is not None:
-                            with self._process_lock:
-                                self._active_process = None
-        except FileNotFoundError:
-            return False, f"{command[0]} not installed"
-        except Exception as exc:
-            logger.error("Unexpected command error for '%s': %s", safe_command, exc)
-            return False, str(exc)
-        finally:
-            with self._process_lock:
-                self._active_process = None
-
     def cancel_pending_commands(self) -> None:
-        """Reject queued work and terminate the active interruptible command."""
+        """Cancel running commands and reject queued work."""
         self._cancel_event.set()
-        with self._process_lock:
-            process = self._active_process
-        if process is not None and process.poll() is None:
-            process.terminate()
 
     def _run_command(
         self,
@@ -380,8 +319,9 @@ class WarpEngine:
                 if self._cancel_event.is_set():
                     self._last_cli_failure = "cancelled"
                     return None
-                result = subprocess.run(
+                result = command_process.run_command(
                     [self.CLI_PATH, *full_args],
+                    cancel_event=self._cancel_event,
                     capture_output=True,
                     text=True,
                     timeout=self.timeout if timeout is None else timeout,
@@ -418,6 +358,15 @@ class WarpEngine:
                 )
                 return None
 
+            if result.returncode != 0 and not (
+                self._is_error_response(data)
+                or (isinstance(data, dict) and str(data.get("status", "")).lower() == "unable")
+            ):
+                self._last_cli_failure = "command_error"
+                self._log_cli_warning_once(
+                    f"exit:{safe_command}", "Command failed (exit %d): %s", result.returncode, safe_command
+                )
+                return None
             self._clear_cli_warning()
             return data
 
@@ -430,8 +379,10 @@ class WarpEngine:
             self._log_cli_warning_once(f"timeout:{safe_command}", "Command '%s' timed out", safe_command)
             return None
         except Exception as exc:
-            self._last_cli_failure = "command_error"
-            message = self._safe_cli_message(str(exc), sensitive_values)
+            self._last_cli_failure = {"Command cancelled": "cancelled", "Command timeout": "timeout"}.get(
+                str(exc) if isinstance(exc, command_process.CommandError) else "", "command_error"
+            )
+            message = str(exc) if isinstance(exc, command_process.CommandError) else "Command execution failed"
             self._log_cli_warning_once(
                 f"error:{safe_command}:{type(exc).__name__}",
                 "Unexpected command error for '%s': %s",
@@ -560,11 +511,10 @@ class WarpEngine:
     @staticmethod
     def _trusted_executable(name: str) -> Optional[str]:
         """Resolve an executable only from root-owned system locations."""
-        candidates = [name] if os.path.isabs(name) else [f"{directory}/{name}" for directory in ("/usr/bin", "/bin")]
-        for candidate in candidates:
-            if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
-                return os.path.realpath(candidate)
-        return None
+        try:
+            return command_process.resolve_executable(name, privileged=True)
+        except (OSError, command_process.CommandError):
+            return None
 
     def repair_service(self) -> tuple[bool, str]:
         pkexec_path = self._trusted_executable(self.PKEXEC_PATH)
@@ -573,9 +523,10 @@ class WarpEngine:
             return False, "pkexec not installed"
         if not systemctl_path:
             return False, "systemctl not installed"
-        return self._run_interruptible_process(
+        return self._run_process(
             [pkexec_path, systemctl_path, "enable", "--now", self.SVC_NAME],
             timeout=30.0,
+            privileged=True,
         )
 
     # ------------------------------------------------------------------
@@ -1227,7 +1178,7 @@ class WarpEngine:
         if arg.lower() in existing_rules or str(parsed).lower() in existing_rules:
             return False, "This split-tunnel rule already exists."
         command = ("tunnel", "ip", "add") if parsed.prefixlen == parsed.max_prefixlen else ("tunnel", "ip", "add-range")
-        return self._run_command(*command, arg)
+        return self._run_command(*command, arg, sensitive_values=(value, arg))
 
     def remove_split_tunnel_ip(self, value: str) -> tuple[bool, str]:
         try:
@@ -1238,7 +1189,7 @@ class WarpEngine:
         command = (
             ("tunnel", "ip", "remove") if parsed.prefixlen == parsed.max_prefixlen else ("tunnel", "ip", "remove-range")
         )
-        return self._run_command(*command, arg)
+        return self._run_command(*command, arg, sensitive_values=(value, arg))
 
     def add_split_tunnel_host(self, hostname: str) -> tuple[bool, str]:
         value = hostname.strip().rstrip(".")
@@ -1246,13 +1197,13 @@ class WarpEngine:
             return False, "Enter a valid hostname or domain."
         if value.lower() in {rule.lower().rstrip(".") for rule in self.get_split_tunnel_info().get("host_rules", [])}:
             return False, "This split-tunnel hostname already exists."
-        return self._run_command("tunnel", "host", "add", value)
+        return self._run_command("tunnel", "host", "add", value, sensitive_values=(hostname, value))
 
     def remove_split_tunnel_host(self, hostname: str) -> tuple[bool, str]:
         value = hostname.strip().rstrip(".")
         if not self._valid_hostname(value):
             return False, "Enter a valid hostname or domain."
-        return self._run_command("tunnel", "host", "remove", value)
+        return self._run_command("tunnel", "host", "remove", value, sensitive_values=(hostname, value))
 
     def reset_split_tunnel(self) -> tuple[bool, str]:
         with self._command_lock:
@@ -1270,10 +1221,10 @@ class WarpEngine:
             rule.lower().rstrip(".") for rule in self.get_split_tunnel_info().get("fallback_domains", [])
         }:
             return False, "This fallback domain already exists."
-        return self._run_command("dns", "fallback", "add", value)
+        return self._run_command("dns", "fallback", "add", value, sensitive_values=(hostname, value))
 
     def remove_fallback_domain(self, hostname: str) -> tuple[bool, str]:
         value = hostname.strip().rstrip(".")
         if not self._valid_hostname(value):
             return False, "Enter a valid hostname or domain."
-        return self._run_command("dns", "fallback", "remove", value)
+        return self._run_command("dns", "fallback", "remove", value, sensitive_values=(hostname, value))

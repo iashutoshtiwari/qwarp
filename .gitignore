@@ -22,3 +22,29 @@ uv.lock
 # Local test and lint caches
 .pytest_cache/
 .ruff_cache/
+
+# Local AI assistants: instructions, connections, histories, and generated state
+.codex/
+.agents/
+AGENTS.md
+AGENTS.override.md
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+.cursor/
+.cursorrules
+.windsurf/
+.windsurfrules
+.continue/
+.gemini/
+GEMINI.md
+.aider*
+.cline/
+.clinerules
+.roo/
+.roorules
+.mcp.json
+mcp.json
+.github/copilot-instructions.md
+.github/instructions/
+.github/prompts/

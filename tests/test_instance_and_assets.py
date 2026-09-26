@@ -33,13 +33,16 @@ def test_single_instance_primary_and_secondary(qapp, wait_until):
     secondary = SingleInstance(name)
     assert secondary.acquire() == InstanceRole.SECONDARY
     wait_until(lambda: bool(wakeups))
-    primary.server.close()
+    primary.close()
 
 
 def test_single_instance_recovers_only_after_failed_notification(qapp):
     instance = SingleInstance(f"qwarp-test-{uuid.uuid4().hex}")
     with patch.object(instance, "_listen", side_effect=[False, True]) as listen:
-        with patch.object(instance, "_notify_existing", return_value=False):
+        with (
+            patch.object(instance, "_notify_existing", return_value=False),
+            patch.object(instance, "_owned_socket", return_value=True),
+        ):
             with patch("qwarp.core.instance.QLocalServer.removeServer", return_value=True) as remove:
                 assert instance.acquire() == InstanceRole.PRIMARY
     assert listen.call_count == 2
@@ -105,7 +108,7 @@ def test_single_instance_accepts_fragmented_wakeup(qapp, wait_until):
     finally:
         peer.abort()
         if primary.server:
-            primary.server.close()
+            primary.close()
 
 
 def test_assets_and_translation_catalogs_exist():

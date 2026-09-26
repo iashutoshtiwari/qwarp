@@ -2,8 +2,9 @@
 
 import logging
 import os
-import shutil
 from pathlib import Path
+
+from qwarp.utils.process import CommandError, resolve_executable
 
 logger = logging.getLogger(__name__)
 
@@ -72,10 +73,10 @@ def set_autostart_enabled(enabled: bool, minimize: bool = False) -> tuple[bool, 
         return True, "Autostart is already disabled."
 
     # Enable autostart
-    executable = shutil.which("qwarp")
-    if not executable:
-        # Fallback to just the command name if not in PATH
-        executable = "qwarp"
+    try:
+        executable = resolve_executable("qwarp")
+    except (OSError, CommandError):
+        return False, "A trusted QWarp executable could not be found."
 
     exec_cmd = _quote_exec_argument(executable)
     if minimize:

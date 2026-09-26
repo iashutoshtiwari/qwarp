@@ -560,8 +560,8 @@
 </context><context>
     <name>WarpStateManager</name>
     <message>
-        <location filename="../../core/state.py" line="547" />
-        <location filename="../../core/state.py" line="459" />
+        <location filename="../../core/state.py" line="549" />
+        <location filename="../../core/state.py" line="461" />
         <source>Another WARP action is already in progress.</source>
         <translation>Eine andere WARP-Aktion wird bereits ausgeführt.</translation>
     </message>

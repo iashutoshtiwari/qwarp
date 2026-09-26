@@ -1,6 +1,7 @@
 import json
 import subprocess
 import time
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -10,11 +11,12 @@ from PyQt6.QtWidgets import QApplication
 
 
 @pytest.fixture(scope="session")
-def qapp():
+def qapp(tmp_path_factory):
     app = QApplication.instance() or QApplication([])
     app.setOrganizationName("qwarp-tests")
     app.setApplicationName("qwarp-tests")
     QSettings.setDefaultFormat(QSettings.Format.IniFormat)
+    QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(tmp_path_factory.mktemp("settings")))
     yield app
 
 
@@ -241,3 +243,16 @@ class WarpCommandRouter:
 def warp_router():
     """Fixture providing a deterministic WarpCommandRouter."""
     return WarpCommandRouter()
+
+
+@pytest.fixture(autouse=True)
+def forbid_live_daemon_commands(monkeypatch):
+    original = subprocess.Popen
+
+    def guarded(command, *args, **kwargs):
+        executable = command[0] if isinstance(command, (list, tuple)) else command
+        if Path(str(executable)).name in {"warp-cli", "warp-svc", "systemctl", "pkexec"}:
+            raise AssertionError("Tests must not execute live daemon or service commands")
+        return original(command, *args, **kwargs)
+
+    monkeypatch.setattr(subprocess, "Popen", guarded)

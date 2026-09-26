@@ -10,6 +10,45 @@ def require(condition: bool, message: str) -> None:
         raise SystemExit(message)
 
 
+def check_no_ai_files(names) -> None:
+    forbidden = {
+        ".agents",
+        ".codex",
+        ".claude",
+        ".cursor",
+        ".windsurf",
+        ".continue",
+        ".gemini",
+        ".cline",
+        ".roo",
+        "AGENTS.md",
+        "AGENTS.override.md",
+        "CLAUDE.md",
+        "CLAUDE.local.md",
+        "GEMINI.md",
+        ".cursorrules",
+        ".windsurfrules",
+        ".clinerules",
+        ".roorules",
+        ".mcp.json",
+        "mcp.json",
+        "skills-lock.json",
+    }
+    for name in names:
+        parts = Path(name).parts
+        require(
+            not any(part in forbidden or part.startswith(".aider") for part in parts),
+            "Artifact contains AI configuration",
+        )
+        require(
+            not any(
+                value in name
+                for value in (".github/copilot-instructions.md", ".github/instructions/", ".github/prompts/")
+            ),
+            "Artifact contains AI instructions",
+        )
+
+
 def main() -> None:
     version = sys.argv[1]
     root = Path(__file__).resolve().parent.parent
@@ -25,6 +64,7 @@ def main() -> None:
 
     with zipfile.ZipFile(wheel) as archive:
         names = set(archive.namelist())
+        check_no_ai_files(names)
         require("qwarp/main.py" in names, "Wheel does not contain qwarp/main.py")
         require("qwarp/assets/app-icon.svg" in names, "Wheel does not contain application assets")
         require(
@@ -42,6 +82,7 @@ def main() -> None:
 
     with tarfile.open(sdist, "r:gz") as archive:
         names = set(archive.getnames())
+        check_no_ai_files(names)
         require(f"qwarp-{version}/pyproject.toml" in names, "sdist does not contain pyproject.toml")
         require(f"qwarp-{version}/src/qwarp/main.py" in names, "sdist does not contain application source")
         require(f"qwarp-{version}/TRADEMARKS.md" in names, "sdist does not contain the trademark notice")
@@ -56,6 +97,7 @@ def main() -> None:
 
     with tarfile.open(source, "r:gz") as archive:
         names = set(archive.getnames())
+        check_no_ai_files(names)
         require(
             f"qwarp-{version}/CONTRIBUTING.md" in names,
             "Source archive does not contain contributor guidance",
@@ -87,6 +129,7 @@ def main() -> None:
 
     with tarfile.open(binary, "r:gz") as archive:
         names = {name.removeprefix("./") for name in archive.getnames()}
+        check_no_ai_files(names)
         require(
             {"qwarp", "qwarp.desktop", "LICENSE", "README.md", "TRADEMARKS.md"}.issubset(names),
             "Binary archive is incomplete",

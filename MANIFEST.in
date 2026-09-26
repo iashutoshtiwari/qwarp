@@ -1,1 +1,15 @@
 recursive-include src/qwarp/assets *.svg *.qm
+
+prune .agents
+prune .codex
+prune .claude
+prune .cursor
+prune .windsurf
+prune .continue
+prune .gemini
+prune .cline
+prune .roo
+prune .github/instructions
+prune .github/prompts
+global-exclude AGENTS.md AGENTS.override.md CLAUDE.md CLAUDE.local.md GEMINI.md .cursorrules .windsurfrules .clinerules .roorules .aider* .mcp.json mcp.json skills-lock.json
+exclude .github/copilot-instructions.md

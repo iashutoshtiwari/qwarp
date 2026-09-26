@@ -4,7 +4,6 @@ import logging
 import os
 import signal
 import sys
-import traceback
 
 from PyQt6.QtCore import PYQT_VERSION_STR, QT_VERSION_STR, QLocale, QPoint, QSettings, QTimer, QTranslator
 from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
@@ -30,10 +29,14 @@ def unhandled_exception_hook(exc_type, exc_value, exc_traceback):
     Global exception handler to capture unhandled UI errors.
     Ensures that silent crashes are logged for diagnosis.
     """
-    error_msg = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
-    logger.critical("Unhandled UI Exception:\n%s", error_msg)
-    # Allows Qt to gracefully crash if absolutely needed
-    sys.__excepthook__(exc_type, exc_value, exc_traceback)
+    # Keep diagnostic locations, never exception values or source lines (which
+    # can contain credentials). Do not invoke the raw default exception hook.
+    frames = []
+    while exc_traceback is not None:
+        frame = exc_traceback.tb_frame
+        frames.append(f"{os.path.basename(frame.f_code.co_filename)}:{exc_traceback.tb_lineno}")
+        exc_traceback = exc_traceback.tb_next
+    logger.critical("Unhandled UI exception (%s) at %s", exc_type.__name__, " -> ".join(frames))
 
 
 def setup_logging(level_name: str = "INFO") -> None:
@@ -269,6 +272,7 @@ def main() -> None:
         """Ensure threads and IPC listeners tear down properly."""
         logger.info("Initiating graceful teardown...")
         manager.shutdown()
+        instance_manager.close()
         if tray is not None:
             tray.hide()
 

@@ -76,8 +76,9 @@ warp-cli, systemctl, and pkexec
 Keep command execution out of the Qt event loop. UI objects consume state and signals; the state manager owns workers,
 polling, and action serialization; the engine owns subprocess access and parsing.
 
-Repository-wide architecture, security, packaging, and agent guidance lives in [AGENTS.md](AGENTS.md). Its technical
-constraints apply to human-authored changes too.
+Repository-wide architecture, security, and packaging guidance lives in the
+[engineering guide](docs/DEVELOPMENT.md). See the [release guide](docs/RELEASING.md)
+for validation and publication requirements.
 
 ## Make and test changes
 
