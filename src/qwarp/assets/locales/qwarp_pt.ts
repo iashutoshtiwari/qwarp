@@ -73,8 +73,8 @@
         <translation>Tipo de Conta:</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="1026" />
-        <location filename="../../ui/settings.py" line="1020" />
+        <location filename="../../ui/settings.py" line="1030" />
+        <location filename="../../ui/settings.py" line="1024" />
         <location filename="../../ui/settings.py" line="206" />
         <location filename="../../ui/settings.py" line="189" />
         <source>Show</source>
@@ -111,7 +111,7 @@
         <translation>Atualizar Dados</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="826" />
+        <location filename="../../ui/settings.py" line="830" />
         <location filename="../../ui/settings.py" line="227" />
         <source>Delete Registration</source>
         <translation>Excluir Registro</translation>
@@ -143,7 +143,7 @@
         <translation>Atualizar</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="813" />
+        <location filename="../../ui/settings.py" line="817" />
         <location filename="../../ui/settings.py" line="267" />
         <source>Leave Organization</source>
         <translation>Sair da organização</translation>
@@ -224,13 +224,13 @@
         <translation>Protocolo de túnel:</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="799" />
+        <location filename="../../ui/settings.py" line="803" />
         <location filename="../../ui/settings.py" line="324" />
         <source>MASQUE (Default)</source>
         <translation>MASQUE (Predefinido)</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="800" />
+        <location filename="../../ui/settings.py" line="804" />
         <location filename="../../ui/settings.py" line="325" />
         <source>WireGuard (Legacy)</source>
         <translation>WireGuard (Legado)</translation>
@@ -480,7 +480,7 @@
         <translation>Inativo</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="757" />
+        <location filename="../../ui/settings.py" line="761" />
         <location filename="../../ui/settings.py" line="622" />
         <source>Unavailable</source>
         <translation>Indisponível</translation>
@@ -506,54 +506,54 @@
         <translation>Sobre</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="756" />
+        <location filename="../../ui/settings.py" line="760" />
         <source>Registered</source>
         <translation>Registado</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="756" />
+        <location filename="../../ui/settings.py" line="760" />
         <source>Not registered</source>
         <translation>Não registado</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="778" />
+        <location filename="../../ui/settings.py" line="782" />
         <source>Installed client version: %s</source>
         <translation>Versão do cliente instalada: %s</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="785" />
+        <location filename="../../ui/settings.py" line="789" />
         <source>Managed by your organization. This setting is controlled by your organization's Zero Trust policy.</source>
         <translation>Gerido pela sua organização. Esta definição é controlada pela política Zero Trust da sua organização.</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="814" />
+        <location filename="../../ui/settings.py" line="818" />
         <source>Are you sure you want to leave this organization?</source>
         <translation>Tem a certeza de que deseja sair desta organização?</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="827" />
+        <location filename="../../ui/settings.py" line="831" />
         <source>Delete this WARP registration? You will need to register again before reconnecting.</source>
         <translation>Eliminar este registo do WARP? Terá de se registar novamente antes de restabelecer a ligação.</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="876" />
+        <location filename="../../ui/settings.py" line="880" />
         <source>Connection settings are unavailable.</source>
         <translation>As definições de ligação estão indisponíveis.</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="997" />
-        <location filename="../../ui/settings.py" line="971" />
+        <location filename="../../ui/settings.py" line="1001" />
+        <location filename="../../ui/settings.py" line="975" />
         <source>The requested action failed.</source>
         <translation>A ação solicitada falhou.</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="1026" />
-        <location filename="../../ui/settings.py" line="1020" />
+        <location filename="../../ui/settings.py" line="1030" />
+        <location filename="../../ui/settings.py" line="1024" />
         <source>Hide</source>
         <translation>Ocultar</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="1031" />
+        <location filename="../../ui/settings.py" line="1035" />
         <source>Unknown</source>
         <translation>Desconhecido</translation>
     </message>

@@ -73,8 +73,8 @@
         <translation>账户类型:</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="1026" />
-        <location filename="../../ui/settings.py" line="1020" />
+        <location filename="../../ui/settings.py" line="1030" />
+        <location filename="../../ui/settings.py" line="1024" />
         <location filename="../../ui/settings.py" line="206" />
         <location filename="../../ui/settings.py" line="189" />
         <source>Show</source>
@@ -111,7 +111,7 @@
         <translation>刷新数据</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="826" />
+        <location filename="../../ui/settings.py" line="830" />
         <location filename="../../ui/settings.py" line="227" />
         <source>Delete Registration</source>
         <translation>删除注册</translation>
@@ -143,7 +143,7 @@
         <translation>刷新</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="813" />
+        <location filename="../../ui/settings.py" line="817" />
         <location filename="../../ui/settings.py" line="267" />
         <source>Leave Organization</source>
         <translation>离开组织</translation>
@@ -224,13 +224,13 @@
         <translation>隧道协议：</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="799" />
+        <location filename="../../ui/settings.py" line="803" />
         <location filename="../../ui/settings.py" line="324" />
         <source>MASQUE (Default)</source>
         <translation>MASQUE（默认）</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="800" />
+        <location filename="../../ui/settings.py" line="804" />
         <location filename="../../ui/settings.py" line="325" />
         <source>WireGuard (Legacy)</source>
         <translation>WireGuard（旧版）</translation>
@@ -480,7 +480,7 @@
         <translation>未激活</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="757" />
+        <location filename="../../ui/settings.py" line="761" />
         <location filename="../../ui/settings.py" line="622" />
         <source>Unavailable</source>
         <translation>不可用</translation>
@@ -506,54 +506,54 @@
         <translation>关于</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="756" />
+        <location filename="../../ui/settings.py" line="760" />
         <source>Registered</source>
         <translation>已注册</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="756" />
+        <location filename="../../ui/settings.py" line="760" />
         <source>Not registered</source>
         <translation>未注册</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="778" />
+        <location filename="../../ui/settings.py" line="782" />
         <source>Installed client version: %s</source>
         <translation>已安装客户端版本：%s</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="785" />
+        <location filename="../../ui/settings.py" line="789" />
         <source>Managed by your organization. This setting is controlled by your organization's Zero Trust policy.</source>
         <translation>由您的组织管理。此设置由组织的 Zero Trust 策略控制。</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="814" />
+        <location filename="../../ui/settings.py" line="818" />
         <source>Are you sure you want to leave this organization?</source>
         <translation>确定要离开该组织吗？</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="827" />
+        <location filename="../../ui/settings.py" line="831" />
         <source>Delete this WARP registration? You will need to register again before reconnecting.</source>
         <translation>确定要删除此 WARP 注册吗？重新连接前需要再次注册。</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="876" />
+        <location filename="../../ui/settings.py" line="880" />
         <source>Connection settings are unavailable.</source>
         <translation>连接设置不可用。</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="997" />
-        <location filename="../../ui/settings.py" line="971" />
+        <location filename="../../ui/settings.py" line="1001" />
+        <location filename="../../ui/settings.py" line="975" />
         <source>The requested action failed.</source>
         <translation>请求的操作失败。</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="1026" />
-        <location filename="../../ui/settings.py" line="1020" />
+        <location filename="../../ui/settings.py" line="1030" />
+        <location filename="../../ui/settings.py" line="1024" />
         <source>Hide</source>
         <translation>隐藏</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="1031" />
+        <location filename="../../ui/settings.py" line="1035" />
         <source>Unknown</source>
         <translation>未知</translation>
     </message>
