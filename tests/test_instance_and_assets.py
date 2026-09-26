@@ -3,8 +3,10 @@ import uuid
 from unittest.mock import Mock, patch
 from xml.etree import ElementTree
 
+import pytest
 from PyQt6.QtCore import QCoreApplication, QSettings, QSize
 from PyQt6.QtGui import QColor, QPalette
+from PyQt6.QtNetwork import QLocalSocket
 
 from qwarp import __version__
 from qwarp.core.engine import WarpState
@@ -47,6 +49,63 @@ def test_single_instance_recovers_only_after_failed_notification(qapp):
 def test_single_instance_name_can_be_isolated(monkeypatch):
     monkeypatch.setenv("QWARP_IPC_NAME", "qwarp-isolated-test")
     assert SingleInstance().server_name == "qwarp-isolated-test"
+
+
+@pytest.mark.parametrize(
+    "error",
+    [QLocalSocket.LocalSocketError.SocketTimeoutError, QLocalSocket.LocalSocketError.SocketAccessError],
+)
+def test_single_instance_does_not_unlink_on_uncertain_connection_failure(qapp, error):
+    instance = SingleInstance(f"qwarp-test-{uuid.uuid4().hex}")
+    with (
+        patch.object(instance, "_listen", return_value=False),
+        patch("qwarp.core.instance.QLocalSocket") as socket_class,
+        patch("qwarp.core.instance.QLocalServer.removeServer") as remove,
+    ):
+        socket_class.LocalSocketError = QLocalSocket.LocalSocketError
+        socket_class.return_value.waitForConnected.return_value = False
+        socket_class.return_value.error.return_value = error
+        assert instance.acquire() == InstanceRole.ERROR
+        remove.assert_not_called()
+
+
+def test_single_instance_does_not_unlink_live_peer_when_wakeup_write_fails(qapp):
+    instance = SingleInstance(f"qwarp-test-{uuid.uuid4().hex}")
+    with (
+        patch.object(instance, "_listen", return_value=False),
+        patch("qwarp.core.instance.QLocalSocket") as socket_class,
+        patch("qwarp.core.instance.QLocalServer.removeServer") as remove,
+    ):
+        socket_class.return_value.waitForConnected.return_value = True
+        socket_class.return_value.waitForBytesWritten.return_value = False
+        assert instance.acquire() == InstanceRole.ERROR
+        remove.assert_not_called()
+
+
+def test_single_instance_accepts_fragmented_wakeup(qapp, wait_until):
+    primary = SingleInstance(f"qwarp-test-{uuid.uuid4().hex}")
+    peer = QLocalSocket()
+    wakeups = []
+    primary.wakeup_requested.connect(lambda: wakeups.append(True))
+    try:
+        assert primary.acquire() == InstanceRole.PRIMARY
+        peer.connectToServer(primary.server_name)
+        assert peer.waitForConnected(500)
+        peer.write(b"WA")
+        assert peer.waitForBytesWritten(500)
+        wait_until(lambda: bool(primary._connections))
+        QCoreApplication.processEvents()
+        assert not wakeups
+        assert peer.state() == QLocalSocket.LocalSocketState.ConnectedState
+        peer.write(b"KEUP")
+        assert peer.waitForBytesWritten(500)
+        wait_until(lambda: bool(wakeups))
+        assert wakeups == [True]
+        wait_until(lambda: not primary._connections)
+    finally:
+        peer.abort()
+        if primary.server:
+            primary.server.close()
 
 
 def test_assets_and_translation_catalogs_exist():

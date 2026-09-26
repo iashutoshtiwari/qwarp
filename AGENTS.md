@@ -158,7 +158,7 @@ translations for languages you do not know. Release and Arch builds compile the
 
 ## Packaging invariants
 
-- `PKGBUILD` packages only the QWarp GUI and declares `cloudflare-warp-bin` as a
+- `packaging/arch/PKGBUILD` packages only the QWarp GUI and declares `cloudflare-warp-bin` as a
   hard runtime dependency. The dependency owns `warp-cli`, `warp-svc`, its
   systemd units, capabilities, and other official client files. QWarp packaging
   must never install, patch, remove, or replace those files.
@@ -167,10 +167,14 @@ translations for languages you do not know. Release and Arch builds compile the
   the supported build. Do not recreate them or assume a local PKGBUILD exists.
 - `scripts/build_source_archive.sh` uses an explicit source allowlist and
   deterministic tar metadata. Keep new required source files in that allowlist.
-  `PKGBUILD` and `.SRCINFO` intentionally stay outside the source archive so
+  `packaging/arch/PKGBUILD` and `packaging/arch/.SRCINFO` stay outside the source archive so
   the archive checksum can be recorded in them without a circular input.
 - Keep GitHub Actions pinned to audited commit SHAs. Do not add tag-triggered
   publishing or post-tag content generation.
+
+Arch metadata lives in `packaging/arch/`; CI copies it and the source archive
+into a temporary build directory. AUR publication copies the metadata to the
+AUR repository root under the conventional `PKGBUILD` and `.SRCINFO` names.
 
 CI's Arch job builds from the generated source archive and asserts that the
 result owns QWarp files only. Any package containing `warp-cli`, `warp-svc`, a
@@ -178,5 +182,5 @@ WARP systemd unit, a capability hook, an install hook, or a conflict with
 `cloudflare-warp-bin` is a release blocker.
 
 Generated `.qm`, wheel, PyInstaller, makepkg, and package artifacts are ignored
-and must not be committed. Track source `.ts` catalogs, `.SRCINFO`, application
+and must not be committed. Track source `.ts` catalogs, `packaging/arch/.SRCINFO`, application
 assets, and packaging metadata when they intentionally change.

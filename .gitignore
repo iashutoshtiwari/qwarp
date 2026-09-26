@@ -18,3 +18,7 @@ pkg/
 *.qm
 skills-lock.json
 uv.lock
+
+# Local test and lint caches
+.pytest_cache/
+.ruff_cache/

@@ -64,6 +64,19 @@ def test_terms_required_uses_specific_onboarding_copy(qapp, manager):
     assert window.settings_btn.isEnabled()
 
 
+@pytest.mark.parametrize("quota", [0, 1024, None])
+def test_account_diagnostics_handles_numeric_and_null_values(qapp, manager, quota):
+    dialog = SettingsDialog(manager)
+    try:
+        dialog._on_diagnostics_updated({"quota": quota, "license": None, "type": None, "status": None})
+        assert dialog.lbl_quota.text() == ("Unknown" if quota is None else str(quota))
+        assert dialog.lbl_license.text() == "Unknown"
+        assert dialog.lbl_acc_type.text() == "Unknown"
+        assert dialog.lbl_daemon_status.text() == "Unknown"
+    finally:
+        dialog.done(QDialog.DialogCode.Rejected)
+
+
 def test_missing_cli_uses_dedicated_installation_view(qapp, manager):
     window = WarpWindow(manager)
     window._update_ui_state(WarpState.CLI_MISSING)

@@ -41,6 +41,26 @@ Launching `qwarp` starts background polling of the real WARP installation. Do th
 
 ## Understand the code path
 
+### Repository layout
+
+- `src/qwarp/` contains the application and its bundled assets and translations.
+- `tests/` contains deterministic application tests.
+- `docs/` contains audit reports and README screenshots; see the
+  [2026-09-26 audit](docs/audits/2026-09-26.md).
+- `packaging/arch/`, `packaging/debian/`, and `packaging/rpm/` contain distribution metadata.
+- `scripts/` contains build and validation tools; `requirements/` pins CI and release dependencies.
+
+The shared `qwarp.desktop` launcher and legal notices stay at the repository root.
+`build/`, `dist/`, and test/lint caches are disposable generated output; `.venv/`
+is the local development environment.
+
+Arch builds should copy `packaging/arch/PKGBUILD`, `packaging/arch/.SRCINFO`, and
+the source archive into a temporary directory before running `makepkg`. Normal
+CI adjusts the checksum only in that temporary copy to test the current tree;
+committed metadata continues to describe the immutable published release.
+
+### Application architecture
+
 QWarp keeps dependencies in one direction:
 
 ```text

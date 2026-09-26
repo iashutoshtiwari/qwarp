@@ -741,13 +741,17 @@ class SettingsDialog(QDialog):
         settings.setValue("language", lang_code)
 
     def _on_diagnostics_updated(self, data: dict) -> None:
-        # Backend returns specific strings, wrap generic unreachability
-        self.lbl_acc_type.setText(self.tr(data.get("type", "Unknown")))
-        self._license_value = data.get("license", "Unknown")
-        self._update_license_display()
-        self.lbl_quota.setText(self.tr(data.get("quota", "Unknown")))
+        def display_value(key: str) -> str:
+            value = data.get(key)
+            return "Unknown" if value is None else str(value)
 
-        status_text = self.tr(data.get("status", "Unknown"))
+        # Backend returns specific strings, wrap generic unreachability
+        self.lbl_acc_type.setText(self.tr(display_value("type")))
+        self._license_value = display_value("license")
+        self._update_license_display()
+        self.lbl_quota.setText(self.tr(display_value("quota")))
+
+        status_text = self.tr(display_value("status"))
         if data.get("reason"):
             status_text += f" ({data['reason']})"
         self.lbl_daemon_status.setText(status_text)

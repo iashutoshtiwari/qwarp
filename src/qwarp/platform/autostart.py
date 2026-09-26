@@ -32,11 +32,26 @@ def is_autostart_enabled() -> bool:
 
     try:
         content = desktop_file.read_text(encoding="utf-8")
-        # Consider disabled if Hidden=true or X-GNOME-Autostart-enabled=false
-        if "Hidden=true" in content or "X-GNOME-Autostart-enabled=false" in content:
-            return False
-        return True
-    except OSError as e:
+        values = {}
+        in_desktop_entry = False
+        found_desktop_entry = False
+        for raw_line in content.splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if line.startswith("[") and line.endswith("]"):
+                in_desktop_entry = line == "[Desktop Entry]"
+                found_desktop_entry |= in_desktop_entry
+            elif in_desktop_entry:
+                key, separator, value = line.partition("=")
+                if separator:
+                    values[key.strip()] = value.strip()
+        return (
+            found_desktop_entry
+            and values.get("Hidden") != "true"
+            and values.get("X-GNOME-Autostart-enabled") != "false"
+        )
+    except (OSError, UnicodeError) as e:
         logger.error(f"Failed to read autostart file: {e}")
         return False
 

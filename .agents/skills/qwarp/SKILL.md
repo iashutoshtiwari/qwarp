@@ -112,7 +112,7 @@ silence or unrelated messages do not.
 ## 9. Prepare the release after approval
 
 Update only required documentation and metadata. Synchronize the version in
-`src/qwarp/__init__.py`, `CHANGELOG.md`, `PKGBUILD`, `.SRCINFO`,
+`src/qwarp/__init__.py`, `CHANGELOG.md`, `packaging/arch/PKGBUILD`, `packaging/arch/.SRCINFO`,
 `.github/workflows/ci.yml`, Debian/RPM metadata, source checksum, and any other
 metadata enforced by `scripts/check_release.py`. Follow the existing Keep a
 Changelog style. Update README or other docs only for changed user-visible
@@ -120,8 +120,9 @@ behavior, configuration, installation, compatibility, or workflows.
 
 If visible strings changed, complete the localization workflow in `AGENTS.md`.
 First update release versions and notes, then build the release artifacts. Set
-the `PKGBUILD` checksum to the generated source archive's SHA-256 and regenerate
-`.SRCINFO` with `makepkg --printsrcinfo > .SRCINFO`. Use the existing release
+the `packaging/arch/PKGBUILD` checksum to the generated source archive's SHA-256 and regenerate
+`packaging/arch/.SRCINFO` with
+`(cd packaging/arch && makepkg --printsrcinfo > .SRCINFO)`. Use the existing release
 scripts rather than reconstructing their logic:
 
 ```bash
@@ -131,7 +132,7 @@ bash scripts/smoke_frozen.sh dist/qwarp-build/qwarp X.Y.Z
 (cd dist/release && sha256sum --check SHA256SUMS)
 ```
 
-Review the exact source checksum in `PKGBUILD` and run the relevant package
+Review the exact source checksum in `packaging/arch/PKGBUILD` and run the relevant package
 ownership/build checks defined by CI. Never weaken or bypass a failure. If
 verification requires runtime/application changes, invalidate approval, fix
 and test, then return to the human review gate.

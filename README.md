@@ -23,8 +23,8 @@ States and other jurisdictions.
 ## Screenshots
 
 <div align="center">
-  <img src="screenshots/disconnected.png" width="30%" alt="Disconnected State">
-  <img src="screenshots/connected.png" width="30%" alt="Connected State">
+  <img src="docs/screenshots/disconnected.png" width="30%" alt="Disconnected State">
+  <img src="docs/screenshots/connected.png" width="30%" alt="Connected State">
 </div>
 
 ## Features

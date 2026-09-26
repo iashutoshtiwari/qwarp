@@ -15,6 +15,7 @@ source_items=(
     AGENTS.md
     CHANGELOG.md
     CONTRIBUTING.md
+    docs
     LICENSE
     LICENSES
     MANIFEST.in

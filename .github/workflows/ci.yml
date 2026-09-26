@@ -134,23 +134,26 @@ jobs:
             git python python-build python-installer python-pyqt6 \
             python-setuptools python-wheel qt6-tools
           useradd --create-home builder
-          chown -R builder:builder "$GITHUB_WORKSPACE"
-          cp dist/release/qwarp-0.10.0-source.tar.gz .
+          arch_build_dir=$(mktemp -d /tmp/qwarp-arch.XXXXXX)
+          echo "ARCH_BUILD_DIR=$arch_build_dir" >> "$GITHUB_ENV"
+          cp packaging/arch/PKGBUILD packaging/arch/.SRCINFO "$arch_build_dir/"
+          cp dist/release/qwarp-0.10.0-source.tar.gz "$arch_build_dir/"
           # PKGBUILD tracks the immutable published release asset. For normal CI,
           # use the checksum of the just-built current-tree archive only in this
-          # ephemeral checkout so packaging smoke tests exercise the PR/commit.
-          source_hash=$(sha256sum qwarp-0.10.0-source.tar.gz | awk '{print $1}')
-          sed -E -i "s/^sha256sums=.*/sha256sums=('${source_hash}')/" PKGBUILD
-          su builder -c "cd '$GITHUB_WORKSPACE' && makepkg --nodeps --cleanbuild --clean --noconfirm"
+          # temporary build directory so packaging smoke tests exercise the PR/commit.
+          source_hash=$(sha256sum "$arch_build_dir/qwarp-0.10.0-source.tar.gz" | awk '{print $1}')
+          sed -E -i "s/^sha256sums=.*/sha256sums=('${source_hash}')/" "$arch_build_dir/PKGBUILD"
+          chown -R builder:builder "$arch_build_dir"
+          su builder -c "cd '$arch_build_dir' && makepkg --nodeps --cleanbuild --clean --noconfirm"
       - name: Verify metadata and owned files
         run: |
-          su builder -c "cd '$GITHUB_WORKSPACE' && makepkg --printsrcinfo" > /tmp/generated.SRCINFO
-          source_hash=$(sha256sum qwarp-0.10.0-source.tar.gz | awk '{print $1}')
+          su builder -c "cd '$ARCH_BUILD_DIR' && makepkg --printsrcinfo" > /tmp/generated.SRCINFO
+          source_hash=$(sha256sum "$ARCH_BUILD_DIR/qwarp-0.10.0-source.tar.gz" | awk '{print $1}')
           grep -Fq "sha256sums = ${source_hash}" /tmp/generated.SRCINFO
-          grep -v '^[[:space:]]*sha256sums = ' .SRCINFO > /tmp/committed-normalized.SRCINFO
+          grep -v '^[[:space:]]*sha256sums = ' packaging/arch/.SRCINFO > /tmp/committed-normalized.SRCINFO
           grep -v '^[[:space:]]*sha256sums = ' /tmp/generated.SRCINFO > /tmp/generated-normalized.SRCINFO
           diff -u /tmp/committed-normalized.SRCINFO /tmp/generated-normalized.SRCINFO
-          package_file=$(find . -maxdepth 1 -name 'qwarp-*.pkg.tar.zst' -print -quit)
+          package_file=$(find "$ARCH_BUILD_DIR" -maxdepth 1 -name 'qwarp-*.pkg.tar.zst' -print -quit)
           test -n "$package_file"
           bsdtar -tf "$package_file" > /tmp/package-files
           ! grep -Eq '(^|/)(warp-cli|warp-svc|warp-svc\.service)$' /tmp/package-files
@@ -158,8 +161,8 @@ jobs:
           grep -q '^usr/share/doc/qwarp/TRADEMARKS.md$' /tmp/package-files
           grep -q '^usr/share/licenses/qwarp/Apache-2.0.txt$' /tmp/package-files
           grep -q '^usr/share/licenses/qwarp/Glyphs-Poly-MIT.txt$' /tmp/package-files
-          grep -q 'cloudflare-warp-bin' .SRCINFO
-          ! grep -Eq '^\s*(conflicts|install)\s*=' .SRCINFO
+          grep -q 'cloudflare-warp-bin' packaging/arch/.SRCINFO
+          ! grep -Eq '^\s*(conflicts|install)\s*=' packaging/arch/.SRCINFO
       - name: Test pacman installation transaction
         run: |
           mkdir -p /tmp/dummy-warp
@@ -177,10 +180,16 @@ jobs:
           EOF
           chown -R builder:builder /tmp/dummy-warp
           su builder -c "cd /tmp/dummy-warp && makepkg --cleanbuild --noconfirm"
-          package_file=$(find . -maxdepth 1 -name 'qwarp-*.pkg.tar.zst' -print -quit)
+          package_file=$(find "$ARCH_BUILD_DIR" -maxdepth 1 -name 'qwarp-*.pkg.tar.zst' -print -quit)
           pacman -U --noconfirm /tmp/dummy-warp/cloudflare-warp-bin-*.pkg.tar.zst "$package_file"
           /usr/bin/qwarp --version | grep -Fx 'QWarp 0.10.0'
           pacman -Qo /usr/bin/qwarp
+      - name: Remove temporary Arch build
+        if: always()
+        run: |
+          if [ -n "${ARCH_BUILD_DIR:-}" ]; then
+            rm -rf -- "$ARCH_BUILD_DIR"
+          fi
 
   debian-package:
     name: Build Debian package

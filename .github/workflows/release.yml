@@ -104,20 +104,23 @@ jobs:
             git python python-build python-installer python-pyqt6 \
             python-setuptools python-wheel qt6-tools
           useradd --create-home builder
-          chown -R builder:builder "$GITHUB_WORKSPACE"
-          cp "dist/release/qwarp-$RELEASE_VERSION-source.tar.gz" .
-          su builder -c "cd '$GITHUB_WORKSPACE' && makepkg --nodeps --cleanbuild --clean --noconfirm"
-          su builder -c "cd '$GITHUB_WORKSPACE' && makepkg --printsrcinfo" > /tmp/generated.SRCINFO
-          diff -u .SRCINFO /tmp/generated.SRCINFO
-          package_file=$(find . -maxdepth 1 -name 'qwarp-*.pkg.tar.zst' -print -quit)
+          arch_build_dir=$(mktemp -d /tmp/qwarp-arch.XXXXXX)
+          trap 'rm -rf -- "$arch_build_dir"' EXIT
+          cp packaging/arch/PKGBUILD packaging/arch/.SRCINFO "$arch_build_dir/"
+          cp "dist/release/qwarp-$RELEASE_VERSION-source.tar.gz" "$arch_build_dir/"
+          chown -R builder:builder "$arch_build_dir"
+          su builder -c "cd '$arch_build_dir' && makepkg --nodeps --cleanbuild --clean --noconfirm"
+          su builder -c "cd '$arch_build_dir' && makepkg --printsrcinfo" > /tmp/generated.SRCINFO
+          diff -u packaging/arch/.SRCINFO /tmp/generated.SRCINFO
+          package_file=$(find "$arch_build_dir" -maxdepth 1 -name 'qwarp-*.pkg.tar.zst' -print -quit)
           bsdtar -tf "$package_file" > /tmp/package-files
           ! grep -Eq '(^|/)(warp-cli|warp-svc|warp-svc\.service)$' /tmp/package-files
           grep -q '^usr/bin/qwarp$' /tmp/package-files
           grep -q '^usr/share/doc/qwarp/TRADEMARKS.md$' /tmp/package-files
           grep -q '^usr/share/licenses/qwarp/Apache-2.0.txt$' /tmp/package-files
           grep -q '^usr/share/licenses/qwarp/Glyphs-Poly-MIT.txt$' /tmp/package-files
-          grep -q 'cloudflare-warp-bin' .SRCINFO
-          ! grep -Eq '^\s*(conflicts|install)\s*=' .SRCINFO
+          grep -q 'cloudflare-warp-bin' packaging/arch/.SRCINFO
+          ! grep -Eq '^\s*(conflicts|install)\s*=' packaging/arch/.SRCINFO
 
 
   debian-package:
@@ -290,8 +293,8 @@ jobs:
           chmod 600 "$ssh_dir/id_ed25519" "$ssh_dir/known_hosts"
           export GIT_SSH_COMMAND="ssh -i $ssh_dir/id_ed25519 -o IdentitiesOnly=yes -o UserKnownHostsFile=$ssh_dir/known_hosts"
           git clone ssh://aur@aur.archlinux.org/qwarp.git "$aur_dir"
-          install -m644 PKGBUILD "$aur_dir/PKGBUILD"
-          install -m644 .SRCINFO "$aur_dir/.SRCINFO"
+          install -m644 packaging/arch/PKGBUILD "$aur_dir/PKGBUILD"
+          install -m644 packaging/arch/.SRCINFO "$aur_dir/.SRCINFO"
           git -C "$aur_dir" config user.name 'QWarp release automation'
           git -C "$aur_dir" config user.email 'contact@ashutoshtiwari.dev'
           if [ -n "$(git -C "$aur_dir" status --porcelain)" ]; then

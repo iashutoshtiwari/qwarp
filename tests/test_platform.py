@@ -1,9 +1,36 @@
 import subprocess
 from unittest.mock import patch
 
+import pytest
+
 
 class TestAutostart:
     """Tests for XDG autostart .desktop file management."""
+
+    @pytest.mark.parametrize(
+        ("content", "enabled"),
+        [
+            ("[Desktop Entry]\n# Hidden=true\nExec=qwarp\n", True),
+            ("[Desktop Entry]\nComment=Hidden=true\nExec=qwarp\n", True),
+            ("[Desktop Entry]\nHidden = true\n", False),
+            ("[Desktop Entry]\nX-GNOME-Autostart-enabled = false\n", False),
+            ("[Desktop Entry]\nExec=qwarp\n[Desktop Action Other]\nHidden=true\n", True),
+            ("[Desktop Action Other]\nExec=qwarp\n", False),
+        ],
+    )
+    def test_autostart_reads_only_desktop_entry_keys(self, tmp_path, monkeypatch, content, enabled):
+        from qwarp.platform.autostart import DESKTOP_FILENAME, is_autostart_enabled
+
+        monkeypatch.setattr("qwarp.platform.autostart.AUTOSTART_DIR", tmp_path)
+        (tmp_path / DESKTOP_FILENAME).write_text(content)
+        assert is_autostart_enabled() is enabled
+
+    def test_autostart_invalid_encoding_is_unavailable(self, tmp_path, monkeypatch):
+        from qwarp.platform.autostart import DESKTOP_FILENAME, is_autostart_enabled
+
+        monkeypatch.setattr("qwarp.platform.autostart.AUTOSTART_DIR", tmp_path)
+        (tmp_path / DESKTOP_FILENAME).write_bytes(b"[Desktop Entry]\nName=\xff\n")
+        assert is_autostart_enabled() is False
 
     def test_autostart_creates_desktop_file(self, tmp_path, monkeypatch):
         from qwarp.platform.autostart import DESKTOP_FILENAME, set_autostart_enabled

@@ -72,7 +72,16 @@ def main() -> None:
             f"qwarp-{version}/LICENSES/Glyphs-Poly-MIT.txt" in names,
             "Source archive does not contain the Glyphs Poly license",
         )
-        require(f"qwarp-{version}/PKGBUILD" not in names, "Source archive must not contain recursive PKGBUILD metadata")
+        for document in (
+            "docs/audits/2026-09-26.md",
+            "docs/screenshots/connected.png",
+            "docs/screenshots/disconnected.png",
+        ):
+            require(f"qwarp-{version}/{document}" in names, f"Source archive is missing {document}")
+        require(
+            not any(Path(name).name in {"PKGBUILD", ".SRCINFO"} for name in names),
+            "Source archive must not contain recursive Arch metadata",
+        )
         require(not any(".egg-info/" in name for name in names), "Source archive contains generated egg-info")
         require(not any(name.endswith((".pyc", ".qm")) for name in names), "Source archive contains generated files")
 

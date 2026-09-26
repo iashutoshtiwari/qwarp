@@ -24,7 +24,7 @@ def test_branding_notice_is_in_every_release_format():
     package_text = "\n".join(
         (ROOT / path).read_text(encoding="utf-8")
         for path in (
-            "PKGBUILD",
+            "packaging/arch/PKGBUILD",
             "packaging/debian/rules",
             "packaging/rpm/qwarp.spec",
             "scripts/build_artifacts.sh",
@@ -45,8 +45,8 @@ def test_marketing_metadata_does_not_use_retired_branding_or_search_terms():
         for path in (
             "qwarp.desktop",
             "pyproject.toml",
-            "PKGBUILD",
-            ".SRCINFO",
+            "packaging/arch/PKGBUILD",
+            "packaging/arch/.SRCINFO",
             "packaging/debian/control",
             "packaging/rpm/qwarp.spec",
         )
