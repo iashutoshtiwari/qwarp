@@ -97,12 +97,12 @@ class WarpWindow(QWidget):
     def _setup_ui(self) -> None:
         """Fully boots the visual DOM equivalent of the application."""
         self.main_layout = QVBoxLayout(self)
-        self.main_layout.setContentsMargins(20, 24, 20, 20)
+        self.main_layout.setContentsMargins(20, 20, 20, 16)
+        self.main_layout.setSpacing(0)
 
         self._build_header()
-        self.main_layout.addStretch()
         self._build_stack_views()
-        self.main_layout.addStretch()
+        self.main_layout.addWidget(self.stack, stretch=1)
         self._build_footer()
 
     def _build_header(self) -> None:
@@ -238,7 +238,7 @@ class WarpWindow(QWidget):
         self.page2 = QWidget()
         p2_layout = QVBoxLayout(self.page2)
         p2_layout.setContentsMargins(0, 0, 0, 0)
-        p2_layout.setSpacing(10)
+        p2_layout.setSpacing(0)
 
         self.toggle = AnimatedToggle()
         self.toggle.setAccessibleName(self.tr("Cloudflare WARP connection"))
@@ -259,23 +259,31 @@ class WarpWindow(QWidget):
         self.status_title.setWordWrap(True)
 
         self.status_desc = QLabel(self.tr("Connecting to daemon..."))
-        self.status_desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.status_desc.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
         self.status_desc.setWordWrap(True)
         self.status_desc.setProperty("styleClass", "desc_default")
+        self.status_desc.setMinimumHeight(52)
 
         self.status_mode = QLabel()
         self.status_mode.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.status_mode.setWordWrap(True)
         self.status_mode.setProperty("styleClass", "status_mode")
+        self.status_mode.setFixedHeight(20)
+        sp_mode = self.status_mode.sizePolicy()
+        sp_mode.setRetainSizeWhenHidden(True)
+        self.status_mode.setSizePolicy(sp_mode)
 
-        p2_layout.addStretch()
+        p2_layout.addStretch(1)
         p2_layout.addWidget(self.toggle, alignment=Qt.AlignmentFlag.AlignHCenter)
-        p2_layout.addSpacing(10)
+        p2_layout.addSpacing(14)
         p2_layout.addWidget(self.status_title)
+        p2_layout.addSpacing(6)
         p2_layout.addWidget(self.status_mode)
+        p2_layout.addSpacing(6)
         p2_layout.addWidget(self.status_desc)
+        p2_layout.addSpacing(10)
         p2_layout.addWidget(self.repair_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
-        p2_layout.addStretch()
+        p2_layout.addStretch(1)
 
         self.stack.addWidget(self.page2)
 
@@ -298,7 +306,6 @@ class WarpWindow(QWidget):
         p3_layout.addWidget(self.auth_description)
         p3_layout.addStretch()
         self.stack.addWidget(self.page3)
-        self.main_layout.addWidget(self.stack)
 
     def _toggle_org_input(self) -> None:
         self._set_organization_flow(not self._organization_flow)

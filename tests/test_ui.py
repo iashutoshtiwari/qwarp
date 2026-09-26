@@ -93,7 +93,7 @@ def test_window_recovers_from_missing_cli_view(qapp, manager):
 
     assert window.stack.currentIndex() == 2
     assert window.settings_btn.isEnabled()
-    assert window.status_title.text() == "Disconnected"
+    assert window.status_title.text() == "DISCONNECTED"
 
 
 def test_authentication_required_has_actionable_status(qapp, manager):
@@ -172,7 +172,7 @@ def test_failed_connect_restores_toggle_and_shows_contextual_error(qapp, wait_un
     manager.request_connect()
     wait_until(lambda: manager.is_busy is False)
     assert window.toggle.isEnabled()
-    assert window.status_title.text() == "Disconnected"
+    assert window.status_title.text() == "DISCONNECTED"
     assert window.status_desc.text() == "simulated failure"
     window.deleteLater()
     manager.shutdown()
@@ -190,11 +190,11 @@ def test_single_toggle_click_stays_connecting_until_daemon_catches_up(qapp, wait
     assert engine.connect_calls == 1
     assert window.toggle.isChecked()
     assert not window.toggle.isEnabled()
-    assert window.status_title.text() == "Connecting…"
+    assert window.status_title.text() == "CONNECTING…"
 
     manager._on_status_result(WarpState.CONNECTED)
     assert window.toggle.isEnabled()
-    assert window.status_title.text() == "Connected"
+    assert window.status_title.text() == "CONNECTED"
     window.deleteLater()
     manager.shutdown()
 
@@ -447,7 +447,7 @@ def test_main_window_and_tray_share_dns_only_presentation(qapp, manager):
     manager._on_settings_result({"available": True, "mode": "doh", "families": "off"})
     manager._on_status_result(WarpState.CONNECTED)
 
-    assert window.status_title.text() == "Active"
+    assert window.status_title.text() == "ACTIVE"
     assert window.status_mode.text() == "DNS only"
     assert "without routing traffic through WARP" in window.status_desc.text()
     assert tray.toolTip() == "QWarp: Active · DNS only"

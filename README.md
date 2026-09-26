@@ -23,8 +23,10 @@ States and other jurisdictions.
 ## Screenshots
 
 <div align="center">
-  <img src="docs/screenshots/disconnected.png" width="30%" alt="Disconnected State">
-  <img src="docs/screenshots/connected.png" width="30%" alt="Connected State">
+  <img src="docs/screenshots/disconnected.png" width="24%" alt="Disconnected State">
+  <img src="docs/screenshots/connected.png" width="24%" alt="Connected State">
+  <img src="docs/screenshots/dns-only.png" width="24%" alt="DNS Only (1.1.1.1)">
+  <img src="docs/screenshots/zero-trust.png" width="24%" alt="Cloudflare Zero Trust">
 </div>
 
 ## Features
@@ -62,27 +64,27 @@ yay -S qwarp
 
 ### Debian / Ubuntu (.deb)
 
-Download `qwarp_0.10.0-1_all.deb` from the [latest release](https://github.com/iashutoshtiwari/qwarp/releases/latest), then install:
+Download `qwarp_0.10.1-1_all.deb` from the [latest release](https://github.com/iashutoshtiwari/qwarp/releases/latest), then install:
 
 ```bash
-sudo apt install ./qwarp_0.10.0-1_all.deb
+sudo apt install ./qwarp_0.10.1-1_all.deb
 ```
 
 ### Fedora (.rpm)
 
-Download `qwarp-0.10.0-1.fc44.noarch.rpm` from the [latest release](https://github.com/iashutoshtiwari/qwarp/releases/latest), then install:
+Download `qwarp-0.10.1-1.fc44.noarch.rpm` from the [latest release](https://github.com/iashutoshtiwari/qwarp/releases/latest), then install:
 
 ```bash
-sudo dnf install ./qwarp-0.10.0-1.fc44.noarch.rpm
+sudo dnf install ./qwarp-0.10.1-1.fc44.noarch.rpm
 ```
 
 ### Standalone Binary (x86_64)
 
-Download `qwarp-0.10.0-linux-x86_64.tar.gz` and `SHA256SUMS` from the [latest release](https://github.com/iashutoshtiwari/qwarp/releases/latest):
+Download `qwarp-0.10.1-linux-x86_64.tar.gz` and `SHA256SUMS` from the [latest release](https://github.com/iashutoshtiwari/qwarp/releases/latest):
 
 ```bash
 sha256sum --ignore-missing --check SHA256SUMS
-tar -xzf qwarp-0.10.0-linux-x86_64.tar.gz
+tar -xzf qwarp-0.10.1-linux-x86_64.tar.gz
 ./qwarp
 ```
 

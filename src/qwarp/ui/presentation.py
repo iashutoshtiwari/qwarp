@@ -274,7 +274,7 @@ def presentation_for(
     if state == WarpState.NO_NETWORK:
         return WarpPresentation(
             **common,
-            primary_status=_tr("No network"),
+            primary_status=_tr("No network").upper(),
             mode_label=mode_label,
             description=_tr("Waiting for Internet connectivity."),
             tray_label=_tr("No network"),
@@ -308,13 +308,14 @@ def presentation_for(
             disconnect_enabled=False,
         )
     if state == WarpState.CONNECTED:
-        primary = _tr("Active") if mode == OperatingMode.DNS_ONLY else _tr("Connected")
+        primary = _tr("Active").upper() if mode == OperatingMode.DNS_ONLY else _tr("Connected").upper()
+        tray_primary = _tr("Active") if mode == OperatingMode.DNS_ONLY else _tr("Connected")
         return WarpPresentation(
             **common,
             primary_status=primary,
             mode_label=mode_label,
             description=mode_description,
-            tray_label=f"{primary} · {mode_label}",
+            tray_label=f"{tray_primary} · {mode_label}",
             icon_name="tray-connected.svg",
             title_style="title_connected",
             connect_enabled=False,
@@ -323,7 +324,7 @@ def presentation_for(
     if state == WarpState.DISCONNECTED:
         return WarpPresentation(
             **common,
-            primary_status=_tr("Disconnected"),
+            primary_status=_tr("Disconnected").upper(),
             mode_label=mode_label,
             description=_tr("Connect when you're ready."),
             tray_label=_tr("Disconnected") + (f" · {mode_label}" if mode_label else ""),
@@ -335,7 +336,7 @@ def presentation_for(
     if state == WarpState.CONNECTING:
         return WarpPresentation(
             **common,
-            primary_status=_tr("Connecting…"),
+            primary_status=_tr("Connecting…").upper(),
             mode_label=mode_label,
             description=_tr("Establishing a connection to WARP."),
             tray_label=_tr("Connecting…") + (f" · {mode_label}" if mode_label else ""),
@@ -346,7 +347,7 @@ def presentation_for(
         )
     return WarpPresentation(
         **common,
-        primary_status=_tr("Checking status"),
+        primary_status=_tr("Checking status").upper(),
         mode_label="",
         description=_tr("QWarp is reading the current WARP state."),
         tray_label=_tr("Checking status"),

@@ -104,10 +104,10 @@ jobs:
           git diff --exit-code -- 'src/qwarp/assets/locales/*.ts'
           # Normal CI validates the current tree, which may legitimately differ
           # from an already-published immutable release asset.
-          python scripts/check_release.py --version 0.10.0
+          python scripts/check_release.py --version 0.10.1
           (cd dist/release && sha256sum --check SHA256SUMS)
       - name: Verify standalone binary
-        run: bash scripts/smoke_frozen.sh dist/qwarp-build/qwarp 0.10.0
+        run: bash scripts/smoke_frozen.sh dist/qwarp-build/qwarp 0.10.1
       - name: Upload package inputs
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
@@ -139,18 +139,18 @@ jobs:
           arch_build_dir=$(mktemp -d /tmp/qwarp-arch.XXXXXX)
           echo "ARCH_BUILD_DIR=$arch_build_dir" >> "$GITHUB_ENV"
           cp packaging/arch/PKGBUILD packaging/arch/.SRCINFO "$arch_build_dir/"
-          cp dist/release/qwarp-0.10.0-source.tar.gz "$arch_build_dir/"
+          cp dist/release/qwarp-0.10.1-source.tar.gz "$arch_build_dir/"
           # PKGBUILD tracks the immutable published release asset. For normal CI,
           # use the checksum of the just-built current-tree archive only in this
           # temporary build directory so packaging smoke tests exercise the PR/commit.
-          source_hash=$(sha256sum "$arch_build_dir/qwarp-0.10.0-source.tar.gz" | awk '{print $1}')
+          source_hash=$(sha256sum "$arch_build_dir/qwarp-0.10.1-source.tar.gz" | awk '{print $1}')
           sed -E -i "s/^sha256sums=.*/sha256sums=('${source_hash}')/" "$arch_build_dir/PKGBUILD"
           chown -R builder:builder "$arch_build_dir"
           su builder -c "cd '$arch_build_dir' && makepkg --nodeps --cleanbuild --clean --noconfirm"
       - name: Verify metadata and owned files
         run: |
           su builder -c "cd '$ARCH_BUILD_DIR' && makepkg --printsrcinfo" > /tmp/generated.SRCINFO
-          source_hash=$(sha256sum "$ARCH_BUILD_DIR/qwarp-0.10.0-source.tar.gz" | awk '{print $1}')
+          source_hash=$(sha256sum "$ARCH_BUILD_DIR/qwarp-0.10.1-source.tar.gz" | awk '{print $1}')
           grep -Fq "sha256sums = ${source_hash}" /tmp/generated.SRCINFO
           grep -v '^[[:space:]]*sha256sums = ' packaging/arch/.SRCINFO > /tmp/committed-normalized.SRCINFO
           grep -v '^[[:space:]]*sha256sums = ' /tmp/generated.SRCINFO > /tmp/generated-normalized.SRCINFO
@@ -184,7 +184,7 @@ jobs:
           su builder -c "cd /tmp/dummy-warp && makepkg --cleanbuild --noconfirm"
           package_file=$(find "$ARCH_BUILD_DIR" -maxdepth 1 -name 'qwarp-*.pkg.tar.zst' -print -quit)
           pacman -U --noconfirm /tmp/dummy-warp/cloudflare-warp-bin-*.pkg.tar.zst "$package_file"
-          /usr/bin/qwarp --version | grep -Fx 'QWarp 0.10.0'
+          /usr/bin/qwarp --version | grep -Fx 'QWarp 0.10.1'
           pacman -Qo /usr/bin/qwarp
       - name: Remove temporary Arch build
         if: always()
@@ -216,23 +216,23 @@ jobs:
             qt6-tools-dev-tools dpkg-dev python3-pyqt6
       - name: Build .deb
         run: |
-          tar xzf dist/release/qwarp-0.10.0-source.tar.gz
-          cd qwarp-0.10.0
+          tar xzf dist/release/qwarp-0.10.1-source.tar.gz
+          cd qwarp-0.10.1
           cp -r ../packaging/debian debian
           dpkg-buildpackage -us -uc -b
       - name: Inspect and smoke-test .deb
         run: |
-          dpkg-deb --contents qwarp_0.10.0-1_all.deb > /tmp/qwarp-deb-files
+          dpkg-deb --contents qwarp_0.10.1-1_all.deb > /tmp/qwarp-deb-files
           grep -Eq 'usr/bin/qwarp$' /tmp/qwarp-deb-files
           grep -Eq 'usr/share/doc/qwarp/TRADEMARKS.md(\.gz)?$' /tmp/qwarp-deb-files
           grep -Eq 'usr/share/doc/qwarp/Apache-2.0.txt(\.gz)?$' /tmp/qwarp-deb-files
           grep -Eq 'usr/share/doc/qwarp/Glyphs-Poly-MIT.txt(\.gz)?$' /tmp/qwarp-deb-files
           ! grep -Eq '/(warp-cli|warp-svc|warp-svc\.service)$' /tmp/qwarp-deb-files
-          dpkg-deb --field qwarp_0.10.0-1_all.deb Depends | grep -q 'cloudflare-warp'
+          dpkg-deb --field qwarp_0.10.1-1_all.deb Depends | grep -q 'cloudflare-warp'
           mkdir -p /tmp/qwarp-deb-root
-          dpkg-deb --extract qwarp_0.10.0-1_all.deb /tmp/qwarp-deb-root
+          dpkg-deb --extract qwarp_0.10.1-1_all.deb /tmp/qwarp-deb-root
           PYTHONPATH=/tmp/qwarp-deb-root/usr/lib/python3/dist-packages \
-            python3 -m qwarp.main --version | grep -Fx 'QWarp 0.10.0'
+            python3 -m qwarp.main --version | grep -Fx 'QWarp 0.10.1'
       - name: Test apt installation transaction
         run: |
           mkdir -p /tmp/dummy-warp-deb/DEBIAN
@@ -245,14 +245,14 @@ jobs:
           EOF
           dpkg-deb --build /tmp/dummy-warp-deb /tmp/cloudflare-warp_1.0.0_all.deb
           sudo dpkg -i /tmp/cloudflare-warp_1.0.0_all.deb
-          sudo apt-get install -y --no-install-recommends ./qwarp_0.10.0-1_all.deb
-          /usr/bin/qwarp --version | grep -Fx 'QWarp 0.10.0'
+          sudo apt-get install -y --no-install-recommends ./qwarp_0.10.1-1_all.deb
+          /usr/bin/qwarp --version | grep -Fx 'QWarp 0.10.1'
           dpkg -S /usr/bin/qwarp
       - name: Upload .deb
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: qwarp-deb
-          path: qwarp_0.10.0-1_all.deb
+          path: qwarp_0.10.1-1_all.deb
           retention-days: 7
 
   rpm-package:
@@ -278,12 +278,12 @@ jobs:
       - name: Build .rpm
         run: |
           mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-          cp dist/release/qwarp-0.10.0-source.tar.gz ~/rpmbuild/SOURCES/
+          cp dist/release/qwarp-0.10.1-source.tar.gz ~/rpmbuild/SOURCES/
           cp packaging/rpm/qwarp.spec ~/rpmbuild/SPECS/
           rpmbuild -bb ~/rpmbuild/SPECS/qwarp.spec
       - name: Inspect RPM
         run: |
-          rpm_file=$(find ~/rpmbuild/RPMS -name 'qwarp-0.10.0-1*.rpm' -print -quit)
+          rpm_file=$(find ~/rpmbuild/RPMS -name 'qwarp-0.10.1-1*.rpm' -print -quit)
           test -n "$rpm_file"
           rpm -qlp "$rpm_file" > /tmp/qwarp-rpm-files
           grep -q '/usr/bin/qwarp$' /tmp/qwarp-rpm-files
@@ -307,13 +307,13 @@ jobs:
           EOF
           rpmbuild -bb ~/rpmbuild/SPECS/dummy-warp.spec
           dummy_rpm=$(find ~/rpmbuild/RPMS -name 'cloudflare-warp-1.0.0-1*.rpm' -print -quit)
-          rpm_file=$(find ~/rpmbuild/RPMS -name 'qwarp-0.10.0-1*.rpm' -print -quit)
+          rpm_file=$(find ~/rpmbuild/RPMS -name 'qwarp-0.10.1-1*.rpm' -print -quit)
           dnf install -y "$dummy_rpm" "$rpm_file"
-          /usr/bin/qwarp --version | grep -Fx 'QWarp 0.10.0'
+          /usr/bin/qwarp --version | grep -Fx 'QWarp 0.10.1'
           rpm -qf /usr/bin/qwarp
       - name: Upload .rpm
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: qwarp-rpm
-          path: /github/home/rpmbuild/RPMS/noarch/qwarp-0.10.0-1*.rpm
+          path: /github/home/rpmbuild/RPMS/noarch/qwarp-0.10.1-1*.rpm
           retention-days: 7

@@ -5,6 +5,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.10.1] – 2026-09-27
+
+### Added
+
+- Add trusted executable path validation for daemon commands, taskbar commands, and desktop autostart (SEC-01).
+- Add atomic single-instance ownership using per-user runtime directory locking and legacy socket wake-up protocol (SEC-02).
+- Add IPC resource and message boundaries with client count limits and message deadlines (SEC-04).
+- Add comprehensive hash-locked wheel dependency constraints for reproducible supply-chain security (SEC-03).
+
+### Changed
+
+- Modernize primary toggle appearance with sleek neutral grey track when deactivated, tactile thumb shadow, and smooth hover feedback.
+- Format primary connection state typography in uppercase with refined letter spacing.
+- Anchor main widget controls to eliminate vertical layout shifting across message updates and state transitions.
+- Sanitize IP addresses, CIDRs, hostnames, and domain fallbacks across all log levels and diagnostics (PRIV-04).
+- Bound subprocess stream reading to 1 MiB with cancellable execution and structured JSON error handling (ROB-01, PERF-02).
+
+### Fixed
+
+- Prevent UI layout jumping on status description and mode changes by stabilizing layout margins and stretch behavior.
+- Ensure strict JSON parsing validation on command failure states.
+
 ## [v0.10.0] – 2026-09-25
 
 ### Added

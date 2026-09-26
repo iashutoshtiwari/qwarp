@@ -179,12 +179,11 @@ def test_animated_toggle_derives_colors_from_light_and_dark_palettes(qapp):
     assert toggle._get_thumb_color() == light_p.color(QPalette.ColorRole.HighlightedText)
 
     toggle.setChecked(False)
-    assert toggle._get_track_color() == light_p.color(QPalette.ColorRole.Mid)
-    assert toggle._get_thumb_color() == light_p.color(QPalette.ColorRole.Base)
+    assert toggle._get_track_color().name() == "#d0d4dc"
+    assert toggle._get_thumb_color().name() == "#ffffff"
 
     toggle.setEnabled(False)
-    dis = QPalette.ColorGroup.Disabled
-    assert toggle._get_track_color() == light_p.color(dis, QPalette.ColorRole.Mid)
+    assert toggle._get_track_color().name() == "#e5e7eb"
 
     # --- Dark Palette ---
     toggle.setPalette(dark_p)
@@ -194,12 +193,12 @@ def test_animated_toggle_derives_colors_from_light_and_dark_palettes(qapp):
     assert toggle._get_thumb_color() == dark_p.color(QPalette.ColorRole.HighlightedText)
 
     toggle.setChecked(False)
-    assert toggle._get_track_color() == dark_p.color(QPalette.ColorRole.Mid)
+    assert toggle._get_track_color().name() == "#3f444e"
     dark_thumb = toggle._get_thumb_color()
-    assert dark_thumb.lightness() > 100
+    assert dark_thumb.name() == "#ffffff"
 
     toggle.setEnabled(False)
-    assert toggle._get_track_color() == dark_p.color(dis, QPalette.ColorRole.Mid)
+    assert toggle._get_track_color().name() == "#282b32"
 
     toggle.deleteLater()
 
