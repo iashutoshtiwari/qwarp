@@ -10,7 +10,7 @@ depends=('python' 'python-pyqt6' 'cloudflare-warp-bin')
 makedepends=('python-build' 'python-installer' 'python-wheel' 'python-setuptools' 'qt6-tools')
 
 source=("$pkgname-$pkgver-source.tar.gz::https://github.com/iashutoshtiwari/qwarp/releases/download/v$pkgver/$pkgname-$pkgver-source.tar.gz")
-sha256sums=('5465c6fd663038db1c7716655d68828839e9964c5aa1975448c87902605a9109')
+sha256sums=('3ce81cb7c5c024a5dab426eecf293901b62e567bcca38457ba2ea74530920ff9')
 
 build() {
   # Enter the directory extracted from the GitHub tarball

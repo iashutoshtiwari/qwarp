@@ -1,7 +1,6 @@
 import json
 import logging
 import subprocess
-import sys
 import threading
 import time
 from unittest.mock import MagicMock, patch
@@ -205,13 +204,13 @@ def test_repeated_malformed_status_warns_once(mock_run, caplog):
     assert len(warning_records) == 1
 
 
-def test_interruptible_command_is_cancelled_promptly():
+def test_interruptible_command_is_cancelled_promptly(synthetic_python):
     engine = WarpEngine()
     result = []
     worker = threading.Thread(
         target=lambda: result.append(
             engine._run_process(
-                [sys.executable, "-c", "import time; time.sleep(30)"],
+                [synthetic_python, "-c", "import time; time.sleep(30)"],
                 timeout=30,
             )
         )

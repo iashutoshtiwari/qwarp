@@ -19,38 +19,38 @@ from qwarp.main import unhandled_exception_hook
 from qwarp.utils.process import OUTPUT_LIMIT, CommandError, resolve_executable, run_command
 
 
-def test_runner_success_and_nonzero_exit():
-    result = run_command([sys.executable, "-c", "print('ok')"], timeout=2)
+def test_runner_success_and_nonzero_exit(synthetic_python):
+    result = run_command([synthetic_python, "-c", "print('ok')"], timeout=2)
     assert result.stdout == "ok\n"
     assert result.returncode == 0
     result = run_command(
-        [sys.executable, "-c", "import sys; print('failure', file=sys.stderr); sys.exit(7)"], timeout=2
+        [synthetic_python, "-c", "import sys; print('failure', file=sys.stderr); sys.exit(7)"], timeout=2
     )
     assert result.stderr == "failure\n"
     assert result.returncode == 7
 
 
 @pytest.mark.parametrize("stream", ["stdout", "stderr"])
-def test_runner_bounds_both_streams(stream):
+def test_runner_bounds_both_streams(stream, synthetic_python):
     code = f"import sys; sys.{stream}.write('x' * {OUTPUT_LIMIT + 65536}); sys.{stream}.flush()"
     with pytest.raises(CommandError, match="output limit"):
-        run_command([sys.executable, "-c", code], timeout=3)
+        run_command([synthetic_python, "-c", code], timeout=3)
 
 
-def test_runner_accepts_limit_and_replaces_invalid_utf8():
-    result = run_command([sys.executable, "-c", f"import os; os.write(1, b'x' * {OUTPUT_LIMIT})"], timeout=3)
+def test_runner_accepts_limit_and_replaces_invalid_utf8(synthetic_python):
+    result = run_command([synthetic_python, "-c", f"import os; os.write(1, b'x' * {OUTPUT_LIMIT})"], timeout=3)
     assert len(result.stdout) == OUTPUT_LIMIT
-    result = run_command([sys.executable, "-c", "import os; os.write(1, b'\\xff')"], timeout=2)
+    result = run_command([synthetic_python, "-c", "import os; os.write(1, b'\\xff')"], timeout=2)
     assert result.stdout == "\ufffd"
 
 
-def test_runner_timeout_and_cancellation_reap_children(tmp_path):
+def test_runner_timeout_and_cancellation_reap_children(tmp_path, synthetic_python):
     marker = tmp_path / "pid"
     code = (
         "import os,time,pathlib; pathlib.Path(__import__('sys').argv[1]).write_text(str(os.getpid())); time.sleep(30)"
     )
     with pytest.raises(CommandError, match="timeout"):
-        run_command([sys.executable, "-c", code, str(marker)], timeout=0.3)
+        run_command([synthetic_python, "-c", code, str(marker)], timeout=0.3)
     with pytest.raises(ProcessLookupError):
         os.kill(int(marker.read_text()), 0)
     marker.unlink()
@@ -59,7 +59,7 @@ def test_runner_timeout_and_cancellation_reap_children(tmp_path):
 
     def worker():
         try:
-            run_command([sys.executable, "-c", code, str(marker)], timeout=30, cancel_event=cancel)
+            run_command([synthetic_python, "-c", code, str(marker)], timeout=30, cancel_event=cancel)
         except CommandError as exc:
             results.append(str(exc))
 
@@ -351,11 +351,11 @@ def test_simultaneous_processes_have_one_primary_and_recover_after_crash(isolate
             child.communicate(timeout=3)
 
 
-def test_closed_pipes_do_not_disable_timeout():
+def test_closed_pipes_do_not_disable_timeout(synthetic_python):
     code = "import os,time; os.close(1); os.close(2); time.sleep(30)"
     started = time.monotonic()
     with pytest.raises(CommandError, match="timeout"):
-        run_command([sys.executable, "-c", code], timeout=0.1)
+        run_command([synthetic_python, "-c", code], timeout=0.1)
     assert time.monotonic() - started < 2
 
 

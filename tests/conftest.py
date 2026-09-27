@@ -256,3 +256,13 @@ def forbid_live_daemon_commands(monkeypatch):
         return original(command, *args, **kwargs)
 
     monkeypatch.setattr(subprocess, "Popen", guarded)
+
+
+@pytest.fixture
+def synthetic_python():
+    # Hosted setup-python toolcache ancestors may be group-writable. Keep the
+    # application trust policy intact and use the root-owned system interpreter
+    # for stdlib-only child workloads; the parent still runs the matrix Python.
+    from qwarp.utils.process import resolve_executable
+
+    return resolve_executable("/usr/bin/python3", privileged=True)
