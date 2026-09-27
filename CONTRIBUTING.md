@@ -39,6 +39,35 @@ qwarp --help
 
 Launching `qwarp` starts background polling of the real WARP installation. Do that only when live testing is intended.
 
+### Run from source or make a clean test build
+
+From the repository root, run the current source directly:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m qwarp.main
+```
+
+For a clean wheel, source archive, and standalone test binary, install the build
+dependencies once (Qt localization tools listed below are also required):
+
+```bash
+.venv/bin/python -m pip install -c requirements/release.txt build pyinstaller PyQt6 setuptools wheel
+python3 scripts/clean_build.py
+./dist/qwarp-build/qwarp
+```
+
+`clean_build.py` uses the active virtual environment, or the repository's `.venv`
+when none is active. It deletes `build/`, all of `dist/`, test/lint caches,
+source-tree Python bytecode, and the generated root `qwarp.spec`, then calls
+`build_artifacts.sh`. It preserves virtual environments, editable-install
+metadata, and compiled translations. It refuses tracked cleanup targets and
+symlinks; run `python3 scripts/clean_build.py --dry-run` to preview removal.
+
+The helper builds without launching QWarp. Both launch commands above start
+normal daemon polling. Add `--help` or `--version` for a side-effect-free probe.
+Builds refresh translation catalogs; review any `.ts` changes. Local builds do
+not update committed release versions or Arch checksums.
+
 ## Understand the code path
 
 ### Repository layout
