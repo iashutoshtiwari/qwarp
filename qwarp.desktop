@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=QWarp
 GenericName=Network Client Controller
-Comment=Qt6-based alternative desktop client for Cloudflare WARP
+Comment=Cloudflare WARP GUI for Linux with native Qt6 desktop integration
 Exec=qwarp
 Icon=qwarp
 Terminal=false

@@ -1,5 +1,5 @@
 pkgbase = qwarp
-	pkgdesc = Qt6-based alternative desktop client for Cloudflare WARP
+	pkgdesc = Cloudflare WARP GUI for Linux with native Qt6 desktop integration
 	pkgver = 0.10.1
 	pkgrel = 1
 	url = https://github.com/iashutoshtiwari/qwarp

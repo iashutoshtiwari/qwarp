@@ -5,8 +5,15 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "qwarp"
 dynamic = ["version"]
-description = "A Wayland-native, Qt6-based alternative desktop client for Cloudflare WARP"
+description = "Cloudflare WARP GUI for Linux with native Qt6 desktop integration"
 readme = "README.md"
+keywords = ["qwarp", "linux", "qt6", "cloudflare-warp", "warp-cli", "gui"]
+classifiers = [
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: System :: Networking",
+]
 requires-python = ">=3.11"
 license = {text = "MIT AND Apache-2.0"}
 dependencies = [

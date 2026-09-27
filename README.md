@@ -1,9 +1,12 @@
 <div align="center">
   <img src="src/qwarp/assets/app-icon.svg" width="128" alt="QWarp logo">
 
-# QWarp
+# QWarp — Cloudflare WARP GUI for Linux
 
-A Qt6-based alternative desktop client for Cloudflare® WARP® on Linux.
+**A native Linux desktop interface for Cloudflare WARP.** Manage connections, DNS, split tunneling,
+and Zero Trust enrollment from a Qt6 interface built for Wayland and X11.
+
+QWarp is open source and requires separately installed `warp-cli` and `warp-svc`.
 
 [![CI](https://github.com/iashutoshtiwari/qwarp/actions/workflows/ci.yml/badge.svg)](https://github.com/iashutoshtiwari/qwarp/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/iashutoshtiwari/qwarp)](https://github.com/iashutoshtiwari/qwarp/releases/latest)
@@ -11,6 +14,9 @@ A Qt6-based alternative desktop client for Cloudflare® WARP® on Linux.
 [![License: MIT](https://img.shields.io/github/license/iashutoshtiwari/qwarp)](LICENSE)
 
 </div>
+
+[Installation](#installation) · [Usage](docs/USAGE.md) · [FAQ](#faq) ·
+[Troubleshooting](docs/TROUBLESHOOTING.md) · [Contributing](CONTRIBUTING.md)
 
 > [!IMPORTANT]
 > QWarp is independently developed and is not affiliated with, authorized, sponsored, or endorsed by Cloudflare, Inc.
@@ -23,10 +29,10 @@ States and other jurisdictions.
 ## Screenshots
 
 <div align="center">
-  <img src="docs/screenshots/disconnected.png" width="24%" alt="Disconnected State">
-  <img src="docs/screenshots/connected.png" width="24%" alt="Connected State">
-  <img src="docs/screenshots/dns-only.png" width="24%" alt="DNS Only (1.1.1.1)">
-  <img src="docs/screenshots/zero-trust.png" width="24%" alt="Cloudflare Zero Trust">
+  <img src="docs/screenshots/disconnected.png" width="24%" alt="QWarp disconnected in WARP mode with the connection toggle off">
+  <img src="docs/screenshots/connected.png" width="24%" alt="QWarp connected in WARP mode with traffic routed through the tunnel">
+  <img src="docs/screenshots/dns-only.png" width="24%" alt="QWarp active in DNS-only mode without routing traffic through WARP">
+  <img src="docs/screenshots/zero-trust.png" width="24%" alt="QWarp connected in WARP mode with a Zero Trust organization badge">
 </div>
 
 ## Features
@@ -90,7 +96,10 @@ tar -xzf qwarp-0.10.1-linux-x86_64.tar.gz
 
 ## Usage and verification
 
-Verify that both the official client and QWarp are functioning:
+See the [usage guide](docs/USAGE.md) for registration, organization enrollment, connection modes,
+split tunneling, and fallback DNS. For problems, start with [troubleshooting](docs/TROUBLESHOOTING.md).
+
+Check the installed versions and inspect the current status:
 
 ```bash
 warp-cli --version
@@ -116,6 +125,39 @@ sudo systemctl enable --now warp-svc
 | `--start-minimized` | Start minimized to system tray                                   |
 | `--debug`           | Enable sanitized diagnostic logging                              |
 | `--log-level`       | Set terminal log verbosity (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
+
+## FAQ
+
+### Is QWarp an official Cloudflare application?
+
+No. QWarp is independently developed and is not affiliated with or endorsed by Cloudflare. It provides a
+Linux graphical interface to the official client; see the [trademark notice](TRADEMARKS.md).
+
+### Does QWarp include the WARP client?
+
+No. The official `warp-cli` and `warp-svc` must be installed separately, including when using QWarp's
+standalone binary. Follow the [requirements](#requirements) before installing QWarp.
+
+### Which Linux distributions and desktops can I use?
+
+The project provides an Arch Linux AUR package, Debian/Ubuntu `.deb`, Fedora `.rpm`, and an x86_64
+standalone archive. These formats do not guarantee compatibility with every distribution release;
+check the selected release's assets and the official client's supported distributions in the
+[installation instructions](#installation) and [requirements](#requirements).
+
+QWarp supports Wayland and X11 and follows KDE, GNOME, and system palettes. A working Qt6 desktop
+environment and the required system services are still needed. QWarp is Linux-only.
+
+### Does QWarp support Cloudflare Zero Trust?
+
+Yes. Use **Connect to an organization** during setup and complete browser authentication.
+Organization policy can restrict controls. Split-tunnel and fallback-domain editing are available
+only for personal registrations. See [organization enrollment](docs/USAGE.md#organization-enrollment).
+
+### Can I use QWarp without a system tray?
+
+Yes. The main window remains available. When no tray is detected, start-minimized and close-to-hide
+are disabled; closing the window exits QWarp. See [tray troubleshooting](docs/TROUBLESHOOTING.md#no-system-tray-icon).
 
 ## Development and contributing
 

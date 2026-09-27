@@ -1,3 +1,4 @@
+import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -54,4 +55,17 @@ def test_marketing_metadata_does_not_use_retired_branding_or_search_terms():
     assert "Cloudflare Orange" not in metadata_text
     assert "wrapper for Cloudflare WARP" not in metadata_text
     assert "Keywords=cloudflare;warp" not in metadata_text
-    assert metadata_text.count("Qt6-based alternative desktop client") == 6
+    description = "Cloudflare WARP GUI for Linux with native Qt6 desktop integration"
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+    assert project["description"] == description
+    fields = {
+        "qwarp.desktop": ("Comment=", description),
+        "packaging/arch/PKGBUILD": ("pkgdesc=", f'"{description}"'),
+        "packaging/arch/.SRCINFO": ("pkgdesc = ", description),
+        "packaging/debian/control": ("Description: ", description),
+        "packaging/rpm/qwarp.spec": ("Summary:", description),
+    }
+    for path, (prefix, expected) in fields.items():
+        lines = (ROOT / path).read_text(encoding="utf-8").splitlines()
+        values = [line.strip().removeprefix(prefix).strip() for line in lines if line.strip().startswith(prefix)]
+        assert values == [expected], path
