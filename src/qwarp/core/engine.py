@@ -187,7 +187,7 @@ class WarpEngine:
 
     @classmethod
     def _is_error_response(cls, result: Any) -> bool:
-        return isinstance(result, dict) and "error" in result
+        return isinstance(result, dict) and ("error" in result or str(result.get("status", "")).lower() == "unable")
 
     def _log_cli_warning_once(self, key: str, message: str, *args: Any) -> None:
         if self._last_cli_warning == key:
@@ -358,10 +358,7 @@ class WarpEngine:
                 )
                 return None
 
-            if result.returncode != 0 and not (
-                self._is_error_response(data)
-                or (isinstance(data, dict) and str(data.get("status", "")).lower() == "unable")
-            ):
+            if result.returncode != 0 and not self._is_error_response(data):
                 self._last_cli_failure = "command_error"
                 self._log_cli_warning_once(
                     f"exit:{safe_command}", "Command failed (exit %d): %s", result.returncode, safe_command
@@ -593,6 +590,8 @@ class WarpEngine:
             return WarpState.UNKNOWN
 
         if self._is_error_response(result):
+            if "error" not in result:
+                return self._state_from_unable_reason(result.get("reason", {}))
             return self._state_from_cli_error(str(result.get("code", "")), str(result.get("error", "")))
 
         status_str = str(result.get("status", result.get("connection_status", result.get("connection", "")))).lower()
@@ -609,10 +608,6 @@ class WarpEngine:
         if self._normalize_setting(status_str) in {"nonetwork", "networkunavailable", "networkunreachable"}:
             self._last_status_warning = ""
             return WarpState.NO_NETWORK
-
-        # "Unable" status with structured reason
-        if status_str == "unable":
-            return self._state_from_unable_reason(result.get("reason", {}))
 
         if status_str:
             self._warn_unknown_status(f"value:{self._safe_cli_message(status_str)}")

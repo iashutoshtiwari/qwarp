@@ -268,7 +268,7 @@ class WarpWindow(QWidget):
         self.status_mode.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.status_mode.setWordWrap(True)
         self.status_mode.setProperty("styleClass", "status_mode")
-        self.status_mode.setFixedHeight(20)
+        self.status_mode.setMinimumHeight(20)
         sp_mode = self.status_mode.sizePolicy()
         sp_mode.setRetainSizeWhenHidden(True)
         self.status_mode.setSizePolicy(sp_mode)

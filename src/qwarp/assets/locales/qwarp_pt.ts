@@ -660,13 +660,13 @@
         <translation>Termos da Aplicação e Política de Privacidade da Cloudflare</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="316" />
+        <location filename="../../ui/window.py" line="323" />
         <location filename="../../ui/window.py" line="169" />
         <source>Continue</source>
         <translation>Continuar</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="315" />
+        <location filename="../../ui/window.py" line="322" />
         <location filename="../../ui/window.py" line="174" />
         <source>Connect to an organization</source>
         <translation>Ligar a uma organização</translation>
@@ -714,91 +714,91 @@
         <translation>Conectando ao daemon...</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="285" />
+        <location filename="../../ui/window.py" line="293" />
         <source>Complete organization sign-in</source>
         <translation>Concluir início de sessão da organização</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="291" />
+        <location filename="../../ui/window.py" line="299" />
         <source>Complete authentication in your browser to enroll this device.</source>
         <translation>Conclua a autenticação no seu navegador para inscrever este dispositivo.</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="311" />
+        <location filename="../../ui/window.py" line="318" />
         <source>Connect to your organization</source>
         <translation>Ligar à sua organização</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="312" />
+        <location filename="../../ui/window.py" line="319" />
         <source>Enter the organization name provided by your administrator.</source>
         <translation>Introduza o nome da organização fornecido pelo seu administrador.</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="313" />
+        <location filename="../../ui/window.py" line="320" />
         <source>Use personal setup</source>
         <translation>Utilizar configuração pessoal</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="329" />
-        <location filename="../../ui/window.py" line="328" />
+        <location filename="../../ui/window.py" line="336" />
+        <location filename="../../ui/window.py" line="335" />
         <source>Settings</source>
         <translation>Definições</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="334" />
+        <location filename="../../ui/window.py" line="341" />
         <source>Preferences</source>
         <translation>Preferências</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="337" />
+        <location filename="../../ui/window.py" line="344" />
         <source>Exit</source>
         <translation>Sair</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="382" />
+        <location filename="../../ui/window.py" line="389" />
         <source>Connected to %s</source>
         <translation>Ligado a %s</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="382" />
+        <location filename="../../ui/window.py" line="389" />
         <source>Zero Trust enrolled</source>
         <translation>Inscrito no Zero Trust</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="395" />
+        <location filename="../../ui/window.py" line="402" />
         <source>Accept the terms before continuing.</source>
         <translation>Aceite os termos antes de continuar.</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="401" />
+        <location filename="../../ui/window.py" line="408" />
         <source>Please enter an organization name.</source>
         <translation>Por favor, introduza um nome de organização.</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="513" />
-        <location filename="../../ui/window.py" line="417" />
+        <location filename="../../ui/window.py" line="520" />
+        <location filename="../../ui/window.py" line="424" />
         <source>CONNECTING</source>
         <translation>CONECTANDO</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="513" />
-        <location filename="../../ui/window.py" line="417" />
+        <location filename="../../ui/window.py" line="520" />
+        <location filename="../../ui/window.py" line="424" />
         <source>DISCONNECTING</source>
         <translation>DESCONECTANDO</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="515" />
-        <location filename="../../ui/window.py" line="418" />
+        <location filename="../../ui/window.py" line="522" />
+        <location filename="../../ui/window.py" line="425" />
         <source>Please wait...</source>
         <translation>Por favor, aguarde...</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="429" />
+        <location filename="../../ui/window.py" line="436" />
         <source>Registration failed.</source>
         <translation>Falha no registo.</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="432" />
+        <location filename="../../ui/window.py" line="439" />
         <source>The requested action failed.</source>
         <translation>A ação solicitada falhou.</translation>
     </message>

@@ -660,13 +660,13 @@
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="316" />
+        <location filename="../../ui/window.py" line="323" />
         <location filename="../../ui/window.py" line="169" />
         <source>Continue</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="315" />
+        <location filename="../../ui/window.py" line="322" />
         <location filename="../../ui/window.py" line="174" />
         <source>Connect to an organization</source>
         <translation type="unfinished" />
@@ -714,91 +714,91 @@
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="285" />
+        <location filename="../../ui/window.py" line="293" />
         <source>Complete organization sign-in</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="291" />
+        <location filename="../../ui/window.py" line="299" />
         <source>Complete authentication in your browser to enroll this device.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="311" />
+        <location filename="../../ui/window.py" line="318" />
         <source>Connect to your organization</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="312" />
+        <location filename="../../ui/window.py" line="319" />
         <source>Enter the organization name provided by your administrator.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="313" />
+        <location filename="../../ui/window.py" line="320" />
         <source>Use personal setup</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="329" />
-        <location filename="../../ui/window.py" line="328" />
+        <location filename="../../ui/window.py" line="336" />
+        <location filename="../../ui/window.py" line="335" />
         <source>Settings</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="334" />
+        <location filename="../../ui/window.py" line="341" />
         <source>Preferences</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="337" />
+        <location filename="../../ui/window.py" line="344" />
         <source>Exit</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="382" />
+        <location filename="../../ui/window.py" line="389" />
         <source>Connected to %s</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="382" />
+        <location filename="../../ui/window.py" line="389" />
         <source>Zero Trust enrolled</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="395" />
+        <location filename="../../ui/window.py" line="402" />
         <source>Accept the terms before continuing.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="401" />
+        <location filename="../../ui/window.py" line="408" />
         <source>Please enter an organization name.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="513" />
-        <location filename="../../ui/window.py" line="417" />
+        <location filename="../../ui/window.py" line="520" />
+        <location filename="../../ui/window.py" line="424" />
         <source>CONNECTING</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="513" />
-        <location filename="../../ui/window.py" line="417" />
+        <location filename="../../ui/window.py" line="520" />
+        <location filename="../../ui/window.py" line="424" />
         <source>DISCONNECTING</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="515" />
-        <location filename="../../ui/window.py" line="418" />
+        <location filename="../../ui/window.py" line="522" />
+        <location filename="../../ui/window.py" line="425" />
         <source>Please wait...</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="429" />
+        <location filename="../../ui/window.py" line="436" />
         <source>Registration failed.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../ui/window.py" line="432" />
+        <location filename="../../ui/window.py" line="439" />
         <source>The requested action failed.</source>
         <translation type="unfinished" />
     </message>

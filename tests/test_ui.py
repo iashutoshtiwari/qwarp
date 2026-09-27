@@ -708,3 +708,19 @@ def test_status_description_layout_word_wraps_without_overlap(qapp, manager):
         assert desc_bottom < settings_top, f"status_desc overlaps footer: {desc_bottom} >= {settings_top}"
 
     window.deleteLater()
+
+
+def test_mode_label_expands_for_large_desktop_fonts(qapp, manager):
+    from PyQt6.QtGui import QFont
+
+    window = WarpWindow(manager)
+    window.setFont(QFont("Sans", 16))
+    window._update_ui_state(WarpState.CONNECTED)
+    window.show()
+    QCoreApplication.processEvents()
+    try:
+        assert window.status_mode.height() >= window.status_mode.fontMetrics().height()
+        assert window.status_mode.sizePolicy().retainSizeWhenHidden()
+    finally:
+        window.hide()
+        window.deleteLater()

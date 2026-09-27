@@ -431,3 +431,23 @@ def test_ipc_rejects_public_socket(isolated_ipc):
         assert path.exists()
     finally:
         contender.close()
+
+
+@pytest.mark.parametrize("exit_code", [0, 1])
+def test_unable_payload_is_never_successful_registration_or_settings(exit_code):
+    import json
+
+    payload = {"status": "Unable", "reason": {"RegistrationMissing": {}}}
+    with patch("qwarp.utils.process.run_command") as run:
+
+        def response(argv, **kwargs):
+            if "--json" in argv:
+                return subprocess.CompletedProcess(argv, exit_code, json.dumps(payload), "")
+            return subprocess.CompletedProcess(argv, 1, "", "Service unavailable")
+
+        run.side_effect = response
+        engine = WarpEngine()
+        assert engine.register() == (False, "Registration check failed")
+        assert engine.get_settings()["available"] is False
+        assert engine.status() == WarpState.UNREGISTERED
+        assert not any("new" in call.args[0] for call in run.call_args_list)
