@@ -73,8 +73,8 @@
         <translation>アカウントタイプ:</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="1026" />
-        <location filename="../../ui/settings.py" line="1020" />
+        <location filename="../../ui/settings.py" line="1030" />
+        <location filename="../../ui/settings.py" line="1024" />
         <location filename="../../ui/settings.py" line="206" />
         <location filename="../../ui/settings.py" line="189" />
         <source>Show</source>
@@ -111,7 +111,7 @@
         <translation>データを更新</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="826" />
+        <location filename="../../ui/settings.py" line="830" />
         <location filename="../../ui/settings.py" line="227" />
         <source>Delete Registration</source>
         <translation>登録を削除</translation>
@@ -143,7 +143,7 @@
         <translation>更新</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="813" />
+        <location filename="../../ui/settings.py" line="817" />
         <location filename="../../ui/settings.py" line="267" />
         <source>Leave Organization</source>
         <translation>組織から脱退</translation>
@@ -224,13 +224,13 @@
         <translation>トンネルプロトコル:</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="799" />
+        <location filename="../../ui/settings.py" line="803" />
         <location filename="../../ui/settings.py" line="324" />
         <source>MASQUE (Default)</source>
         <translation>MASQUE（デフォルト）</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="800" />
+        <location filename="../../ui/settings.py" line="804" />
         <location filename="../../ui/settings.py" line="325" />
         <source>WireGuard (Legacy)</source>
         <translation>WireGuard（レガシー）</translation>
@@ -480,7 +480,7 @@
         <translation>非アクティブ</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="757" />
+        <location filename="../../ui/settings.py" line="761" />
         <location filename="../../ui/settings.py" line="622" />
         <source>Unavailable</source>
         <translation>利用不可</translation>
@@ -506,62 +506,62 @@
         <translation>概要</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="756" />
+        <location filename="../../ui/settings.py" line="760" />
         <source>Registered</source>
         <translation>登録済み</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="756" />
+        <location filename="../../ui/settings.py" line="760" />
         <source>Not registered</source>
         <translation>未登録</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="778" />
+        <location filename="../../ui/settings.py" line="782" />
         <source>Installed client version: %s</source>
         <translation>インストール済みクライアントのバージョン: %s</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="785" />
+        <location filename="../../ui/settings.py" line="789" />
         <source>Managed by your organization. This setting is controlled by your organization's Zero Trust policy.</source>
         <translation>組織によって管理されています。この設定は組織の Zero Trust ポリシーによって制御されます。</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="814" />
+        <location filename="../../ui/settings.py" line="818" />
         <source>Are you sure you want to leave this organization?</source>
         <translation>この組織から脱退してもよろしいですか？</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="827" />
+        <location filename="../../ui/settings.py" line="831" />
         <source>Delete this WARP registration? You will need to register again before reconnecting.</source>
         <translation>この WARP 登録を削除しますか？再接続する前に再度登録する必要があります。</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="876" />
+        <location filename="../../ui/settings.py" line="880" />
         <source>Connection settings are unavailable.</source>
         <translation>接続設定は利用できません。</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="997" />
-        <location filename="../../ui/settings.py" line="971" />
+        <location filename="../../ui/settings.py" line="1001" />
+        <location filename="../../ui/settings.py" line="975" />
         <source>The requested action failed.</source>
         <translation>要求されたアクションは失敗しました。</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="1026" />
-        <location filename="../../ui/settings.py" line="1020" />
+        <location filename="../../ui/settings.py" line="1030" />
+        <location filename="../../ui/settings.py" line="1024" />
         <source>Hide</source>
         <translation>非表示</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="1031" />
+        <location filename="../../ui/settings.py" line="1035" />
         <source>Unknown</source>
         <translation>不明</translation>
     </message>
 </context><context>
     <name>WarpStateManager</name>
     <message>
-        <location filename="../../core/state.py" line="547" />
-        <location filename="../../core/state.py" line="459" />
+        <location filename="../../core/state.py" line="549" />
+        <location filename="../../core/state.py" line="461" />
         <source>Another WARP action is already in progress.</source>
         <translation>別の WARP アクションが既に進行中です。</translation>
     </message>
@@ -660,13 +660,13 @@
         <translation>Cloudflare アプリケーション利用規約とアプリケーションプライバシーポリシー</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="316" />
+        <location filename="../../ui/window.py" line="323" />
         <location filename="../../ui/window.py" line="169" />
         <source>Continue</source>
         <translation>続行</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="315" />
+        <location filename="../../ui/window.py" line="322" />
         <location filename="../../ui/window.py" line="174" />
         <source>Connect to an organization</source>
         <translation>組織に接続</translation>
@@ -714,91 +714,91 @@
         <translation>Daemon に接続中...</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="285" />
+        <location filename="../../ui/window.py" line="293" />
         <source>Complete organization sign-in</source>
         <translation>組織へのサインインを完了</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="291" />
+        <location filename="../../ui/window.py" line="299" />
         <source>Complete authentication in your browser to enroll this device.</source>
         <translation>ブラウザで認証を完了してこのデバイスを登録してください。</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="311" />
+        <location filename="../../ui/window.py" line="318" />
         <source>Connect to your organization</source>
         <translation>組織に接続</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="312" />
+        <location filename="../../ui/window.py" line="319" />
         <source>Enter the organization name provided by your administrator.</source>
         <translation>管理者から提供された組織名を入力してください。</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="313" />
+        <location filename="../../ui/window.py" line="320" />
         <source>Use personal setup</source>
         <translation>個人用の設定を使用</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="329" />
-        <location filename="../../ui/window.py" line="328" />
+        <location filename="../../ui/window.py" line="336" />
+        <location filename="../../ui/window.py" line="335" />
         <source>Settings</source>
         <translation>設定</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="334" />
+        <location filename="../../ui/window.py" line="341" />
         <source>Preferences</source>
         <translation>設定</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="337" />
+        <location filename="../../ui/window.py" line="344" />
         <source>Exit</source>
         <translation>終了</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="382" />
+        <location filename="../../ui/window.py" line="389" />
         <source>Connected to %s</source>
         <translation>%s に接続済み</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="382" />
+        <location filename="../../ui/window.py" line="389" />
         <source>Zero Trust enrolled</source>
         <translation>Zero Trust に登録済み</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="395" />
+        <location filename="../../ui/window.py" line="402" />
         <source>Accept the terms before continuing.</source>
         <translation>続行する前に規約に同意してください。</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="401" />
+        <location filename="../../ui/window.py" line="408" />
         <source>Please enter an organization name.</source>
         <translation>組織名を入力してください。</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="513" />
-        <location filename="../../ui/window.py" line="417" />
+        <location filename="../../ui/window.py" line="520" />
+        <location filename="../../ui/window.py" line="424" />
         <source>CONNECTING</source>
         <translation>接続中</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="513" />
-        <location filename="../../ui/window.py" line="417" />
+        <location filename="../../ui/window.py" line="520" />
+        <location filename="../../ui/window.py" line="424" />
         <source>DISCONNECTING</source>
         <translation>切断中</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="515" />
-        <location filename="../../ui/window.py" line="418" />
+        <location filename="../../ui/window.py" line="522" />
+        <location filename="../../ui/window.py" line="425" />
         <source>Please wait...</source>
         <translation>お待ちください...</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="429" />
+        <location filename="../../ui/window.py" line="436" />
         <source>Registration failed.</source>
         <translation>登録に失敗しました。</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="432" />
+        <location filename="../../ui/window.py" line="439" />
         <source>The requested action failed.</source>
         <translation>要求されたアクションは失敗しました。</translation>
     </message>

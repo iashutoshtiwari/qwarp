@@ -1,3 +1,12 @@
+qwarp (0.10.1-1) unstable; urgency=medium
+
+  * Add trusted executable path validation (SEC-01).
+  * Add atomic single-instance ownership and IPC boundaries (SEC-02, SEC-04).
+  * Refine toggle appearance, status typography, and layout stability.
+  * Bound subprocess execution and sanitize diagnostics logs (ROB-01, PRIV-04, PERF-02).
+
+ -- Ashutosh Tiwari <contact@ashutoshtiwari.dev>  Sun, 27 Sep 2026 12:00:00 +0000
+
 qwarp (0.10.0-1) unstable; urgency=medium
 
   * Add split tunneling, local domain fallback DNS, and tray mode switching.

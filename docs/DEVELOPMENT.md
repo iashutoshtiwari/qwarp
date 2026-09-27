@@ -1,41 +1,4 @@
-# AGENTS.md
-
-This file is the repository-wide guide for coding agents working on QWarp. It
-applies to the whole tree.
-
-## Agent handoff
-
-These instructions are the shared operating contract for every LLM or coding
-agent that works on QWarp. Agent-specific defaults must not override them.
-
-At the beginning of each task, read this file, inspect `git status`, confirm the
-current branch and upstream, and review the relevant code and recent history
-before editing. Do not assume the checkout is clean, discard unrelated changes,
-expose local credentials, or reuse a release attestation for a different
-commit.
-
-The handoff baseline is:
-
-- `v0.9.1` / Arch `0.9.1-1` is already published from merge commit
-  `06ad02ead0543b709eba4feed8111aefb4b0f3ec`. Published tags and release
-  assets are immutable.
-- The AUR `qwarp` package depends on the separately installed
-  `cloudflare-warp-bin` package and owns no Cloudflare binaries or services.
-- Cloudflare WARP 2026.6 and 2026.7 compatibility includes `Missing
-  registration`, `WarpProxy on port ...`, resolver-based Families values,
-  typed current and legacy settings keys, and per-command `--accept-tos`
-  handling. Preserve these variants and the existing registration during
-  Terms acceptance.
-- GitHub release and AUR credentials live only in the protected GitHub
-  `release` environment. Never copy them into the checkout, print them, or use
-  them outside an explicitly authorized release.
-
-Use the repository `qwarp` skill for features, fixes, GitHub issues, and
-releases intended for the next release. Work with one main agent by default;
-do not create permanent role agents. A temporary read-only subagent is allowed
-only for genuinely independent investigations that would otherwise add
-substantial noisy context, never for routine planning, coding, testing,
-documentation, or release work.
+# QWarp engineering guide
 
 ## Project priorities
 
@@ -96,7 +59,7 @@ From the repository root, install the editable package and development tools:
 python -m pip install -e ".[dev]"
 ```
 
-The `qwarp` skill defines the pre-review quality gates. `scripts/format.sh` is
+The [release guide](RELEASING.md) defines the pre-review quality gates. `scripts/format.sh` is
 a mutating helper (`ruff check --fix` followed by `ruff format`); run it only
 when formatting changes are intended.
 
@@ -158,7 +121,7 @@ translations for languages you do not know. Release and Arch builds compile the
 
 ## Packaging invariants
 
-- `PKGBUILD` packages only the QWarp GUI and declares `cloudflare-warp-bin` as a
+- `packaging/arch/PKGBUILD` packages only the QWarp GUI and declares `cloudflare-warp-bin` as a
   hard runtime dependency. The dependency owns `warp-cli`, `warp-svc`, its
   systemd units, capabilities, and other official client files. QWarp packaging
   must never install, patch, remove, or replace those files.
@@ -167,10 +130,14 @@ translations for languages you do not know. Release and Arch builds compile the
   the supported build. Do not recreate them or assume a local PKGBUILD exists.
 - `scripts/build_source_archive.sh` uses an explicit source allowlist and
   deterministic tar metadata. Keep new required source files in that allowlist.
-  `PKGBUILD` and `.SRCINFO` intentionally stay outside the source archive so
+  `packaging/arch/PKGBUILD` and `packaging/arch/.SRCINFO` stay outside the source archive so
   the archive checksum can be recorded in them without a circular input.
 - Keep GitHub Actions pinned to audited commit SHAs. Do not add tag-triggered
   publishing or post-tag content generation.
+
+Arch metadata lives in `packaging/arch/`; CI copies it and the source archive
+into a temporary build directory. AUR publication copies the metadata to the
+AUR repository root under the conventional `PKGBUILD` and `.SRCINFO` names.
 
 CI's Arch job builds from the generated source archive and asserts that the
 result owns QWarp files only. Any package containing `warp-cli`, `warp-svc`, a
@@ -178,5 +145,5 @@ WARP systemd unit, a capability hook, an install hook, or a conflict with
 `cloudflare-warp-bin` is a release blocker.
 
 Generated `.qm`, wheel, PyInstaller, makepkg, and package artifacts are ignored
-and must not be committed. Track source `.ts` catalogs, `.SRCINFO`, application
+and must not be committed. Track source `.ts` catalogs, `packaging/arch/.SRCINFO`, application
 assets, and packaging metadata when they intentionally change.

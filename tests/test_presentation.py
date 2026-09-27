@@ -34,13 +34,13 @@ def test_setup_and_organization_enrollment_states_are_distinct():
 @pytest.mark.parametrize(
     ("mode", "expected_mode", "primary", "label"),
     [
-        ("warp", OperatingMode.WARP, "Connected", "WARP"),
-        ("doh", OperatingMode.DNS_ONLY, "Active", "DNS only"),
-        ("dot", OperatingMode.DNS_ONLY, "Active", "DNS only"),
-        ("warp+doh", OperatingMode.WARP_DNS, "Connected", "WARP + DNS"),
-        ("warp+dot", OperatingMode.WARP_DNS, "Connected", "WARP + DNS"),
-        ("proxy", OperatingMode.PROXY, "Connected", "Proxy"),
-        ("tunnel_only", OperatingMode.TUNNEL_ONLY, "Connected", "Tunnel only"),
+        ("warp", OperatingMode.WARP, "CONNECTED", "WARP"),
+        ("doh", OperatingMode.DNS_ONLY, "ACTIVE", "DNS only"),
+        ("dot", OperatingMode.DNS_ONLY, "ACTIVE", "DNS only"),
+        ("warp+doh", OperatingMode.WARP_DNS, "CONNECTED", "WARP + DNS"),
+        ("warp+dot", OperatingMode.WARP_DNS, "CONNECTED", "WARP + DNS"),
+        ("proxy", OperatingMode.PROXY, "CONNECTED", "Proxy"),
+        ("tunnel_only", OperatingMode.TUNNEL_ONLY, "CONNECTED", "Tunnel only"),
     ],
 )
 def test_connected_mode_presentation(mode, expected_mode, primary, label):
@@ -90,13 +90,13 @@ def test_unknown_future_mode_is_not_presented_as_warp():
     presentation = presentation_for(WarpState.CONNECTED, {"mode": "future-mode"})
 
     assert presentation.mode == OperatingMode.UNKNOWN
-    assert presentation.primary_status == "Connected"
+    assert presentation.primary_status == "CONNECTED"
     assert presentation.mode_label == "Unknown mode"
 
 
 def test_no_network_has_its_own_presentation():
     presentation = presentation_for(WarpState.NO_NETWORK)
 
-    assert presentation.primary_status == "No network"
+    assert presentation.primary_status == "NO NETWORK"
     assert presentation.description == "Waiting for Internet connectivity."
     assert presentation.connect_enabled is False

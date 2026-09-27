@@ -10,11 +10,9 @@ trap 'rm -rf "$source_stage"' EXIT
 mkdir -p "$source_stage/qwarp-$version" "$(dirname "$output")"
 
 source_items=(
-    .agents
-    .codex
-    AGENTS.md
     CHANGELOG.md
     CONTRIBUTING.md
+    docs
     LICENSE
     LICENSES
     MANIFEST.in

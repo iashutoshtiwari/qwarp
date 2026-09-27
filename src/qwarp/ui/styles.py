@@ -172,12 +172,15 @@ QLabel[styleClass="header"] {{
 
 QLabel[styleClass="title_connected"] {{
     color: {colors.text_connected};
+    letter-spacing: 1.5px;
 }}
 QLabel[styleClass="title_disconnected"] {{
     color: palette(placeholder-text);
+    letter-spacing: 1.5px;
 }}
 QLabel[styleClass="title_error"] {{
     color: {colors.text_error};
+    letter-spacing: 1.5px;
 }}
 
 QLabel[styleClass="desc_default"] {{

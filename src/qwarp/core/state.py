@@ -101,7 +101,7 @@ class QueryWorker(QRunnable):
         try:
             result = self.query()
         except Exception:
-            logger.exception("Background query failed")
+            logger.error("Background query failed")
             result = {}
         self.signals.result_ready.emit(result)
 
@@ -178,13 +178,13 @@ class ActionWorker(QRunnable):
                     success, message = callback(argument)
             else:
                 success, message = False, f"Unknown action: {self.action}"
-        except Exception as exc:
+        except Exception:
             if self.action == "set_license":
                 logger.error("Unhandled exception while applying a license")
                 success, message = False, "License update failed"
             else:
-                logger.exception("Unhandled exception in action '%s'", self.action)
-                success, message = False, str(exc) or "Unknown error"
+                logger.error("Unhandled exception in action '%s'", self.action)
+                success, message = False, "Command execution failed"
 
         self.signals.completed.emit(
             self.action,
@@ -206,9 +206,9 @@ class CallableActionWorker(QRunnable):
     def run(self) -> None:
         try:
             success, message = self.callback()
-        except Exception as exc:
-            logger.exception("Unhandled exception in platform action '%s'", self.action)
-            success, message = False, str(exc) or "Unknown error"
+        except Exception:
+            logger.error("Unhandled exception in platform action '%s'", self.action)
+            success, message = False, "Command execution failed"
         self.signals.completed.emit(
             self.action,
             success,
@@ -265,6 +265,7 @@ class WarpStateManager(QObject):
         self._connect_previous_state: Optional[WarpState] = None
         self._connect_refresh_pending = False
         self._shutting_down = False
+        self._platform_cancel = threading.Event()
 
         self.status_thread = StatusWorker(self.engine, interval_ms=poll_interval_ms)
         self.status_thread.signals.result_ready.connect(self._on_status_result)
@@ -289,6 +290,7 @@ class WarpStateManager(QObject):
 
     def shutdown(self) -> None:
         self._shutting_down = True
+        self._platform_cancel.set()
         self.query_pool.clear()
         self.action_pool.clear()
         self.platform_pool.clear()
@@ -572,7 +574,11 @@ class WarpStateManager(QObject):
     def request_set_taskbar_suppressed(self, suppressed: bool, restore_running: bool = False) -> None:
         from qwarp.platform.taskbar import restore_taskbar, suppress_taskbar
 
-        callback = suppress_taskbar if suppressed else lambda: restore_taskbar(start=restore_running)
+        callback = (
+            (lambda: suppress_taskbar(cancel_event=self._platform_cancel))
+            if suppressed
+            else lambda: restore_taskbar(start=restore_running, cancel_event=self._platform_cancel)
+        )
         self._dispatch_platform_action(ActionId.SET_TASKBAR_SUPPRESSED, callback)
 
     # ------------------------------------------------------------------
@@ -613,7 +619,7 @@ class WarpStateManager(QObject):
             try:
                 result = query()
             except Exception:
-                logger.exception("Background network diagnostics query failed")
+                logger.error("Background network diagnostics query failed")
                 result = {}
             results.append(result if isinstance(result, dict) else {})
         return results[0], results[1], results[2]
@@ -640,7 +646,7 @@ class WarpStateManager(QObject):
             try:
                 value = query()
             except Exception:
-                logger.exception("Background connection statistics query failed")
+                logger.error("Background connection statistics query failed")
                 value = {}
             results.append(value if isinstance(value, dict) else {})
         return results[0], results[1]
@@ -680,12 +686,11 @@ class WarpStateManager(QObject):
         worker.signals.result_ready.connect(self._on_platform_settings_result)
         self.platform_pool.start(worker)
 
-    @staticmethod
-    def _query_platform_settings() -> dict[str, bool]:
+    def _query_platform_settings(self) -> dict[str, bool]:
         from qwarp.platform.autostart import is_autostart_enabled
         from qwarp.platform.taskbar import get_taskbar_state
 
-        taskbar_masked, taskbar_running = get_taskbar_state()
+        taskbar_masked, taskbar_running = get_taskbar_state(cancel_event=self._platform_cancel)
 
         return {
             "autostart_enabled": is_autostart_enabled(),

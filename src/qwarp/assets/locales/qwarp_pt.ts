@@ -73,8 +73,8 @@
         <translation>Tipo de Conta:</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="1026" />
-        <location filename="../../ui/settings.py" line="1020" />
+        <location filename="../../ui/settings.py" line="1030" />
+        <location filename="../../ui/settings.py" line="1024" />
         <location filename="../../ui/settings.py" line="206" />
         <location filename="../../ui/settings.py" line="189" />
         <source>Show</source>
@@ -111,7 +111,7 @@
         <translation>Atualizar Dados</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="826" />
+        <location filename="../../ui/settings.py" line="830" />
         <location filename="../../ui/settings.py" line="227" />
         <source>Delete Registration</source>
         <translation>Excluir Registro</translation>
@@ -143,7 +143,7 @@
         <translation>Atualizar</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="813" />
+        <location filename="../../ui/settings.py" line="817" />
         <location filename="../../ui/settings.py" line="267" />
         <source>Leave Organization</source>
         <translation>Sair da organização</translation>
@@ -224,13 +224,13 @@
         <translation>Protocolo de túnel:</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="799" />
+        <location filename="../../ui/settings.py" line="803" />
         <location filename="../../ui/settings.py" line="324" />
         <source>MASQUE (Default)</source>
         <translation>MASQUE (Predefinido)</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="800" />
+        <location filename="../../ui/settings.py" line="804" />
         <location filename="../../ui/settings.py" line="325" />
         <source>WireGuard (Legacy)</source>
         <translation>WireGuard (Legado)</translation>
@@ -480,7 +480,7 @@
         <translation>Inativo</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="757" />
+        <location filename="../../ui/settings.py" line="761" />
         <location filename="../../ui/settings.py" line="622" />
         <source>Unavailable</source>
         <translation>Indisponível</translation>
@@ -506,62 +506,62 @@
         <translation>Sobre</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="756" />
+        <location filename="../../ui/settings.py" line="760" />
         <source>Registered</source>
         <translation>Registado</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="756" />
+        <location filename="../../ui/settings.py" line="760" />
         <source>Not registered</source>
         <translation>Não registado</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="778" />
+        <location filename="../../ui/settings.py" line="782" />
         <source>Installed client version: %s</source>
         <translation>Versão do cliente instalada: %s</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="785" />
+        <location filename="../../ui/settings.py" line="789" />
         <source>Managed by your organization. This setting is controlled by your organization's Zero Trust policy.</source>
         <translation>Gerido pela sua organização. Esta definição é controlada pela política Zero Trust da sua organização.</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="814" />
+        <location filename="../../ui/settings.py" line="818" />
         <source>Are you sure you want to leave this organization?</source>
         <translation>Tem a certeza de que deseja sair desta organização?</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="827" />
+        <location filename="../../ui/settings.py" line="831" />
         <source>Delete this WARP registration? You will need to register again before reconnecting.</source>
         <translation>Eliminar este registo do WARP? Terá de se registar novamente antes de restabelecer a ligação.</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="876" />
+        <location filename="../../ui/settings.py" line="880" />
         <source>Connection settings are unavailable.</source>
         <translation>As definições de ligação estão indisponíveis.</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="997" />
-        <location filename="../../ui/settings.py" line="971" />
+        <location filename="../../ui/settings.py" line="1001" />
+        <location filename="../../ui/settings.py" line="975" />
         <source>The requested action failed.</source>
         <translation>A ação solicitada falhou.</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="1026" />
-        <location filename="../../ui/settings.py" line="1020" />
+        <location filename="../../ui/settings.py" line="1030" />
+        <location filename="../../ui/settings.py" line="1024" />
         <source>Hide</source>
         <translation>Ocultar</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="1031" />
+        <location filename="../../ui/settings.py" line="1035" />
         <source>Unknown</source>
         <translation>Desconhecido</translation>
     </message>
 </context><context>
     <name>WarpStateManager</name>
     <message>
-        <location filename="../../core/state.py" line="547" />
-        <location filename="../../core/state.py" line="459" />
+        <location filename="../../core/state.py" line="549" />
+        <location filename="../../core/state.py" line="461" />
         <source>Another WARP action is already in progress.</source>
         <translation>Outra ação do WARP já se encontra em curso.</translation>
     </message>
@@ -660,13 +660,13 @@
         <translation>Termos da Aplicação e Política de Privacidade da Cloudflare</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="316" />
+        <location filename="../../ui/window.py" line="323" />
         <location filename="../../ui/window.py" line="169" />
         <source>Continue</source>
         <translation>Continuar</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="315" />
+        <location filename="../../ui/window.py" line="322" />
         <location filename="../../ui/window.py" line="174" />
         <source>Connect to an organization</source>
         <translation>Ligar a uma organização</translation>
@@ -714,91 +714,91 @@
         <translation>Conectando ao daemon...</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="285" />
+        <location filename="../../ui/window.py" line="293" />
         <source>Complete organization sign-in</source>
         <translation>Concluir início de sessão da organização</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="291" />
+        <location filename="../../ui/window.py" line="299" />
         <source>Complete authentication in your browser to enroll this device.</source>
         <translation>Conclua a autenticação no seu navegador para inscrever este dispositivo.</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="311" />
+        <location filename="../../ui/window.py" line="318" />
         <source>Connect to your organization</source>
         <translation>Ligar à sua organização</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="312" />
+        <location filename="../../ui/window.py" line="319" />
         <source>Enter the organization name provided by your administrator.</source>
         <translation>Introduza o nome da organização fornecido pelo seu administrador.</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="313" />
+        <location filename="../../ui/window.py" line="320" />
         <source>Use personal setup</source>
         <translation>Utilizar configuração pessoal</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="329" />
-        <location filename="../../ui/window.py" line="328" />
+        <location filename="../../ui/window.py" line="336" />
+        <location filename="../../ui/window.py" line="335" />
         <source>Settings</source>
         <translation>Definições</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="334" />
+        <location filename="../../ui/window.py" line="341" />
         <source>Preferences</source>
         <translation>Preferências</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="337" />
+        <location filename="../../ui/window.py" line="344" />
         <source>Exit</source>
         <translation>Sair</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="382" />
+        <location filename="../../ui/window.py" line="389" />
         <source>Connected to %s</source>
         <translation>Ligado a %s</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="382" />
+        <location filename="../../ui/window.py" line="389" />
         <source>Zero Trust enrolled</source>
         <translation>Inscrito no Zero Trust</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="395" />
+        <location filename="../../ui/window.py" line="402" />
         <source>Accept the terms before continuing.</source>
         <translation>Aceite os termos antes de continuar.</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="401" />
+        <location filename="../../ui/window.py" line="408" />
         <source>Please enter an organization name.</source>
         <translation>Por favor, introduza um nome de organização.</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="513" />
-        <location filename="../../ui/window.py" line="417" />
+        <location filename="../../ui/window.py" line="520" />
+        <location filename="../../ui/window.py" line="424" />
         <source>CONNECTING</source>
         <translation>CONECTANDO</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="513" />
-        <location filename="../../ui/window.py" line="417" />
+        <location filename="../../ui/window.py" line="520" />
+        <location filename="../../ui/window.py" line="424" />
         <source>DISCONNECTING</source>
         <translation>DESCONECTANDO</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="515" />
-        <location filename="../../ui/window.py" line="418" />
+        <location filename="../../ui/window.py" line="522" />
+        <location filename="../../ui/window.py" line="425" />
         <source>Please wait...</source>
         <translation>Por favor, aguarde...</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="429" />
+        <location filename="../../ui/window.py" line="436" />
         <source>Registration failed.</source>
         <translation>Falha no registo.</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="432" />
+        <location filename="../../ui/window.py" line="439" />
         <source>The requested action failed.</source>
         <translation>A ação solicitada falhou.</translation>
     </message>

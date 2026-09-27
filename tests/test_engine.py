@@ -1,7 +1,6 @@
 import json
 import logging
 import subprocess
-import sys
 import threading
 import time
 from unittest.mock import MagicMock, patch
@@ -41,19 +40,19 @@ def json_output(data: object, returncode: int = 0) -> MagicMock:
         ),
     ],
 )
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_json_status_parsing(mock_run, json_data, expected):
     mock_run.return_value = json_output(json_data)
     assert WarpEngine().status() == expected
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_json_status_unknown_value(mock_run):
     mock_run.return_value = json_output({"status": "SomethingNew"})
     assert WarpEngine().status() == WarpState.UNKNOWN
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_json_status_error_missing_registration(mock_run):
     """JSON error response with MissingRegistration code."""
     mock_run.return_value = json_output(
@@ -63,14 +62,14 @@ def test_json_status_error_missing_registration(mock_run):
     assert WarpEngine().status() == WarpState.UNREGISTERED
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_plain_terms_response_is_not_misreported_as_daemon_failure(mock_run):
     """Current clients can require Terms before returning any JSON payload."""
     mock_run.return_value = process(returncode=1, stderr="Accept the Terms of Service with --accept-tos")
     assert WarpEngine().status() == WarpState.TERMS_REQUIRED
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_json_status_policy_restriction_is_actionable(mock_run):
     mock_run.return_value = json_output(
         {"code": "PolicyRestricted", "error": "This action is managed by your organization"}, returncode=1
@@ -78,7 +77,7 @@ def test_json_status_policy_restriction_is_actionable(mock_run):
     assert WarpEngine().status() == WarpState.POLICY_RESTRICTED
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_json_status_authentication_required_is_actionable(mock_run):
     mock_run.return_value = json_output(
         {"code": "AuthenticationRequired", "error": "Reauthentication required"}, returncode=1
@@ -86,7 +85,7 @@ def test_json_status_authentication_required_is_actionable(mock_run):
     assert WarpEngine().status() == WarpState.AUTHENTICATION_REQUIRED
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_json_status_no_network_is_actionable(mock_run):
     mock_run.return_value = json_output(
         {"code": "NetworkUnavailable", "error": "No network connection is available."}, returncode=1
@@ -104,7 +103,7 @@ def test_status_falls_back_to_validated_text_without_matching_disconnected_as_co
     engine._run_command.assert_called_once_with("status", quiet=True)
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_json_status_daemon_unavailable_is_distinguished(mock_run):
     mock_run.side_effect = [
         json_output({"code": "DaemonUnavailable", "error": "daemon IPC unavailable"}, returncode=1),
@@ -113,7 +112,7 @@ def test_json_status_daemon_unavailable_is_distinguished(mock_run):
     assert WarpEngine().status() == WarpState.DAEMON_ERROR
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_json_status_unable_with_non_registration_reason(mock_run):
     """Unable status with a non-registration reason checks service state."""
     mock_run.side_effect = [
@@ -123,7 +122,7 @@ def test_json_status_unable_with_non_registration_reason(mock_run):
     assert WarpEngine().status() == WarpState.SERVICE_STOPPED
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_failed_status_distinguishes_starting_service(mock_run):
     mock_run.side_effect = [
         process(stdout="not json", returncode=1),
@@ -137,7 +136,7 @@ def test_failed_status_distinguishes_starting_service(mock_run):
 # -----------------------------------------------------------------------
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_failed_status_distinguishes_stopped_service(mock_run):
     """When JSON parsing returns None (e.g. timeout), check service state."""
     mock_run.side_effect = [
@@ -147,7 +146,7 @@ def test_failed_status_distinguishes_stopped_service(mock_run):
     assert WarpEngine().status() == WarpState.SERVICE_STOPPED
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_failed_status_maps_inspection_failure_to_transient_error(mock_run):
     mock_run.side_effect = [
         subprocess.TimeoutExpired(cmd="warp-cli", timeout=2),
@@ -156,17 +155,17 @@ def test_failed_status_maps_inspection_failure_to_transient_error(mock_run):
     assert WarpEngine().status() == WarpState.TRANSIENT_ERROR
 
 
-@patch("subprocess.run", side_effect=FileNotFoundError)
+@patch("qwarp.utils.process.run_command", side_effect=FileNotFoundError)
 def test_missing_cli_is_distinguished(_mock_run):
     assert WarpEngine().status() == WarpState.CLI_MISSING
 
 
-@patch("subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="warp-cli", timeout=2))
+@patch("qwarp.utils.process.run_command", side_effect=subprocess.TimeoutExpired(cmd="warp-cli", timeout=2))
 def test_timeout_is_reported(_mock_run):
     assert WarpEngine().connect() == (False, "Command timeout")
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_malformed_json_falls_back_without_crashing(mock_run):
     mock_run.side_effect = [
         process(stdout="{not-json"),
@@ -175,19 +174,19 @@ def test_malformed_json_falls_back_without_crashing(mock_run):
     assert WarpEngine().status() == WarpState.SERVICE_STOPPED
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_empty_status_response_is_unknown_without_crashing(mock_run):
     mock_run.return_value = process(stdout="")
     assert WarpEngine().status() == WarpState.UNKNOWN
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_scalar_json_status_is_unknown_without_crashing(mock_run):
     mock_run.return_value = json_output(True)
     assert WarpEngine().status() == WarpState.UNKNOWN
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_repeated_malformed_status_warns_once(mock_run, caplog):
     mock_run.side_effect = [
         process(stdout="not-json"),
@@ -205,20 +204,20 @@ def test_repeated_malformed_status_warns_once(mock_run, caplog):
     assert len(warning_records) == 1
 
 
-def test_interruptible_command_is_cancelled_promptly():
+def test_interruptible_command_is_cancelled_promptly(synthetic_python):
     engine = WarpEngine()
     result = []
     worker = threading.Thread(
         target=lambda: result.append(
-            engine._run_interruptible_process(
-                [sys.executable, "-c", "import time; time.sleep(30)"],
+            engine._run_process(
+                [synthetic_python, "-c", "import time; time.sleep(30)"],
                 timeout=30,
             )
         )
     )
     worker.start()
     deadline = time.monotonic() + 2
-    while engine._active_process is None and time.monotonic() < deadline:
+    while not worker.is_alive() and time.monotonic() < deadline:
         time.sleep(0.01)
     engine.cancel_pending_commands()
     worker.join(2)
@@ -236,7 +235,7 @@ def test_service_repair_requires_trusted_executables(_mock_resolve):
 # -----------------------------------------------------------------------
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_actions_forward_expected_arguments(mock_run):
     mock_run.return_value = process(stdout="ok")
     engine = WarpEngine()
@@ -248,7 +247,7 @@ def test_actions_forward_expected_arguments(mock_run):
     assert mock_run.call_args.args[0] == ["warp-cli", "dns", "families", "full"]
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_accepted_terms_are_forwarded_to_future_commands(mock_run):
     mock_run.return_value = process(stdout="ok")
     engine = WarpEngine(accept_tos=True)
@@ -257,7 +256,7 @@ def test_accepted_terms_are_forwarded_to_future_commands(mock_run):
     assert mock_run.call_args.args[0] == ["warp-cli", "--accept-tos", "connect"]
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_new_actions_forward_expected_arguments(mock_run):
     """Test new v0.9.0 command argument forwarding."""
     mock_run.return_value = process(stdout="ok")
@@ -281,7 +280,7 @@ def test_new_actions_forward_expected_arguments(mock_run):
 # -----------------------------------------------------------------------
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_register_reuses_existing_registration_after_accepting_terms(mock_run):
     """JSON registration show returns valid data — registration preserved."""
     mock_run.return_value = json_output({"account_type": "Free", "device_id": "abc123"})
@@ -298,7 +297,7 @@ def test_register_reuses_existing_registration_after_accepting_terms(mock_run):
         {"code": "MissingRegistration", "error": "No registration"},
     ],
 )
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_register_creates_registration_only_when_missing(mock_run, error_data):
     mock_run.side_effect = [
         json_output(error_data, returncode=1),
@@ -311,7 +310,7 @@ def test_register_creates_registration_only_when_missing(mock_run, error_data):
     assert mock_run.call_args_list[1].args[0] == ["warp-cli", "--accept-tos", "registration", "new"]
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_register_enables_terms_for_subsequent_status_calls(mock_run):
     mock_run.side_effect = [
         json_output({"account_type": "Free"}),  # registration show
@@ -325,7 +324,7 @@ def test_register_enables_terms_for_subsequent_status_calls(mock_run):
     assert "--accept-tos" in mock_run.call_args.args[0]
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_register_does_not_replace_registration_on_unexpected_inspection_failure(mock_run):
     """Unexpected error from registration show — do not create new registration."""
     mock_run.return_value = json_output(
@@ -346,7 +345,7 @@ def test_register_does_not_replace_registration_on_unexpected_inspection_failure
         json_output("unexpected scalar"),
     ],
 )
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_register_never_creates_after_inconclusive_inspection(mock_run, inspection_failure):
     mock_run.return_value = inspection_failure
     if isinstance(inspection_failure, BaseException):
@@ -358,7 +357,7 @@ def test_register_never_creates_after_inconclusive_inspection(mock_run, inspecti
     mock_run.assert_called_once()
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_register_with_organization_redacts_name_from_logs(mock_run, caplog):
     """Registration with Zero Trust organization name."""
     mock_run.side_effect = [
@@ -378,7 +377,7 @@ def test_register_with_organization_redacts_name_from_logs(mock_run, caplog):
     assert organization not in caplog.text
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_registration_inspection_and_creation_are_one_serialized_transaction(mock_run):
     inspection_started = threading.Event()
     release_inspection = threading.Event()
@@ -429,7 +428,7 @@ def test_registration_inspection_and_creation_are_one_serialized_transaction(moc
 # -----------------------------------------------------------------------
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_license_is_redacted_from_logs_and_error(mock_run, caplog):
     sensitive_value = "synthetic-license-value"
     mock_run.return_value = process(returncode=1, stderr=f"rejected {sensitive_value}")
@@ -503,7 +502,7 @@ def test_families_parser_current_resolver_variants(resolver, expected):
 # -----------------------------------------------------------------------
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_json_settings_list(mock_run):
     """JSON settings list returns structured data with operation_mode."""
     settings_json = {
@@ -533,7 +532,7 @@ def test_json_settings_list(mock_run):
     assert settings["trust_ethernet"] is False
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_json_settings_with_families(mock_run):
     """JSON settings with families info from text fallback."""
     settings_json = {
@@ -549,7 +548,7 @@ def test_json_settings_with_families(mock_run):
     assert settings["families"] == "full"
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_json_settings_uses_families_from_current_schema_without_second_command(mock_run):
     mock_run.return_value = json_output(
         {"settings": {"operation_mode": "warp+doh", "families_mode": "malware"}, "sources": {}}
@@ -559,7 +558,7 @@ def test_json_settings_uses_families_from_current_schema_without_second_command(
     mock_run.assert_called_once()
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_json_settings_normalizes_typed_mode_name(mock_run):
     mock_run.return_value = json_output(
         {"settings": {"operation_mode": "WarpWithDnsOverHttps", "families_mode": "off"}}
@@ -580,7 +579,7 @@ def test_diagnostics_json_parsing(warp_router):
     )
     warp_router.on(["registration", "organization"], json_data={"organization": ""})
     warp_router.on(["status"], json_data={"status": "Connected"})
-    with patch("subprocess.run", warp_router):
+    with patch("qwarp.utils.process.run_command", warp_router):
         diag = WarpEngine().get_diagnostics()
     assert diag["type"] == "Unlimited"
     assert diag["license"] == "masked-value"
@@ -595,14 +594,14 @@ def test_diagnostics_with_organization(warp_router):
     )
     warp_router.on(["registration", "organization"], json_data={"organization": "my-corp"})
     warp_router.on(["status"], json_data={"status": "Connected"})
-    with patch("subprocess.run", warp_router):
+    with patch("qwarp.utils.process.run_command", warp_router):
         diag = WarpEngine().get_diagnostics()
     assert diag["type"] == "Teams"
     assert diag["device_id"] == "dev-123"
     assert diag["organization"] == "my-corp"
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_diagnostics_current_registration_shape_and_single_accept_tos(mock_run):
     mock_run.side_effect = [
         json_output(
@@ -639,7 +638,7 @@ def test_diagnostics_fallback_to_text(warp_router):
     )
     warp_router.on(["registration", "organization"], json_data={"error": "not found"}, returncode=1)
     warp_router.on(["status"], json_data={"status": "Connected"})
-    with patch("subprocess.run", warp_router):
+    with patch("qwarp.utils.process.run_command", warp_router):
         diag = WarpEngine().get_diagnostics()
     assert diag["type"] == "Unlimited"
     assert diag["license"] == "masked-value"
@@ -660,7 +659,7 @@ def test_capability_detection(mock_which, warp_router):
     warp_router.on(["mode-switch-allowed"], json_data={"allowed": True})
     warp_router.on(["registration", "organization"], json_data={"error": "No org"}, returncode=1)
 
-    with patch("subprocess.run", warp_router):
+    with patch("qwarp.utils.process.run_command", warp_router):
         caps = WarpEngine().detect_capabilities()
     assert caps.cli_found is True
     assert caps.version == "warp-cli 2026.6.880.0"
@@ -681,7 +680,7 @@ def test_capability_detection_zero_trust(mock_which, warp_router):
     warp_router.on(["mode-switch-allowed"], json_data={"allowed": False})
     warp_router.on(["registration", "organization"], json_data={"organization": "my-corp"})
 
-    with patch("subprocess.run", warp_router):
+    with patch("qwarp.utils.process.run_command", warp_router):
         caps = WarpEngine().detect_capabilities()
     assert caps.is_zero_trust is True
     assert caps.organization == "my-corp"
@@ -699,7 +698,7 @@ def test_capability_detection_accepts_scalar_json(mock_which, warp_router):
     warp_router.on(["mode-switch-allowed"], json_data=False)
     warp_router.on(["registration", "organization"], json_data="synthetic-org")
 
-    with patch("subprocess.run", warp_router):
+    with patch("qwarp.utils.process.run_command", warp_router):
         caps = WarpEngine().detect_capabilities()
 
     assert caps.has_json is True
@@ -722,7 +721,7 @@ def test_capability_detection_missing_cli(mock_which):
 # -----------------------------------------------------------------------
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_get_network_info(mock_run):
     net_data = {
         "v4_iface": {"name": "wlan0", "address": "192.168.1.10", "kind": "wifi"},
@@ -736,7 +735,7 @@ def test_get_network_info(mock_run):
     assert info["dns"] == ["1.1.1.1"]
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_get_override_status(mock_run):
     mock_run.return_value = json_output({"set": False, "ends_in_secs": 0})
     status = WarpEngine().get_override_status()
@@ -744,7 +743,7 @@ def test_get_override_status(mock_run):
     assert status["status"] == "Inactive"
 
 
-@patch("subprocess.run")
+@patch("qwarp.utils.process.run_command")
 def test_get_split_tunnel_info(mock_run):
     mock_run.return_value = json_output(
         {
@@ -771,13 +770,21 @@ def test_split_tunnel_ip_validation_and_range_command():
 
     assert engine.add_split_tunnel_ip("not an address") == (False, "Enter a valid IP address or CIDR network.")
     assert engine.add_split_tunnel_ip("2001:db8::/48") == (True, "")
-    engine._run_command.assert_called_with("tunnel", "ip", "add-range", "2001:db8::/48")
+    engine._run_command.assert_called_with(
+        "tunnel", "ip", "add-range", "2001:db8::/48", sensitive_values=("2001:db8::/48", "2001:db8::/48")
+    )
     assert engine.add_split_tunnel_ip("192.0.2.1") == (True, "")
-    engine._run_command.assert_called_with("tunnel", "ip", "add", "192.0.2.1")
+    engine._run_command.assert_called_with(
+        "tunnel", "ip", "add", "192.0.2.1", sensitive_values=("192.0.2.1", "192.0.2.1")
+    )
     assert engine.remove_split_tunnel_ip("192.0.2.1") == (True, "")
-    engine._run_command.assert_called_with("tunnel", "ip", "remove", "192.0.2.1")
+    engine._run_command.assert_called_with(
+        "tunnel", "ip", "remove", "192.0.2.1", sensitive_values=("192.0.2.1", "192.0.2.1")
+    )
     assert engine.remove_split_tunnel_ip("2001:db8::/48") == (True, "")
-    engine._run_command.assert_called_with("tunnel", "ip", "remove-range", "2001:db8::/48")
+    engine._run_command.assert_called_with(
+        "tunnel", "ip", "remove-range", "2001:db8::/48", sensitive_values=("2001:db8::/48", "2001:db8::/48")
+    )
 
 
 def test_split_tunnel_hostname_and_fallback_reject_duplicates():
@@ -840,7 +847,7 @@ def test_router_dispatches_by_command_shape_independent_of_order(warp_router):
     warp_router.on(["settings"], json_data={"settings": {"operation_mode": "warp"}})
     warp_router.on(["registration", "show"], json_data={"account": {"type": "Free"}})
 
-    with patch("subprocess.run", warp_router):
+    with patch("qwarp.utils.process.run_command", warp_router):
         engine = WarpEngine()
         settings = engine.get_settings()
         diag = engine.get_diagnostics()
@@ -861,7 +868,7 @@ def test_status_with_unknown_and_nested_fields(warp_router):
             "extra_metadata": {"version": 3, "tags": ["a", "b"]},
         },
     )
-    with patch("subprocess.run", warp_router):
+    with patch("qwarp.utils.process.run_command", warp_router):
         assert WarpEngine().status() == WarpState.CONNECTED
 
 
@@ -869,7 +876,7 @@ def test_settings_with_malformed_and_scalar_json(warp_router):
     """Scalar or malformed JSON in settings falls back gracefully without crashing."""
     warp_router.on(["--json", "settings"], json_data="scalar string")
     warp_router.on(["settings"], text="Mode: Warp\nFamilies mode: Off")
-    with patch("subprocess.run", warp_router):
+    with patch("qwarp.utils.process.run_command", warp_router):
         settings = WarpEngine().get_settings()
     assert settings["mode"] == "warp"
     assert settings["families"] == "off"
@@ -883,7 +890,7 @@ def test_diagnostics_with_unknown_fields_and_empty_sections(warp_router):
     )
     warp_router.on(["registration", "organization"], json_data={"error": "none"}, returncode=1)
     warp_router.on(["status"], json_data={"status": "Disconnected"})
-    with patch("subprocess.run", warp_router):
+    with patch("qwarp.utils.process.run_command", warp_router):
         diag = WarpEngine().get_diagnostics()
     assert diag["status"] == "Disconnected"
     assert diag["type"] == "Unknown"

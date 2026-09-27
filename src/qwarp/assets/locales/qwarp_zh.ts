@@ -73,8 +73,8 @@
         <translation>账户类型:</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="1026" />
-        <location filename="../../ui/settings.py" line="1020" />
+        <location filename="../../ui/settings.py" line="1030" />
+        <location filename="../../ui/settings.py" line="1024" />
         <location filename="../../ui/settings.py" line="206" />
         <location filename="../../ui/settings.py" line="189" />
         <source>Show</source>
@@ -111,7 +111,7 @@
         <translation>刷新数据</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="826" />
+        <location filename="../../ui/settings.py" line="830" />
         <location filename="../../ui/settings.py" line="227" />
         <source>Delete Registration</source>
         <translation>删除注册</translation>
@@ -143,7 +143,7 @@
         <translation>刷新</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="813" />
+        <location filename="../../ui/settings.py" line="817" />
         <location filename="../../ui/settings.py" line="267" />
         <source>Leave Organization</source>
         <translation>离开组织</translation>
@@ -224,13 +224,13 @@
         <translation>隧道协议：</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="799" />
+        <location filename="../../ui/settings.py" line="803" />
         <location filename="../../ui/settings.py" line="324" />
         <source>MASQUE (Default)</source>
         <translation>MASQUE（默认）</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="800" />
+        <location filename="../../ui/settings.py" line="804" />
         <location filename="../../ui/settings.py" line="325" />
         <source>WireGuard (Legacy)</source>
         <translation>WireGuard（旧版）</translation>
@@ -480,7 +480,7 @@
         <translation>未激活</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="757" />
+        <location filename="../../ui/settings.py" line="761" />
         <location filename="../../ui/settings.py" line="622" />
         <source>Unavailable</source>
         <translation>不可用</translation>
@@ -506,62 +506,62 @@
         <translation>关于</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="756" />
+        <location filename="../../ui/settings.py" line="760" />
         <source>Registered</source>
         <translation>已注册</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="756" />
+        <location filename="../../ui/settings.py" line="760" />
         <source>Not registered</source>
         <translation>未注册</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="778" />
+        <location filename="../../ui/settings.py" line="782" />
         <source>Installed client version: %s</source>
         <translation>已安装客户端版本：%s</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="785" />
+        <location filename="../../ui/settings.py" line="789" />
         <source>Managed by your organization. This setting is controlled by your organization's Zero Trust policy.</source>
         <translation>由您的组织管理。此设置由组织的 Zero Trust 策略控制。</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="814" />
+        <location filename="../../ui/settings.py" line="818" />
         <source>Are you sure you want to leave this organization?</source>
         <translation>确定要离开该组织吗？</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="827" />
+        <location filename="../../ui/settings.py" line="831" />
         <source>Delete this WARP registration? You will need to register again before reconnecting.</source>
         <translation>确定要删除此 WARP 注册吗？重新连接前需要再次注册。</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="876" />
+        <location filename="../../ui/settings.py" line="880" />
         <source>Connection settings are unavailable.</source>
         <translation>连接设置不可用。</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="997" />
-        <location filename="../../ui/settings.py" line="971" />
+        <location filename="../../ui/settings.py" line="1001" />
+        <location filename="../../ui/settings.py" line="975" />
         <source>The requested action failed.</source>
         <translation>请求的操作失败。</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="1026" />
-        <location filename="../../ui/settings.py" line="1020" />
+        <location filename="../../ui/settings.py" line="1030" />
+        <location filename="../../ui/settings.py" line="1024" />
         <source>Hide</source>
         <translation>隐藏</translation>
     </message>
     <message>
-        <location filename="../../ui/settings.py" line="1031" />
+        <location filename="../../ui/settings.py" line="1035" />
         <source>Unknown</source>
         <translation>未知</translation>
     </message>
 </context><context>
     <name>WarpStateManager</name>
     <message>
-        <location filename="../../core/state.py" line="547" />
-        <location filename="../../core/state.py" line="459" />
+        <location filename="../../core/state.py" line="549" />
+        <location filename="../../core/state.py" line="461" />
         <source>Another WARP action is already in progress.</source>
         <translation>另一项 WARP 操作正在进行中。</translation>
     </message>
@@ -660,13 +660,13 @@
         <translation>Cloudflare 应用程序条款与应用程序隐私政策</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="316" />
+        <location filename="../../ui/window.py" line="323" />
         <location filename="../../ui/window.py" line="169" />
         <source>Continue</source>
         <translation>继续</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="315" />
+        <location filename="../../ui/window.py" line="322" />
         <location filename="../../ui/window.py" line="174" />
         <source>Connect to an organization</source>
         <translation>连接到组织</translation>
@@ -714,91 +714,91 @@
         <translation>正在连接到 daemon...</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="285" />
+        <location filename="../../ui/window.py" line="293" />
         <source>Complete organization sign-in</source>
         <translation>完成组织登录</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="291" />
+        <location filename="../../ui/window.py" line="299" />
         <source>Complete authentication in your browser to enroll this device.</source>
         <translation>请在浏览器中完成身份验证以注册此设备。</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="311" />
+        <location filename="../../ui/window.py" line="318" />
         <source>Connect to your organization</source>
         <translation>连接到您的组织</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="312" />
+        <location filename="../../ui/window.py" line="319" />
         <source>Enter the organization name provided by your administrator.</source>
         <translation>输入管理员提供的组织名称。</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="313" />
+        <location filename="../../ui/window.py" line="320" />
         <source>Use personal setup</source>
         <translation>使用个人设置</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="329" />
-        <location filename="../../ui/window.py" line="328" />
+        <location filename="../../ui/window.py" line="336" />
+        <location filename="../../ui/window.py" line="335" />
         <source>Settings</source>
         <translation>设置</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="334" />
+        <location filename="../../ui/window.py" line="341" />
         <source>Preferences</source>
         <translation>偏好设置</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="337" />
+        <location filename="../../ui/window.py" line="344" />
         <source>Exit</source>
         <translation>退出</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="382" />
+        <location filename="../../ui/window.py" line="389" />
         <source>Connected to %s</source>
         <translation>已连接到 %s</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="382" />
+        <location filename="../../ui/window.py" line="389" />
         <source>Zero Trust enrolled</source>
         <translation>已加入 Zero Trust</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="395" />
+        <location filename="../../ui/window.py" line="402" />
         <source>Accept the terms before continuing.</source>
         <translation>继续之前请先接受条款。</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="401" />
+        <location filename="../../ui/window.py" line="408" />
         <source>Please enter an organization name.</source>
         <translation>请输入组织名称。</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="513" />
-        <location filename="../../ui/window.py" line="417" />
+        <location filename="../../ui/window.py" line="520" />
+        <location filename="../../ui/window.py" line="424" />
         <source>CONNECTING</source>
         <translation>连接中</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="513" />
-        <location filename="../../ui/window.py" line="417" />
+        <location filename="../../ui/window.py" line="520" />
+        <location filename="../../ui/window.py" line="424" />
         <source>DISCONNECTING</source>
         <translation>正在断开连接</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="515" />
-        <location filename="../../ui/window.py" line="418" />
+        <location filename="../../ui/window.py" line="522" />
+        <location filename="../../ui/window.py" line="425" />
         <source>Please wait...</source>
         <translation>请稍候...</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="429" />
+        <location filename="../../ui/window.py" line="436" />
         <source>Registration failed.</source>
         <translation>注册失败。</translation>
     </message>
     <message>
-        <location filename="../../ui/window.py" line="432" />
+        <location filename="../../ui/window.py" line="439" />
         <source>The requested action failed.</source>
         <translation>请求的操作失败。</translation>
     </message>

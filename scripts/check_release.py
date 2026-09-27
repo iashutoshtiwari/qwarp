@@ -26,10 +26,10 @@ def main() -> None:
     args = parser.parse_args()
 
     init_version = match(r'^__version__ = "([^"]+)"$', read("src/qwarp/__init__.py"), "Python version")
-    pkgbuild = read("PKGBUILD")
+    pkgbuild = read("packaging/arch/PKGBUILD")
     pkg_version = match(r"^pkgver=(.+)$", pkgbuild, "PKGBUILD pkgver")
     pkg_release = match(r"^pkgrel=(.+)$", pkgbuild, "PKGBUILD pkgrel")
-    srcinfo = read(".SRCINFO")
+    srcinfo = read("packaging/arch/.SRCINFO")
     src_version = match(r"^\s*pkgver = (.+)$", srcinfo, ".SRCINFO pkgver")
     src_release = match(r"^\s*pkgrel = (.+)$", srcinfo, ".SRCINFO pkgrel")
     debian_version = match(r"^qwarp \(([^-]+)-1\)", read("packaging/debian/changelog"), "Debian version")

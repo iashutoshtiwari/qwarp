@@ -2,8 +2,9 @@
 
 import logging
 import os
-import shutil
 from pathlib import Path
+
+from qwarp.utils.process import CommandError, resolve_executable
 
 logger = logging.getLogger(__name__)
 
@@ -32,11 +33,26 @@ def is_autostart_enabled() -> bool:
 
     try:
         content = desktop_file.read_text(encoding="utf-8")
-        # Consider disabled if Hidden=true or X-GNOME-Autostart-enabled=false
-        if "Hidden=true" in content or "X-GNOME-Autostart-enabled=false" in content:
-            return False
-        return True
-    except OSError as e:
+        values = {}
+        in_desktop_entry = False
+        found_desktop_entry = False
+        for raw_line in content.splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if line.startswith("[") and line.endswith("]"):
+                in_desktop_entry = line == "[Desktop Entry]"
+                found_desktop_entry |= in_desktop_entry
+            elif in_desktop_entry:
+                key, separator, value = line.partition("=")
+                if separator:
+                    values[key.strip()] = value.strip()
+        return (
+            found_desktop_entry
+            and values.get("Hidden") != "true"
+            and values.get("X-GNOME-Autostart-enabled") != "false"
+        )
+    except (OSError, UnicodeError) as e:
         logger.error(f"Failed to read autostart file: {e}")
         return False
 
@@ -57,10 +73,10 @@ def set_autostart_enabled(enabled: bool, minimize: bool = False) -> tuple[bool, 
         return True, "Autostart is already disabled."
 
     # Enable autostart
-    executable = shutil.which("qwarp")
-    if not executable:
-        # Fallback to just the command name if not in PATH
-        executable = "qwarp"
+    try:
+        executable = resolve_executable("qwarp")
+    except (OSError, CommandError):
+        return False, "A trusted QWarp executable could not be found."
 
     exec_cmd = _quote_exec_argument(executable)
     if minimize:

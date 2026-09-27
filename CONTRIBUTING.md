@@ -39,7 +39,56 @@ qwarp --help
 
 Launching `qwarp` starts background polling of the real WARP installation. Do that only when live testing is intended.
 
+### Run from source or make a clean test build
+
+From the repository root, run the current source directly:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m qwarp.main
+```
+
+For a clean wheel, source archive, and standalone test binary, install the build
+dependencies once (Qt localization tools listed below are also required):
+
+```bash
+.venv/bin/python -m pip install -c requirements/release.txt build pyinstaller PyQt6 setuptools wheel
+python3 scripts/clean_build.py
+./dist/qwarp-build/qwarp
+```
+
+`clean_build.py` uses the active virtual environment, or the repository's `.venv`
+when none is active. It deletes `build/`, all of `dist/`, test/lint caches,
+source-tree Python bytecode, and the generated root `qwarp.spec`, then calls
+`build_artifacts.sh`. It preserves virtual environments, editable-install
+metadata, and compiled translations. It refuses tracked cleanup targets and
+symlinks; run `python3 scripts/clean_build.py --dry-run` to preview removal.
+
+The helper builds without launching QWarp. Both launch commands above start
+normal daemon polling. Add `--help` or `--version` for a side-effect-free probe.
+Builds refresh translation catalogs; review any `.ts` changes. Local builds do
+not update committed release versions or Arch checksums.
+
 ## Understand the code path
+
+### Repository layout
+
+- `src/qwarp/` contains the application and its bundled assets and translations.
+- `tests/` contains deterministic application tests.
+- `docs/` contains audit reports and README screenshots; see the
+  [2026-09-26 audit](docs/audits/2026-09-26.md).
+- `packaging/arch/`, `packaging/debian/`, and `packaging/rpm/` contain distribution metadata.
+- `scripts/` contains build and validation tools; `requirements/` pins CI and release dependencies.
+
+The shared `qwarp.desktop` launcher and legal notices stay at the repository root.
+`build/`, `dist/`, and test/lint caches are disposable generated output; `.venv/`
+is the local development environment.
+
+Arch builds should copy `packaging/arch/PKGBUILD`, `packaging/arch/.SRCINFO`, and
+the source archive into a temporary directory before running `makepkg`. Normal
+CI adjusts the checksum only in that temporary copy to test the current tree;
+committed metadata continues to describe the immutable published release.
+
+### Application architecture
 
 QWarp keeps dependencies in one direction:
 
@@ -56,8 +105,9 @@ warp-cli, systemctl, and pkexec
 Keep command execution out of the Qt event loop. UI objects consume state and signals; the state manager owns workers,
 polling, and action serialization; the engine owns subprocess access and parsing.
 
-Repository-wide architecture, security, packaging, and agent guidance lives in [AGENTS.md](AGENTS.md). Its technical
-constraints apply to human-authored changes too.
+Repository-wide architecture, security, and packaging guidance lives in the
+[engineering guide](docs/DEVELOPMENT.md). See the [release guide](docs/RELEASING.md)
+for validation and publication requirements.
 
 ## Make and test changes
 

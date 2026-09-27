@@ -64,6 +64,19 @@ def test_terms_required_uses_specific_onboarding_copy(qapp, manager):
     assert window.settings_btn.isEnabled()
 
 
+@pytest.mark.parametrize("quota", [0, 1024, None])
+def test_account_diagnostics_handles_numeric_and_null_values(qapp, manager, quota):
+    dialog = SettingsDialog(manager)
+    try:
+        dialog._on_diagnostics_updated({"quota": quota, "license": None, "type": None, "status": None})
+        assert dialog.lbl_quota.text() == ("Unknown" if quota is None else str(quota))
+        assert dialog.lbl_license.text() == "Unknown"
+        assert dialog.lbl_acc_type.text() == "Unknown"
+        assert dialog.lbl_daemon_status.text() == "Unknown"
+    finally:
+        dialog.done(QDialog.DialogCode.Rejected)
+
+
 def test_missing_cli_uses_dedicated_installation_view(qapp, manager):
     window = WarpWindow(manager)
     window._update_ui_state(WarpState.CLI_MISSING)
@@ -80,7 +93,7 @@ def test_window_recovers_from_missing_cli_view(qapp, manager):
 
     assert window.stack.currentIndex() == 2
     assert window.settings_btn.isEnabled()
-    assert window.status_title.text() == "Disconnected"
+    assert window.status_title.text() == "DISCONNECTED"
 
 
 def test_authentication_required_has_actionable_status(qapp, manager):
@@ -159,7 +172,7 @@ def test_failed_connect_restores_toggle_and_shows_contextual_error(qapp, wait_un
     manager.request_connect()
     wait_until(lambda: manager.is_busy is False)
     assert window.toggle.isEnabled()
-    assert window.status_title.text() == "Disconnected"
+    assert window.status_title.text() == "DISCONNECTED"
     assert window.status_desc.text() == "simulated failure"
     window.deleteLater()
     manager.shutdown()
@@ -177,11 +190,11 @@ def test_single_toggle_click_stays_connecting_until_daemon_catches_up(qapp, wait
     assert engine.connect_calls == 1
     assert window.toggle.isChecked()
     assert not window.toggle.isEnabled()
-    assert window.status_title.text() == "Connecting…"
+    assert window.status_title.text() == "CONNECTING…"
 
     manager._on_status_result(WarpState.CONNECTED)
     assert window.toggle.isEnabled()
-    assert window.status_title.text() == "Connected"
+    assert window.status_title.text() == "CONNECTED"
     window.deleteLater()
     manager.shutdown()
 
@@ -434,7 +447,7 @@ def test_main_window_and_tray_share_dns_only_presentation(qapp, manager):
     manager._on_settings_result({"available": True, "mode": "doh", "families": "off"})
     manager._on_status_result(WarpState.CONNECTED)
 
-    assert window.status_title.text() == "Active"
+    assert window.status_title.text() == "ACTIVE"
     assert window.status_mode.text() == "DNS only"
     assert "without routing traffic through WARP" in window.status_desc.text()
     assert tray.toolTip() == "QWarp: Active · DNS only"
@@ -695,3 +708,19 @@ def test_status_description_layout_word_wraps_without_overlap(qapp, manager):
         assert desc_bottom < settings_top, f"status_desc overlaps footer: {desc_bottom} >= {settings_top}"
 
     window.deleteLater()
+
+
+def test_mode_label_expands_for_large_desktop_fonts(qapp, manager):
+    from PyQt6.QtGui import QFont
+
+    window = WarpWindow(manager)
+    window.setFont(QFont("Sans", 16))
+    window._update_ui_state(WarpState.CONNECTED)
+    window.show()
+    QCoreApplication.processEvents()
+    try:
+        assert window.status_mode.height() >= window.status_mode.fontMetrics().height()
+        assert window.status_mode.sizePolicy().retainSizeWhenHidden()
+    finally:
+        window.hide()
+        window.deleteLater()
