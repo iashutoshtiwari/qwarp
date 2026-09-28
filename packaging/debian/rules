@@ -13,6 +13,7 @@ override_dh_auto_test:
 
 override_dh_install:
 	dh_install
+	install -Dm644 packaging/appstream/io.github.iashutoshtiwari.qwarp.metainfo.xml debian/qwarp/usr/share/metainfo/io.github.iashutoshtiwari.qwarp.metainfo.xml
 	install -Dm644 qwarp.desktop debian/qwarp/usr/share/applications/qwarp.desktop
 	install -Dm644 src/qwarp/assets/app-icon.svg debian/qwarp/usr/share/icons/hicolor/scalable/apps/qwarp.svg
 	install -Dm644 TRADEMARKS.md debian/qwarp/usr/share/doc/qwarp/TRADEMARKS.md

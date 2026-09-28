@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.10.2] – 2026-09-28
+
+### Added
+
+- Ship shared AppStream metadata in Debian and RPM packages, with developer, license, screenshot, and release information.
+
+### Fixed
+
+- Declare the Debian/Ubuntu QtSvg Python runtime dependency required during UI initialization.
+- Include missing Qt module names in fatal exception logs while retaining locations and protecting private values.
+- Validate Qt runtime imports and built Debian dependency metadata in package checks.
+
 ## [v0.10.1] – 2026-09-27
 
 ### Added

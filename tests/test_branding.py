@@ -55,7 +55,7 @@ def test_marketing_metadata_does_not_use_retired_branding_or_search_terms():
     assert "Cloudflare Orange" not in metadata_text
     assert "wrapper for Cloudflare WARP" not in metadata_text
     assert "Keywords=cloudflare;warp" not in metadata_text
-    description = "Cloudflare WARP GUI for Linux with native Qt6 desktop integration"
+    description = "Desktop interface for Cloudflare WARP on Linux"
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
     assert project["description"] == description
     fields = {
@@ -69,3 +69,28 @@ def test_marketing_metadata_does_not_use_retired_branding_or_search_terms():
         lines = (ROOT / path).read_text(encoding="utf-8").splitlines()
         values = [line.strip().removeprefix(prefix).strip() for line in lines if line.strip().startswith(prefix)]
         assert values == [expected], path
+
+
+def test_appstream_matches_release_and_desktop_identity():
+    from qwarp import __version__
+    from scripts.check_release import check_appstream
+
+    check_appstream(__version__)
+
+
+def test_appstream_rejects_mismatched_release_and_launcher(monkeypatch):
+    import pytest
+
+    from qwarp import __version__
+    from scripts import check_release
+
+    original_read = check_release.read
+    for old, new in ((f'version="{__version__}"', 'version="0.0.0"'), ("qwarp.desktop", "wrong.desktop")):
+
+        def changed_read(path, old=old, new=new):
+            text = original_read(path)
+            return text.replace(old, new) if path.endswith(".metainfo.xml") else text
+
+        monkeypatch.setattr(check_release, "read", changed_read)
+        with pytest.raises(SystemExit, match="AppStream"):
+            check_release.check_appstream(__version__)

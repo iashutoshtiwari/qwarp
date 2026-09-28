@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=QWarp
-GenericName=Network Client Controller
-Comment=Cloudflare WARP GUI for Linux with native Qt6 desktop integration
+GenericName=Network Connection Manager
+Comment=Desktop interface for Cloudflare WARP on Linux
 Exec=qwarp
 Icon=qwarp
 Terminal=false
@@ -9,4 +9,4 @@ Type=Application
 Categories=Network;
 StartupNotify=true
 StartupWMClass=qwarp
-Keywords=vpn;dns;network;privacy;
+Keywords=WARP;Cloudflare;VPN;DNS;network;privacy;

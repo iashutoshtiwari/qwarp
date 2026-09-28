@@ -451,3 +451,26 @@ def test_unable_payload_is_never_successful_registration_or_settings(exit_code):
         assert engine.get_settings()["available"] is False
         assert engine.status() == WarpState.UNREGISTERED
         assert not any("new" in call.args[0] for call in run.call_args_list)
+
+
+def test_exception_hook_reports_missing_qtsvg_without_private_context(caplog):
+    try:
+        try:
+            raise RuntimeError("synthetic-private-token")
+        except RuntimeError as cause:
+            raise ModuleNotFoundError("private exception text", name="PyQt6.QtSvg") from cause
+    except ModuleNotFoundError:
+        with caplog.at_level(logging.CRITICAL):
+            unhandled_exception_hook(*sys.exc_info())
+    assert "ModuleNotFoundError: No module named 'PyQt6.QtSvg'" in caplog.text
+    assert "test_hardening.py:" in caplog.text
+    assert "synthetic-private-token" not in caplog.text
+    assert "private exception text" not in caplog.text
+    assert "raise ModuleNotFoundError" not in caplog.text
+
+
+def test_exception_hook_redacts_unknown_module_names(caplog):
+    error = ModuleNotFoundError("private module", name="private.organization")
+    unhandled_exception_hook(type(error), error, None)
+    assert "ModuleNotFoundError: <message redacted>" in caplog.text
+    assert "private" not in caplog.text

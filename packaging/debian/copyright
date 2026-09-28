@@ -3,7 +3,7 @@ Upstream-Name: qwarp
 Source: https://github.com/iashutoshtiwari/qwarp
 
 Files: *
-Copyright: 2026 Ashutosh Tiwari
+Copyright: 2026 Ashutosh
 License: MIT
 
 Files: src/qwarp/assets/tray-connected.svg
@@ -41,4 +41,4 @@ License: MIT
 
 License: Apache-2.0
  The full Apache License, Version 2.0 is provided in
- LICENSES/Apache-2.0.txt and installed with the package.
+ /usr/share/common-licenses/Apache-2.0 on Debian systems.

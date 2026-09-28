@@ -4,6 +4,7 @@ import logging
 import os
 import signal
 import sys
+import traceback
 
 from PyQt6.QtCore import PYQT_VERSION_STR, QT_VERSION_STR, QLocale, QPoint, QSettings, QTimer, QTranslator
 from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
@@ -29,14 +30,24 @@ def unhandled_exception_hook(exc_type, exc_value, exc_traceback):
     Global exception handler to capture unhandled UI errors.
     Ensures that silent crashes are logged for diagnosis.
     """
-    # Keep diagnostic locations, never exception values or source lines (which
-    # can contain credentials). Do not invoke the raw default exception hook.
-    frames = []
-    while exc_traceback is not None:
-        frame = exc_traceback.tb_frame
-        frames.append(f"{os.path.basename(frame.f_code.co_filename)}:{exc_traceback.tb_lineno}")
-        exc_traceback = exc_traceback.tb_next
-    logger.critical("Unhandled UI exception (%s) at %s", exc_type.__name__, " -> ".join(frames))
+    # Exception values, source lines, locals and chained exceptions can contain
+    # credentials or private network data. Only expose known dependency names.
+    message = "<message redacted>"
+    if isinstance(exc_value, ModuleNotFoundError) and exc_value.name in {
+        "PyQt6",
+        "PyQt6.QtCore",
+        "PyQt6.QtGui",
+        "PyQt6.QtWidgets",
+        "PyQt6.QtNetwork",
+        "PyQt6.QtSvg",
+    }:
+        message = f"No module named '{exc_value.name}'"
+    frames = [
+        f"{os.path.basename(frame.f_code.co_filename)}:{lineno}" for frame, lineno in traceback.walk_tb(exc_traceback)
+    ]
+    # Do not pass raw exc_info: default logging formatters expose source lines
+    # and unsanitized messages, including exception causes/contexts.
+    logger.critical("Unhandled UI exception: %s: %s at %s", exc_type.__name__, message, " -> ".join(frames))
 
 
 def setup_logging(level_name: str = "INFO") -> None:

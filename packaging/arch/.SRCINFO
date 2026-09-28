@@ -1,6 +1,6 @@
 pkgbase = qwarp
-	pkgdesc = Cloudflare WARP GUI for Linux with native Qt6 desktop integration
-	pkgver = 0.10.1
+	pkgdesc = Desktop interface for Cloudflare WARP on Linux
+	pkgver = 0.10.2
 	pkgrel = 1
 	url = https://github.com/iashutoshtiwari/qwarp
 	arch = x86_64
@@ -14,7 +14,7 @@ pkgbase = qwarp
 	depends = python
 	depends = python-pyqt6
 	depends = cloudflare-warp-bin
-	source = qwarp-0.10.1-source.tar.gz::https://github.com/iashutoshtiwari/qwarp/releases/download/v0.10.1/qwarp-0.10.1-source.tar.gz
-	sha256sums = c8d03b009f3ab1c29b1c21ebc2599a5e2de6b0fd3b052e4aa539d6066f9f767e
+	source = qwarp-0.10.2-source.tar.gz::https://github.com/iashutoshtiwari/qwarp/releases/download/v0.10.2/qwarp-0.10.2-source.tar.gz
+	sha256sums = 97459fe0532a95836744f39e8b0f9c064678d499026bce7399fed34ce5635573
 
 pkgname = qwarp

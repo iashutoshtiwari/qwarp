@@ -9,9 +9,10 @@ Rules-Requires-Root: no
 
 Package: qwarp
 Architecture: all
-Depends: ${misc:Depends}, ${python3:Depends}, python3-pyqt6, cloudflare-warp
-Description: Cloudflare WARP GUI for Linux with native Qt6 desktop integration
+Depends: ${misc:Depends}, ${python3:Depends}, python3-pyqt6, python3-pyqt6.qtsvg, cloudflare-warp
+Description: Desktop interface for Cloudflare WARP on Linux
  QWarp provides connection controls, DNS settings, and status diagnostics
  for the official Cloudflare WARP client on Linux. It supports Wayland and X11.
- The official warp-cli and warp-svc must be installed separately; QWarp does
- not bundle or replace them and is not affiliated with Cloudflare.
+ QWarp requires the separately installed official Cloudflare WARP client.
+ It does not implement or bundle the WARP service and is not affiliated with
+ or endorsed by Cloudflare.

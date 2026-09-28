@@ -2,6 +2,8 @@
 import argparse
 import hashlib
 import re
+import tomllib
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -18,12 +20,50 @@ def match(pattern: str, value: str, label: str) -> str:
     return result.group(1)
 
 
+def check_appstream(version: str) -> None:
+    """Validate identity and release data shared by the native packages."""
+    component = ET.fromstring(read("packaging/appstream/io.github.iashutoshtiwari.qwarp.metainfo.xml"))  # noqa: S314 -- trusted repository XML
+    project = tomllib.loads(read("pyproject.toml"))["project"]
+    expected = {
+        "id": "io.github.iashutoshtiwari.qwarp",
+        "name": "QWarp",
+        "summary": project["description"],
+        "metadata_license": "MIT",
+        "project_license": project["license"]["text"],
+        "launchable[@type='desktop-id']": "qwarp.desktop",
+        "icon[@type='stock']": "qwarp",
+        "provides/binary": "qwarp",
+        "url[@type='homepage']": project["urls"]["Homepage"],
+        "url[@type='bugtracker']": project["urls"]["Issues"],
+    }
+    if component.get("type") != "desktop-application":
+        raise SystemExit("AppStream component must be a desktop application")
+    for field, value in expected.items():
+        if component.findtext(field) != value:
+            raise SystemExit(f"AppStream {field} must be {value!r}")
+    for field in ("developer/name", "description/p", "screenshots/screenshot/image", "content_rating"):
+        if component.find(field) is None:
+            raise SystemExit(f"Missing AppStream {field}")
+    release = component.find("releases/release")
+    date = match(
+        rf"^## \[v{re.escape(version)}\] \u2013 (\d{{4}}-\d{{2}}-\d{{2}})$", read("CHANGELOG.md"), "release date"
+    )
+    if release is None or release.get("version") != version or release.get("date") != date:
+        raise SystemExit("AppStream current release version/date differs from CHANGELOG.md")
+    desktop = read("qwarp.desktop")
+    for field, value in {"Name": "QWarp", "Icon": "qwarp", "Exec": "qwarp", "Type": "Application"}.items():
+        if match(rf"^{field}=(.+)$", desktop, field) != value:
+            raise SystemExit(f"Desktop {field} differs from AppStream identity")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Validate synchronized QWarp release metadata")
     parser.add_argument("--version", required=True)
     parser.add_argument("--artifacts", type=Path)
     parser.add_argument("--notes-output", type=Path)
     args = parser.parse_args()
+
+    check_appstream(args.version)
 
     init_version = match(r'^__version__ = "([^"]+)"$', read("src/qwarp/__init__.py"), "Python version")
     pkgbuild = read("packaging/arch/PKGBUILD")

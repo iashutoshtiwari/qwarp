@@ -1,7 +1,7 @@
 Name:           qwarp
-Version:        0.10.1
+Version:        0.10.2
 Release:        1%{?dist}
-Summary:        Cloudflare WARP GUI for Linux with native Qt6 desktop integration
+Summary:        Desktop interface for Cloudflare WARP on Linux
 License:        MIT AND Apache-2.0
 URL:            https://github.com/iashutoshtiwari/qwarp
 Source0:        %{name}-%{version}-source.tar.gz
@@ -21,8 +21,9 @@ Requires:       cloudflare-warp
 %description
 QWarp provides connection controls, DNS settings, and status diagnostics
 for the official Cloudflare WARP client on Linux. It supports Wayland and X11.
-The official warp-cli and warp-svc must be installed separately; QWarp does
-not bundle or replace them and is not affiliated with Cloudflare.
+QWarp requires the separately installed official Cloudflare WARP client.
+It does not implement or bundle the WARP service and is not affiliated with
+or endorsed by Cloudflare.
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -35,17 +36,22 @@ bash scripts/build_locales.sh
 %pyproject_install
 %pyproject_save_files qwarp
 
+install -Dm644 packaging/appstream/io.github.iashutoshtiwari.qwarp.metainfo.xml %{buildroot}%{_metainfodir}/io.github.iashutoshtiwari.qwarp.metainfo.xml
 install -Dm644 qwarp.desktop %{buildroot}%{_datadir}/applications/qwarp.desktop
 install -Dm644 src/qwarp/assets/app-icon.svg %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/qwarp.svg
 
 %files -n qwarp -f %{pyproject_files}
 %license LICENSE LICENSES/Apache-2.0.txt LICENSES/Glyphs-Poly-MIT.txt
 %doc README.md TRADEMARKS.md
+%{_metainfodir}/io.github.iashutoshtiwari.qwarp.metainfo.xml
 %{_bindir}/qwarp
 %{_datadir}/applications/qwarp.desktop
 %{_datadir}/icons/hicolor/scalable/apps/qwarp.svg
 
 %changelog
+* Mon Sep 28 2026 Ashutosh Tiwari <contact@ashutoshtiwari.dev> - 0.10.2-1
+- Improve missing Qt module diagnostics and runtime smoke coverage
+
 * Sun Sep 27 2026 Ashutosh Tiwari <contact@ashutoshtiwari.dev> - 0.10.1-1
 - Add trusted executable validation and atomic IPC ownership (SEC-01, SEC-02)
 - Refine toggle appearance, status typography, and layout stability

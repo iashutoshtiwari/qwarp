@@ -18,6 +18,7 @@ source_items=(
     MANIFEST.in
     README.md
     TRADEMARKS.md
+    packaging/appstream
     pyproject.toml
     qwarp.desktop
     requirements
@@ -27,7 +28,8 @@ source_items=(
 )
 
 for item in "${source_items[@]}"; do
-    cp -a "$repo_root/$item" "$source_stage/qwarp-$version/"
+    mkdir -p "$source_stage/qwarp-$version/$(dirname "$item")"
+    cp -a "$repo_root/$item" "$source_stage/qwarp-$version/$item"
 done
 
 find "$source_stage" -type d -name __pycache__ -prune -exec rm -rf {} +

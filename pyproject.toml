@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "qwarp"
 dynamic = ["version"]
-description = "Cloudflare WARP GUI for Linux with native Qt6 desktop integration"
+description = "Desktop interface for Cloudflare WARP on Linux"
 readme = "README.md"
 keywords = ["qwarp", "linux", "qt6", "cloudflare-warp", "warp-cli", "gui"]
 classifiers = [

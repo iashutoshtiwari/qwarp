@@ -13,3 +13,6 @@ prune .github/instructions
 prune .github/prompts
 global-exclude AGENTS.md AGENTS.override.md CLAUDE.md CLAUDE.local.md GEMINI.md .cursorrules .windsurfrules .clinerules .roorules .aider* .mcp.json mcp.json skills-lock.json
 exclude .github/copilot-instructions.md
+
+include qwarp.desktop
+recursive-include packaging/appstream *.metainfo.xml

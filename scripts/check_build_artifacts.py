@@ -83,6 +83,10 @@ def main() -> None:
     with tarfile.open(sdist, "r:gz") as archive:
         names = set(archive.getnames())
         check_no_ai_files(names)
+        require(
+            f"qwarp-{version}/packaging/appstream/io.github.iashutoshtiwari.qwarp.metainfo.xml" in names,
+            "sdist does not contain AppStream metadata",
+        )
         require(f"qwarp-{version}/pyproject.toml" in names, "sdist does not contain pyproject.toml")
         require(f"qwarp-{version}/src/qwarp/main.py" in names, "sdist does not contain application source")
         require(f"qwarp-{version}/TRADEMARKS.md" in names, "sdist does not contain the trademark notice")
@@ -98,6 +102,12 @@ def main() -> None:
     with tarfile.open(source, "r:gz") as archive:
         names = set(archive.getnames())
         check_no_ai_files(names)
+        for metadata in (
+            "packaging/appstream/io.github.iashutoshtiwari.qwarp.metainfo.xml",
+            "qwarp.desktop",
+            "src/qwarp/assets/app-icon.svg",
+        ):
+            require(f"qwarp-{version}/{metadata}" in names, f"Source archive is missing {metadata}")
         require(
             f"qwarp-{version}/CONTRIBUTING.md" in names,
             "Source archive does not contain contributor guidance",

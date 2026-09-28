@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2026 Ashutosh. SPDX-License-Identifier: MIT -->
+<component type="desktop-application">
+  <id>io.github.iashutoshtiwari.qwarp</id>
+  <name>QWarp</name>
+  <summary>Desktop interface for Cloudflare WARP on Linux</summary>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT AND Apache-2.0</project_license>
+  <developer id="io.github.iashutoshtiwari">
+    <name>Ashutosh Tiwari</name>
+  </developer>
+  <description>
+    <p>QWarp is an independent desktop interface for the official Cloudflare WARP
+    client on Linux. Connect or disconnect, choose connection modes, and manage
+    DNS settings from your desktop or system tray.</p>
+    <p>QWarp supports Wayland and X11, optional launch at login, and multiple
+    interface languages. It requires the official Cloudflare WARP client to be
+    installed separately and does not implement or bundle the WARP service.
+    QWarp is not affiliated with or endorsed by Cloudflare.</p>
+  </description>
+  <launchable type="desktop-id">qwarp.desktop</launchable>
+  <icon type="stock">qwarp</icon>
+  <url type="homepage">https://github.com/iashutoshtiwari/qwarp</url>
+  <url type="bugtracker">https://github.com/iashutoshtiwari/qwarp/issues</url>
+  <url type="vcs-browser">https://github.com/iashutoshtiwari/qwarp</url>
+  <provides>
+    <binary>qwarp</binary>
+  </provides>
+  <translation type="qt">qwarp</translation>
+  <categories>
+    <category>Network</category>
+  </categories>
+  <content_rating type="oars-1.1"/>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Connected in WARP mode</caption>
+      <image type="source">https://raw.githubusercontent.com/iashutoshtiwari/qwarp/9256a911ab500a6cf0a66239d1158fb4a16a3007/docs/screenshots/connected.png</image>
+    </screenshot>
+  </screenshots>
+  <releases>
+    <!-- Keep the newest version and date synchronized with CHANGELOG.md. -->
+    <release version="0.10.2" date="2026-09-28" type="stable">
+      <description>
+        <p>Fix missing SVG bindings in Debian and Ubuntu packages and improve
+        missing-module diagnostics. Add application metadata for software centers.</p>
+      </description>
+    </release>
+    <release version="0.10.1" date="2026-09-27" type="stable">
+      <description>
+        <p>Improve command validation, single-instance handling, diagnostic privacy,
+        and connection status presentation.</p>
+      </description>
+    </release>
+    <release version="0.10.0" date="2026-09-25" type="stable">
+      <description>
+        <p>Add split tunneling, local domain fallback DNS settings, and connection
+        mode switching from the system tray.</p>
+      </description>
+    </release>
+  </releases>
+</component>

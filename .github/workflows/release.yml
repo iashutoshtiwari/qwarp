@@ -143,7 +143,11 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             build-essential debhelper dh-python pybuild-plugin-pyproject \
             python3-all python3-setuptools python3-build qt6-l10n-tools \
-            qt6-tools-dev-tools dpkg-dev python3-pyqt6
+            qt6-tools-dev-tools dpkg-dev appstream desktop-file-utils
+      - name: Validate application metadata
+        run: |
+          appstreamcli validate --pedantic --no-net packaging/appstream/*.metainfo.xml
+          desktop-file-validate qwarp.desktop
       - name: Build .deb
         run: |
           tar xzf dist/release/qwarp-$RELEASE_VERSION-source.tar.gz
@@ -155,15 +159,32 @@ jobs:
           deb="qwarp_${RELEASE_VERSION}-1_all.deb"
           dpkg-deb --contents "$deb" > /tmp/qwarp-deb-files
           grep -Eq 'usr/bin/qwarp$' /tmp/qwarp-deb-files
+          grep -Eq 'usr/share/metainfo/io.github.iashutoshtiwari.qwarp.metainfo.xml$' /tmp/qwarp-deb-files
+          grep -Eq 'usr/share/applications/qwarp.desktop$' /tmp/qwarp-deb-files
+          grep -Eq 'usr/share/icons/hicolor/scalable/apps/qwarp.svg$' /tmp/qwarp-deb-files
           grep -Eq 'usr/share/doc/qwarp/TRADEMARKS.md(\.gz)?$' /tmp/qwarp-deb-files
           grep -Eq 'usr/share/doc/qwarp/Apache-2.0.txt(\.gz)?$' /tmp/qwarp-deb-files
           grep -Eq 'usr/share/doc/qwarp/Glyphs-Poly-MIT.txt(\.gz)?$' /tmp/qwarp-deb-files
           ! grep -Eq '/(warp-cli|warp-svc|warp-svc\.service)$' /tmp/qwarp-deb-files
           dpkg-deb --field "$deb" Depends | grep -q 'cloudflare-warp'
-          mkdir -p /tmp/qwarp-deb-root
-          dpkg-deb --extract "$deb" /tmp/qwarp-deb-root
-          PYTHONPATH=/tmp/qwarp-deb-root/usr/lib/python3/dist-packages \
-            python3 -m qwarp.main --version | grep -Fx "QWarp $RELEASE_VERSION"
+          dpkg-deb --field "$deb" Depends | tr ',' '\n' | \
+            grep -Eq '^ *python3-pyqt6\.qtsvg( *\([^)]*\))? *$'
+      - name: Test apt installation transaction
+        run: |
+          mkdir -p /tmp/dummy-warp-deb/DEBIAN
+          cat << 'EOF' > /tmp/dummy-warp-deb/DEBIAN/control
+          Package: cloudflare-warp
+          Version: 1.0.0
+          Architecture: all
+          Maintainer: CI <ci@example.com>
+          Description: Dummy package for CI dependency satisfaction
+          EOF
+          dpkg-deb --build /tmp/dummy-warp-deb /tmp/cloudflare-warp_1.0.0_all.deb
+          sudo dpkg -i /tmp/cloudflare-warp_1.0.0_all.deb
+          sudo apt-get install -y --no-install-recommends ./qwarp_${RELEASE_VERSION}-1_all.deb
+          /usr/bin/qwarp --version | grep -Fx "QWarp $RELEASE_VERSION"
+          QT_QPA_PLATFORM=offscreen /usr/bin/python3 tests/test_runtime_imports.py
+          dpkg -S /usr/bin/qwarp
       - name: Upload .deb
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
@@ -203,6 +224,9 @@ jobs:
           test -n "$rpm_file"
           rpm -qlp "$rpm_file" > /tmp/qwarp-rpm-files
           grep -q '/usr/bin/qwarp$' /tmp/qwarp-rpm-files
+          grep -Fx '/usr/share/metainfo/io.github.iashutoshtiwari.qwarp.metainfo.xml' /tmp/qwarp-rpm-files
+          grep -Fx '/usr/share/applications/qwarp.desktop' /tmp/qwarp-rpm-files
+          grep -Fx '/usr/share/icons/hicolor/scalable/apps/qwarp.svg' /tmp/qwarp-rpm-files
           grep -q '/usr/share/doc/qwarp/TRADEMARKS.md$' /tmp/qwarp-rpm-files
           grep -q '/usr/share/licenses/qwarp/Apache-2.0.txt$' /tmp/qwarp-rpm-files
           grep -q '/usr/share/licenses/qwarp/Glyphs-Poly-MIT.txt$' /tmp/qwarp-rpm-files

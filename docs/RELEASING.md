@@ -48,3 +48,31 @@ or print them locally. Never replace published tags/assets or force-push AUR.
 Verify the exact published commit, complete artifacts and checksums, successful
 workflow, and AUR version. An interrupted release must be diagnosed before retry.
 A previous commit's QA attestation does not authorize a changed commit.
+
+### Application metadata
+
+Keep the newest release version and date in
+`packaging/appstream/io.github.iashutoshtiwari.qwarp.metainfo.xml` synchronized
+with `CHANGELOG.md`. `scripts/check_release.py` checks these along with the
+application name, license, launcher, and icon identity. AppStream uses the
+reverse-DNS ID while the established launcher and icon remain `qwarp.desktop`
+and `qwarp`.
+
+Validate metadata with:
+
+```bash
+appstreamcli validate --pedantic packaging/appstream/*.metainfo.xml
+desktop-file-validate qwarp.desktop
+```
+
+CI validates without network access; run the command above locally when changing
+screenshot URLs. Use existing screenshots at immutable commit URLs. Qt translation
+catalogs are associated with AppStream using the `qwarp` prefix; the current Qt
+translation extraction does not translate desktop entries or metainfo text.
+
+Debian and RPM must both contain the metainfo file in `/usr/share/metainfo/`,
+the launcher in `/usr/share/applications/`, and the SVG in
+`/usr/share/icons/hicolor/scalable/apps/`. Package artifact checks enforce this.
+Software-center display depends on the frontend and distribution's AppStream
+catalog ingestion. This metadata does not establish package-origin trust;
+signed repository infrastructure is a separate release concern.
