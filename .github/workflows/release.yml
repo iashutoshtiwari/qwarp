@@ -76,7 +76,7 @@ jobs:
           bash scripts/smoke_frozen.sh dist/qwarp-build/qwarp "$RELEASE_VERSION"
           (cd dist/release && sha256sum --check SHA256SUMS)
       - name: Upload the exact release bundle
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: qwarp-${{ inputs.version }}-release
           path: dist/release/
@@ -165,7 +165,7 @@ jobs:
           PYTHONPATH=/tmp/qwarp-deb-root/usr/lib/python3/dist-packages \
             python3 -m qwarp.main --version | grep -Fx "QWarp $RELEASE_VERSION"
       - name: Upload .deb
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: qwarp-${{ inputs.version }}-deb
           path: qwarp_${{ inputs.version }}-1_all.deb
@@ -209,7 +209,7 @@ jobs:
           ! grep -Eq '/(warp-cli|warp-svc|warp-svc\.service)$' /tmp/qwarp-rpm-files
           rpm -qp --requires "$rpm_file" | grep -q 'cloudflare-warp'
       - name: Upload .rpm
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: qwarp-${{ inputs.version }}-rpm
           path: /github/home/rpmbuild/RPMS/noarch/qwarp-${{ inputs.version }}-1*.rpm
