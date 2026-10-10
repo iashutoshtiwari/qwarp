@@ -94,7 +94,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Download exact release bundle
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: qwarp-${{ inputs.version }}-release
           path: dist/release
@@ -133,7 +133,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Download source artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: qwarp-${{ inputs.version }}-release
           path: dist/release
@@ -182,7 +182,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: Download source artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: qwarp-${{ inputs.version }}-release
           path: dist/release
@@ -230,18 +230,18 @@ jobs:
         with:
           fetch-depth: 0
       - name: Download exact release bundle
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: qwarp-${{ inputs.version }}-release
           path: dist/release
 
       - name: Download .deb artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: qwarp-${{ inputs.version }}-deb
           path: dist/release
       - name: Download .rpm artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
           name: qwarp-${{ inputs.version }}-rpm
           path: dist/release
