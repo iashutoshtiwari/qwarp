@@ -5,7 +5,12 @@ import re
 import tomllib
 from pathlib import Path
 
-from check_build_artifacts import LICENSE_EXPRESSION, check_legal_files
+if __package__:
+    from .check_build_artifacts import LICENSE_EXPRESSION, check_legal_files
+    from .release_policy import verify_checksums
+else:
+    from check_build_artifacts import LICENSE_EXPRESSION, check_legal_files
+    from release_policy import verify_checksums
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -70,16 +75,19 @@ def main() -> None:
         section = changelog.split(heading, 1)[1]
         section = section.split("\n## ", 1)[0].rstrip()
         args.notes_output.parent.mkdir(parents=True, exist_ok=True)
-        args.notes_output.write_text(f"{heading}{section}\n", encoding="utf-8")
+        args.notes_output.write_text(
+            f"{heading}{section}\n\nStandalone executable distribution is temporarily unavailable pending bundled-dependency compliance.\n",
+            encoding="utf-8",
+        )
 
     if args.artifacts:
         source_archive = args.artifacts / f"qwarp-{args.version}-source.tar.gz"
-        binary_archive = args.artifacts / f"qwarp-{args.version}-linux-x86_64.tar.gz"
         checksums = args.artifacts / "SHA256SUMS"
-        for artifact in (source_archive, binary_archive, checksums):
+        for artifact in (source_archive, checksums):
             if not artifact.is_file() or artifact.stat().st_size == 0:
                 raise SystemExit(f"Missing release artifact: {artifact}")
 
+        verify_checksums(args.version, args.artifacts)
         source_hash = hashlib.sha256(source_archive.read_bytes()).hexdigest()
         pkg_hash = match(r"^sha256sums=\('([a-f0-9]{64})'\)$", pkgbuild, "PKGBUILD checksum")
         if source_hash != pkg_hash:

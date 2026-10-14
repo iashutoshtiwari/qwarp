@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 import hashlib
+import re
 import sys
 import tarfile
-import tempfile
 import zipfile
 from email.parser import BytesParser
 from pathlib import Path
+
+if __package__:
+    from .release_policy import verify_checksums
+else:
+    from release_policy import verify_checksums
 
 LICENSE_EXPRESSION = "GPL-3.0-only AND MIT AND Apache-2.0"
 LEGAL_FILES = {"LICENSE", "LICENSES/Apache-2.0.txt", "LICENSES/Glyphs-Poly-MIT.txt", "TRADEMARKS.md"}
@@ -56,6 +61,22 @@ def check_frozen_contents(executable: Path) -> set[str]:
     return set(frozen.toc)
 
 
+def check_no_bundled_native(names, read_file) -> None:
+    for name in names:
+        suffix = Path(name).name.lower()
+        header = read_file(name)[:4]
+        require(
+            not (
+                re.search(r"\.so(?:\.|$)", suffix)
+                or suffix.endswith((".dll", ".dylib"))
+                or header == b"\x7fELF"
+                or header[:2] == b"MZ"
+                or header in {b"\xcf\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xca\xfe\xba\xbe"}
+            ),
+            f"Bundled native object is forbidden in unfrozen application archives: {name}",
+        )
+
+
 def check_no_ai_files(names) -> None:
     forbidden = {
         ".agents",
@@ -102,19 +123,20 @@ def main() -> None:
     dist = Path(sys.argv[2]).resolve() if len(sys.argv) > 2 else root / "dist"
     release = dist / "release"
 
-    wheel = dist / f"qwarp-{version}-py3-none-any.whl"
-    sdist = dist / f"qwarp-{version}.tar.gz"
+    wheel = release / f"qwarp-{version}-py3-none-any.whl"
+    sdist = release / f"qwarp-{version}.tar.gz"
     source = release / f"qwarp-{version}-source.tar.gz"
-    binary = release / f"qwarp-{version}-linux-x86_64.tar.gz"
-    for path in (wheel, sdist, source, binary, release / "SHA256SUMS"):
+    for path in (wheel, sdist, source, release / "SHA256SUMS"):
         require(path.is_file() and path.stat().st_size > 0, f"Missing or empty artifact: {path}")
 
+    verify_checksums(version, release)
     check_legal_files(lambda name: (root / name).read_bytes())
 
     with zipfile.ZipFile(wheel) as archive:
         names = set(archive.namelist())
         check_no_ai_files(names)
         check_no_cloudflare_files(names)
+        check_no_bundled_native((name for name in names if not name.endswith("/")), archive.read)
         info = f"qwarp-{version}.dist-info"
         check_license_metadata(archive.read(f"{info}/METADATA"))
         check_legal_files(lambda name: archive.read(f"{info}/licenses/{name}"))
@@ -137,10 +159,15 @@ def main() -> None:
         names = set(archive.getnames())
         check_no_ai_files(names)
         check_no_cloudflare_files(names)
+        check_no_bundled_native(
+            (m.name for m in archive.getmembers() if m.isfile()), lambda name: archive.extractfile(name).read()
+        )
         check_license_metadata(archive.extractfile(f"qwarp-{version}/PKG-INFO").read())
         check_legal_files(lambda name: archive.extractfile(f"qwarp-{version}/{name}").read())
         require(f"qwarp-{version}/pyproject.toml" in names, "sdist does not contain pyproject.toml")
         require(f"qwarp-{version}/src/qwarp/main.py" in names, "sdist does not contain application source")
+        for recipe in ("packaging/debian/rules", "packaging/debian/copyright", "packaging/rpm/qwarp.spec"):
+            require(f"qwarp-{version}/{recipe}" in names, f"sdist is missing build recipe {recipe}")
         require(f"qwarp-{version}/TRADEMARKS.md" in names, "sdist does not contain the trademark notice")
         require(
             f"qwarp-{version}/LICENSES/Apache-2.0.txt" in names,
@@ -155,6 +182,9 @@ def main() -> None:
         names = set(archive.getnames())
         check_no_ai_files(names)
         check_no_cloudflare_files(names)
+        check_no_bundled_native(
+            (m.name for m in archive.getmembers() if m.isfile()), lambda name: archive.extractfile(name).read()
+        )
         check_legal_files(lambda name: archive.extractfile(f"qwarp-{version}/{name}").read())
         require(
             f"qwarp-{version}/CONTRIBUTING.md" in names,
@@ -176,6 +206,10 @@ def main() -> None:
             "docs/legal/LICENSING-AUDIT.md",
             "docs/RELEASING.md",
             "scripts/build_artifacts.sh",
+            "scripts/release_policy.py",
+            "packaging/debian/rules",
+            "packaging/debian/copyright",
+            "packaging/rpm/qwarp.spec",
             "requirements/locks/release-py3.11.txt",
             "docs/audits/2026-09-26.md",
             "docs/screenshots/connected.png",
@@ -189,34 +223,7 @@ def main() -> None:
         require(not any(".egg-info/" in name for name in names), "Source archive contains generated egg-info")
         require(not any(name.endswith((".pyc", ".qm")) for name in names), "Source archive contains generated files")
 
-    with tarfile.open(binary, "r:gz") as archive:
-        names = {name.removeprefix("./") for name in archive.getnames()}
-        check_no_ai_files(names)
-        check_no_cloudflare_files(names)
-        check_legal_files(lambda name: archive.extractfile(f"./{name}").read())
-        require(
-            {
-                "qwarp",
-                "qwarp.desktop",
-                "LICENSE",
-                "README.md",
-                "TRADEMARKS.md",
-                "docs/legal/LICENSING-AUDIT.md",
-                "FROZEN-COMPONENTS.txt",
-            }.issubset(names),
-            "Binary archive is incomplete",
-        )
-        require("LICENSES/Apache-2.0.txt" in names, "Binary archive is missing the Material Symbols license")
-        require("LICENSES/Glyphs-Poly-MIT.txt" in names, "Binary archive is missing the Glyphs Poly license")
-        require("docs/legal/FROZEN-INVENTORY.tsv" in names, "Binary archive is missing the audit snapshot")
-        with tempfile.TemporaryDirectory(prefix="qwarp-artifact-inspection-") as temporary:
-            executable = Path(temporary) / "qwarp"
-            executable.write_bytes(archive.extractfile("./qwarp").read())
-            frozen_names = check_frozen_contents(executable)
-        inventory = archive.extractfile("./FROZEN-COMPONENTS.txt").read().decode()
-        require(all(name in inventory for name in frozen_names), "Frozen component inventory is incomplete")
-
-    print(f"QWarp {version} structural artifact checks passed; frozen dependency compliance requires manual review")
+    print(f"QWarp {version} unfrozen artifact checks passed; standalone publication disabled")
 
 
 if __name__ == "__main__":

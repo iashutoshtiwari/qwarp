@@ -48,7 +48,7 @@ States and other jurisdictions.
 - **Official Cloudflare WARP client:** QWarp requires a separately installed official Cloudflare WARP client (`warp-cli` and `warp-svc`). Consult Cloudflare's [Linux documentation](https://developers.cloudflare.com/warp-client/get-started/#linux) and [package repository](https://pkg.cloudflareclient.com/) for supported distributions and installation instructions.
 - **Desktop Session:** A Wayland or X11 desktop session. A system tray is optional; the main window remains accessible if no tray is present.
 - **System Services:** `systemd` and `pkexec` are used for daemon status checks and service control.
-- **Python (Source/Development):** Python 3.11 or newer and PyQt6 (not required for the standalone binary).
+- **Python (Source/Development):** Python 3.11 or newer and PyQt6.
 
 ## Installation
 
@@ -78,15 +78,14 @@ Download `qwarp-0.10.1-1.fc44.noarch.rpm` from the [latest release](https://gith
 sudo dnf install ./qwarp-0.10.1-1.fc44.noarch.rpm
 ```
 
-### Standalone Binary (x86_64)
+### Standalone binary status
 
-Download `qwarp-0.10.1-linux-x86_64.tar.gz` and `SHA256SUMS` from the [latest release](https://github.com/iashutoshtiwari/qwarp/releases/latest):
-
-```bash
-sha256sum --ignore-missing --check SHA256SUMS
-tar -xzf qwarp-0.10.1-linux-x86_64.tar.gz
-./qwarp
-```
+Standalone executable distribution is temporarily unavailable for new releases
+pending verification of bundled-dependency notices, matching source, and library
+replacement/rebuild obligations. Existing published releases are unchanged.
+Use a native package or the Python/source installation above. Local frozen builds
+remain available for inspection; see [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[licensing audit](docs/legal/LICENSING-AUDIT.md).
 
 ## Usage and verification
 

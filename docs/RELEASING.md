@@ -25,8 +25,9 @@ Review [the licensing audit](legal/LICENSING-AUDIT.md) before preparing a public
 release. Frozen binary redistribution is blocked until the exact bundled
 components, notices, matching corresponding source, and any required library
 replacement/rebuild mechanism have been verified. Structural artifact checks
-alone do not establish licensing compliance. Resolve or obtain qualified review
-of the QWarp naming and Cloudflare integration questions separately.
+alone do not establish licensing compliance. QWarp retains its name by
+maintainer decision; no renaming is proposed.
+Qualified review of naming and Cloudflare integration questions remains external.
 
 Publish matching QWarp source and build instructions beside each GPL-covered
 binary. The edited tree differs from the immutable v0.10.1 source asset: do not
@@ -36,13 +37,22 @@ the checksum and `.SRCINFO`, and verify the exact resulting packages.
 
 Synchronize the application version, changelog, CI version probes,
 `packaging/arch/PKGBUILD`, `packaging/arch/.SRCINFO`, and Debian/RPM metadata.
-Compile all eight locales. Build artifacts with `scripts/build_artifacts.sh`.
+Compile all eight locales. Build public candidate artifacts with
+`scripts/build_artifacts.sh --output-dir FRESH_DIRECTORY`. Default builds produce
+source archives and a wheel; native jobs add Debian/RPM packages. Standalone
+executables are excluded from public manifests, uploads, checksums and
+attestations. `--frozen-local` builds only an inspection executable outside
+`release/`; it does not enable publication or certify compliance.
 Set the candidate source checksum in Arch metadata and regenerate `.SRCINFO`
 using `(cd packaging/arch && makepkg --printsrcinfo > .SRCINFO)`.
 
-Validate with `scripts/check_release.py --version X.Y.Z --artifacts dist/release`,
-`scripts/smoke_frozen.sh dist/qwarp-build/qwarp X.Y.Z`, and `sha256sum --check
-SHA256SUMS` inside the artifact directory. Verify package ownership: QWarp must
+Validate with `scripts/check_release.py --version X.Y.Z --artifacts OUTPUT/release`,
+`scripts/check_build_artifacts.py X.Y.Z OUTPUT`, and `scripts/release_policy.py
+X.Y.Z OUTPUT/release --require-native`. The publisher takes its file list from
+the policy validator, which rejects frozen/stale/unexpected inputs and checks
+complete checksums. Frozen compliance requires a separate evidence-backed code
+change before that public allowlist can change; no boolean approval bypass
+exists. Verify package ownership: QWarp must
 not contain Cloudflare binaries, service units, capability hooks, or install
 hooks. Arch must depend on the separately installed `cloudflare-warp-bin`.
 

@@ -47,26 +47,32 @@ From the repository root, run the current source directly:
 PYTHONPATH=src .venv/bin/python -m qwarp.main
 ```
 
-For a clean wheel, source archive, and standalone test binary, install the build
-dependencies once (Qt localization tools listed below are also required):
+For source, wheel and native-package inputs, install the matching release lock
+and build into a fresh directory without removing existing output:
 
 ```bash
-.venv/bin/python -m pip install -c requirements/release.txt build pyinstaller PyQt6 setuptools wheel
-python3 scripts/clean_build.py
-./dist/qwarp-build/qwarp
+uv pip install --python .venv/bin/python --require-hashes --only-binary=:all: -r requirements/locks/release-py3.11.txt
+PATH="$PWD/.venv/bin:$PATH" bash scripts/build_artifacts.sh --output-dir dist/local-candidate
 ```
 
-`clean_build.py` uses the active virtual environment, or the repository's `.venv`
-when none is active. It deletes `build/`, all of `dist/`, test/lint caches,
-source-tree Python bytecode, and the generated root `qwarp.spec`, then calls
-`build_artifacts.sh`. It preserves virtual environments, editable-install
-metadata, and compiled translations. It refuses tracked cleanup targets and
-symlinks; run `python3 scripts/clean_build.py --dry-run` to preview removal.
+Select the lock matching your interpreter (3.11 or 3.14). Add `--frozen-local`
+only for a local inspection build. The executable is placed under
+`dist/local-candidate/local-frozen/qwarp`, outside the public `release/` directory.
+Its `evidence/inventory.json` binds every embedded payload and notice to the
+executable SHA-256. The legal status remains BLOCKED; this manifest does not
+permit redistribution. Never upload the local-frozen directory.
 
-The helper builds without launching QWarp. Both launch commands above start
-normal daemon polling. Add `--help` or `--version` for a side-effect-free probe.
-Builds refresh translation catalogs; review any `.ts` changes. Local builds do
-not update committed release versions or Arch checksums.
+`scripts/clean_build.py` remains an explicit destructive cleanup helper. It
+removes `build/`, `dist/`, and caches; preview with `--dry-run` first. It builds
+unfrozen artifacts by default; `--frozen-local` requests the inspection executable.
+No helper automatically launches QWarp. Use `--help` or `--version` for a
+side-effect-free probe. Normal startup polls the separately installed WARP client.
+
+Builds compile all eight catalogs; review any tracked `.ts` changes. Candidate
+checksums stay in the chosen output directory. Local builds do not update
+committed release versions or Arch checksums. Validate dependency coherence with
+`python scripts/check_requirements.py` and inspect public inputs with
+`python scripts/release_policy.py VERSION OUTPUT/release`.
 
 ## Understand the code path
 

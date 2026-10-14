@@ -49,6 +49,7 @@ def cleanup(root: Path, *, dry_run: bool = False) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dry-run", action="store_true", help="list cleanup targets without deleting or building")
+    parser.add_argument("--frozen-local", action="store_true", help="also build a local inspection-only executable")
     args = parser.parse_args()
     root = Path(__file__).resolve().parent.parent
     if args.dry_run:
@@ -59,11 +60,20 @@ def main() -> None:
     python = environment / "bin/python"
     if not python.is_file():
         python = Path(sys.executable)
-    subprocess.run([str(python), "-c", "import build, PyInstaller, PyQt6"], check=True)
+    imports = "import build, PyQt6" + (", PyInstaller" if args.frozen_local else "")
+    subprocess.run([str(python), "-c", imports], check=True)
     cleanup(root)
     env = dict(os.environ, PATH=f"{python.parent}{os.pathsep}{os.environ.get('PATH', '')}")
-    subprocess.run(["bash", str(root / "scripts/build_artifacts.sh")], cwd=root, env=env, check=True)
-    print(f"\nBuild ready. To test the application, run:\n{root / 'dist/qwarp-build/qwarp'}")
+    command = ["bash", str(root / "scripts/build_artifacts.sh")]
+    if args.frozen_local:
+        command.append("--frozen-local")
+    subprocess.run(command, cwd=root, env=env, check=True)
+    if args.frozen_local:
+        print(
+            f"\nLocal inspection only; public redistribution blocked. Version probe:\n{root / 'dist/local-frozen/qwarp'} --version"
+        )
+    else:
+        print(f"\nUnfrozen candidate artifacts ready in {root / 'dist/release'}")
 
 
 if __name__ == "__main__":

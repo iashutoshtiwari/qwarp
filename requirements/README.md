@@ -11,6 +11,12 @@ versions. Review all added transitive dependencies, version changes, and hashes.
 The generator resolves wheel metadata and hashes the actual downloaded wheels;
 no source distributions are accepted. Dependency update PRs must regenerate
 locks. Unchanged inputs should reproduce identical lock contents.
+`python scripts/check_requirements.py` rejects stale locks in CI before building.
+The 2026-10-14 reconciliation follows the existing dependency-update commits:
+SIP 13.13.0, hooks-contrib 2026.8, iniconfig 2.3.1 and Ruff 0.16.10. PyQt6 6.11.0,
+Qt 6.11.2 and all other versions remain unchanged. The minimum-Qt lock deliberately
+uses PyQt6/Qt 6.6.0; SIP and development-tool versions follow the current constraints.
+No hash was invented: the existing generator hashes downloaded versioned wheels.
 
 Install the matching lock using:
 

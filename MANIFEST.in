@@ -3,6 +3,8 @@ include CONTRIBUTING.md
 recursive-include docs/legal *.md *.tsv
 recursive-include requirements *.txt *.md
 recursive-include scripts *.py *.sh
+recursive-include packaging/debian *
+recursive-include packaging/rpm *.spec
 include docs/DEVELOPMENT.md docs/RELEASING.md qwarp.desktop
 
 prune .agents

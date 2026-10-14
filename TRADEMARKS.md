@@ -16,6 +16,9 @@ The project continues to use the name QWarp. Because that name incorporates
 WARP, it carries trademark risk under Cloudflare's guidelines. Cloudflare has
 not approved this name, and this notice is not legal clearance for its use.
 
+The maintainer has elected to retain QWarp. This decision does not establish
+permission, non-infringement, or independent legal clearance.
+
 - [Cloudflare Trademark Guidelines](https://www.cloudflare.com/trademark/)
 - [Cloudflare WARP client legal information](https://developers.cloudflare.com/warp-client/legal/)
 - [Cloudflare Application Terms](https://www.cloudflare.com/application/terms/)

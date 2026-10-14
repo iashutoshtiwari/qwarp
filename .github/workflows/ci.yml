@@ -9,6 +9,20 @@ on:
     branches: [master]
 
 jobs:
+  workflow-lint:
+    name: Validate workflows
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Run pinned actionlint
+        run: |
+          mkdir -p "$RUNNER_TEMP/actionlint"
+          GOBIN="$RUNNER_TEMP/actionlint" go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.11
+          "$RUNNER_TEMP/actionlint/actionlint"
+
   quality:
     name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-22.04
@@ -41,6 +55,7 @@ jobs:
         run: python3 scripts/check_locales.py
       - name: Ruff
         run: |
+          python scripts/check_requirements.py
           ruff check src/ tests/ --output-format=github
           ruff format src/ tests/ --check --diff
       - name: Test
@@ -76,7 +91,7 @@ jobs:
         run: pytest tests/ -v --tb=short
 
   package:
-    name: Build and smoke-test release artifacts
+    name: Build and verify unfrozen release artifacts
     runs-on: ubuntu-22.04
     permissions:
       contents: read
@@ -106,8 +121,6 @@ jobs:
           # from an already-published immutable release asset.
           python scripts/check_release.py --version 0.10.1
           (cd dist/release && sha256sum --check SHA256SUMS)
-      - name: Verify standalone binary
-        run: bash scripts/smoke_frozen.sh dist/qwarp-build/qwarp 0.10.1
       - name: Upload package inputs
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
@@ -158,7 +171,7 @@ jobs:
           package_file=$(find "$ARCH_BUILD_DIR" -maxdepth 1 -name 'qwarp-*.pkg.tar.zst' -print -quit)
           test -n "$package_file"
           bsdtar -tf "$package_file" > /tmp/package-files
-          ! grep -Eq '(^|/)(warp-cli|warp-svc|warp-svc\.service)$' /tmp/package-files
+          if grep -Eq '(^|/)(warp-cli|warp-svc|warp-svc\.service)$' /tmp/package-files; then echo "Forbidden package member or ownership hook" >&2; exit 1; fi
           grep -q '^usr/bin/qwarp$' /tmp/package-files
           grep -q '^usr/share/doc/qwarp/TRADEMARKS.md$' /tmp/package-files
           grep -Eq '^usr/share/licenses/qwarp/LICENSE$' /tmp/package-files
@@ -166,7 +179,7 @@ jobs:
           grep -q '^usr/share/licenses/qwarp/Apache-2.0.txt$' /tmp/package-files
           grep -q '^usr/share/licenses/qwarp/Glyphs-Poly-MIT.txt$' /tmp/package-files
           grep -q 'cloudflare-warp-bin' packaging/arch/.SRCINFO
-          ! grep -Eq '^\s*(conflicts|install)\s*=' packaging/arch/.SRCINFO
+          if grep -Eq '^\s*(conflicts|install)\s*=' packaging/arch/.SRCINFO; then echo "Forbidden package member or ownership hook" >&2; exit 1; fi
       - name: Test pacman installation transaction
         run: |
           mkdir -p /tmp/dummy-warp
@@ -231,7 +244,7 @@ jobs:
           grep -Eq 'usr/share/doc/qwarp/LICENSE(\.gz)?$' /tmp/qwarp-deb-files
           grep -Eq 'usr/share/doc/qwarp/Apache-2.0.txt(\.gz)?$' /tmp/qwarp-deb-files
           grep -Eq 'usr/share/doc/qwarp/Glyphs-Poly-MIT.txt(\.gz)?$' /tmp/qwarp-deb-files
-          ! grep -Eq '/(warp-cli|warp-svc|warp-svc\.service)$' /tmp/qwarp-deb-files
+          if grep -Eq '/(warp-cli|warp-svc|warp-svc\.service)$' /tmp/qwarp-deb-files; then echo "Forbidden package member or ownership hook" >&2; exit 1; fi
           dpkg-deb --field qwarp_0.10.1-1_all.deb Depends | grep -q 'cloudflare-warp'
           mkdir -p /tmp/qwarp-deb-root
           dpkg-deb --extract qwarp_0.10.1-1_all.deb /tmp/qwarp-deb-root
@@ -296,7 +309,7 @@ jobs:
           grep -q '/usr/share/licenses/qwarp/TRADEMARKS.md$' /tmp/qwarp-rpm-files
           grep -q '/usr/share/licenses/qwarp/Apache-2.0.txt$' /tmp/qwarp-rpm-files
           grep -q '/usr/share/licenses/qwarp/Glyphs-Poly-MIT.txt$' /tmp/qwarp-rpm-files
-          ! grep -Eq '/(warp-cli|warp-svc|warp-svc\.service)$' /tmp/qwarp-rpm-files
+          if grep -Eq '/(warp-cli|warp-svc|warp-svc\.service)$' /tmp/qwarp-rpm-files; then echo "Forbidden package member or ownership hook" >&2; exit 1; fi
           rpm -qp --requires "$rpm_file" | grep -q 'cloudflare-warp'
       - name: Test dnf installation transaction
         run: |
