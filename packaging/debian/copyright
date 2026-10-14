@@ -4,7 +4,8 @@ Source: https://github.com/iashutoshtiwari/qwarp
 
 Files: *
 Copyright: 2026 Ashutosh Tiwari
-License: MIT
+License: GPL-3
+Comment: GPL version 3 only; earlier MIT grants remain unaffected.
 
 Files: src/qwarp/assets/tray-connected.svg
  src/qwarp/assets/tray-connecting.svg
@@ -19,6 +20,28 @@ Files: src/qwarp/assets/app-icon.svg
 Copyright: 2018 Goran Spasojevic
  Google LLC
 License: MIT and Apache-2.0
+
+Files: LICENSES/Glyphs-Poly-MIT.txt
+Copyright: 2018 Goran Spasojevic
+License: MIT
+
+Files: docs/screenshots/*.png
+Copyright: 2026 Ashutosh Tiwari
+ 2018 Goran Spasojevic
+ Google LLC
+License: GPL-3 and MIT and Apache-2.0
+Comment: Application captures include the third-party artwork described in
+ TRADEMARKS.md. Original artwork copyrights and licenses remain applicable.
+
+Files: LICENSES/Apache-2.0.txt
+Copyright: The Apache Software Foundation
+License: Apache-2.0
+
+License: GPL-3
+ QWarp's independently owned material is licensed under the GNU General
+ Public License, version 3 only. The complete license is in LICENSE and
+ installed in /usr/share/doc/qwarp/LICENSE. On Debian systems it is also
+ available in /usr/share/common-licenses/GPL-3.
 
 License: MIT
  Permission is hereby granted, free of charge, to any person obtaining a copy

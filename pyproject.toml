@@ -8,7 +8,8 @@ dynamic = ["version"]
 description = "A Wayland-native, Qt6-based alternative desktop client for Cloudflare WARP"
 readme = "README.md"
 requires-python = ">=3.11"
-license = {text = "MIT AND Apache-2.0"}
+license = "GPL-3.0-only AND MIT AND Apache-2.0"
+license-files = ["LICENSE", "LICENSES/*.txt", "TRADEMARKS.md"]
 dependencies = [
     "PyQt6>=6.6,<7",
 ]
@@ -27,9 +28,6 @@ dev = [
 
 [project.scripts]
 qwarp = "qwarp.main:main"
-
-[tool.setuptools]
-license-files = ["LICENSE", "LICENSES/*.txt", "TRADEMARKS.md"]
 
 [tool.setuptools.dynamic]
 version = {attr = "qwarp.__version__"}

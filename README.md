@@ -8,7 +8,7 @@ A Qt6-based alternative desktop client for Cloudflare® WARP® on Linux.
 [![CI](https://github.com/iashutoshtiwari/qwarp/actions/workflows/ci.yml/badge.svg)](https://github.com/iashutoshtiwari/qwarp/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/iashutoshtiwari/qwarp)](https://github.com/iashutoshtiwari/qwarp/releases/latest)
 [![AUR version](https://img.shields.io/aur/version/qwarp)](https://aur.archlinux.org/packages/qwarp)
-[![License: MIT](https://img.shields.io/github/license/iashutoshtiwari/qwarp)](LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0--only-blue)](LICENSE)
 
 </div>
 
@@ -134,8 +134,13 @@ Please use [GitHub Issues](https://github.com/iashutoshtiwari/qwarp/issues) for 
 
 ## License
 
-QWarp's original code is released under the [MIT License](LICENSE).
+QWarp's independently owned code is released under [GNU GPL version 3 only](LICENSE)
+(`GPL-3.0-only`). Copyright (c) 2026 Ashutosh. Earlier MIT grants remain unaffected.
 
-Bundled assets, third-party icons, and trademark details are documented in [TRADEMARKS.md](TRADEMARKS.md).
+Bundled artwork retains its MIT and Apache-2.0 licenses; the source and wheel
+license expression is `GPL-3.0-only AND MIT AND Apache-2.0`. See
+[TRADEMARKS.md](TRADEMARKS.md) for file-specific attribution and Cloudflare rights,
+and the [licensing audit](docs/legal/LICENSING-AUDIT.md) for unresolved naming,
+integration, and standalone-binary redistribution risks. This is not legal clearance.
 
 Maintained by [Ashutosh Tiwari](https://github.com/iashutoshtiwari).

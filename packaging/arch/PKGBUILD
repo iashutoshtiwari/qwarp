@@ -5,7 +5,7 @@ pkgrel=1
 pkgdesc="Qt6-based alternative desktop client for Cloudflare WARP"
 arch=('x86_64')
 url="https://github.com/iashutoshtiwari/qwarp"
-license=('MIT' 'Apache-2.0')
+license=('GPL-3.0-only' 'MIT' 'Apache-2.0')
 depends=('python' 'python-pyqt6' 'cloudflare-warp-bin')
 makedepends=('python-build' 'python-installer' 'python-wheel' 'python-setuptools' 'qt6-tools')
 

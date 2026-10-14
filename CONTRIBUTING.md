@@ -137,6 +137,15 @@ Common tool packages are `qt6-l10n-tools` and `qt6-tools-dev-tools` on Ubuntu/De
 `qt6-tools` on Arch. Review the tracked `.ts` changes, preserve existing translations, and do not commit generated
 `.qm` files.
 
+## Contribution licensing
+
+New contributions to QWarp's independently owned code and documentation must be
+offered under `GPL-3.0-only`, without assigning copyright to the maintainer.
+Identify imported code and artwork, their owners, sources, licenses, and changes;
+retain required notices. Third-party artwork retains its existing license.
+This policy does not assert consent from historical contributors or revoke
+previous MIT grants. See [the licensing audit](docs/legal/LICENSING-AUDIT.md).
+
 ## Submit a pull request
 
 Before opening a pull request:

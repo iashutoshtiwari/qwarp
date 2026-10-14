@@ -2,7 +2,7 @@ Name:           qwarp
 Version:        0.10.1
 Release:        1%{?dist}
 Summary:        Qt6-based alternative desktop client for Cloudflare WARP
-License:        MIT AND Apache-2.0
+License:        GPL-3.0-only AND MIT AND Apache-2.0
 URL:            https://github.com/iashutoshtiwari/qwarp
 Source0:        %{name}-%{version}-source.tar.gz
 
@@ -39,8 +39,8 @@ install -Dm644 qwarp.desktop %{buildroot}%{_datadir}/applications/qwarp.desktop
 install -Dm644 src/qwarp/assets/app-icon.svg %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/qwarp.svg
 
 %files -n qwarp -f %{pyproject_files}
-%license LICENSE LICENSES/Apache-2.0.txt LICENSES/Glyphs-Poly-MIT.txt
-%doc README.md TRADEMARKS.md
+%license LICENSE LICENSES/Apache-2.0.txt LICENSES/Glyphs-Poly-MIT.txt TRADEMARKS.md
+%doc README.md
 %{_bindir}/qwarp
 %{_datadir}/applications/qwarp.desktop
 %{_datadir}/icons/hicolor/scalable/apps/qwarp.svg
