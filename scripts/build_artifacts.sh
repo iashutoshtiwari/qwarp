@@ -36,6 +36,9 @@ install -Dm644 README.md "$binary_stage/README.md"
 install -Dm644 TRADEMARKS.md "$binary_stage/TRADEMARKS.md"
 install -Dm644 LICENSES/Apache-2.0.txt "$binary_stage/LICENSES/Apache-2.0.txt"
 install -Dm644 LICENSES/Glyphs-Poly-MIT.txt "$binary_stage/LICENSES/Glyphs-Poly-MIT.txt"
+install -Dm644 docs/legal/LICENSING-AUDIT.md "$binary_stage/docs/legal/LICENSING-AUDIT.md"
+install -Dm644 docs/legal/FROZEN-INVENTORY.tsv "$binary_stage/docs/legal/FROZEN-INVENTORY.tsv"
+pyi-archive_viewer -l -r dist/qwarp-build/qwarp > "$binary_stage/FROZEN-COMPONENTS.txt"
 
 tar \
     --sort=name \

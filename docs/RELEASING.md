@@ -21,6 +21,19 @@ runtime/UI changes invalidate that approval and require renewed review.
 
 ## Preparation after approval
 
+Review [the licensing audit](legal/LICENSING-AUDIT.md) before preparing a public
+release. Frozen binary redistribution is blocked until the exact bundled
+components, notices, matching corresponding source, and any required library
+replacement/rebuild mechanism have been verified. Structural artifact checks
+alone do not establish licensing compliance. Resolve or obtain qualified review
+of the QWarp naming and Cloudflare integration questions separately.
+
+Publish matching QWarp source and build instructions beside each GPL-covered
+binary. The edited tree differs from the immutable v0.10.1 source asset: do not
+publish its updated license metadata against that old artifact. During the next
+authorized release, select a new version, build its source archive, regenerate
+the checksum and `.SRCINFO`, and verify the exact resulting packages.
+
 Synchronize the application version, changelog, CI version probes,
 `packaging/arch/PKGBUILD`, `packaging/arch/.SRCINFO`, and Debian/RPM metadata.
 Compile all eight locales. Build artifacts with `scripts/build_artifacts.sh`.

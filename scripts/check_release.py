@@ -2,7 +2,10 @@
 import argparse
 import hashlib
 import re
+import tomllib
 from pathlib import Path
+
+from check_build_artifacts import LICENSE_EXPRESSION, check_legal_files
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -24,6 +27,11 @@ def main() -> None:
     parser.add_argument("--artifacts", type=Path)
     parser.add_argument("--notes-output", type=Path)
     args = parser.parse_args()
+
+    project = tomllib.loads(read("pyproject.toml"))["project"]
+    if project["license"] != LICENSE_EXPRESSION:
+        raise SystemExit("Incorrect project SPDX license expression")
+    check_legal_files(lambda name: (ROOT / name).read_bytes())
 
     init_version = match(r'^__version__ = "([^"]+)"$', read("src/qwarp/__init__.py"), "Python version")
     pkgbuild = read("packaging/arch/PKGBUILD")

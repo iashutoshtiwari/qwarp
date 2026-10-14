@@ -161,6 +161,8 @@ jobs:
           ! grep -Eq '(^|/)(warp-cli|warp-svc|warp-svc\.service)$' /tmp/package-files
           grep -q '^usr/bin/qwarp$' /tmp/package-files
           grep -q '^usr/share/doc/qwarp/TRADEMARKS.md$' /tmp/package-files
+          grep -Eq '^usr/share/licenses/qwarp/LICENSE$' /tmp/package-files
+          bsdtar -xOf "$package_file" .PKGINFO | grep -Eq '^license = GPL-3.0-only$'
           grep -q '^usr/share/licenses/qwarp/Apache-2.0.txt$' /tmp/package-files
           grep -q '^usr/share/licenses/qwarp/Glyphs-Poly-MIT.txt$' /tmp/package-files
           grep -q 'cloudflare-warp-bin' packaging/arch/.SRCINFO
@@ -196,7 +198,8 @@ jobs:
   debian-package:
     name: Build Debian package
     needs: package
-    runs-on: ubuntu-24.04
+    # PEP 639 requires setuptools >=77.0.3; Ubuntu 24.04 ships 68.x.
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
     steps:
@@ -225,6 +228,7 @@ jobs:
           dpkg-deb --contents qwarp_0.10.1-1_all.deb > /tmp/qwarp-deb-files
           grep -Eq 'usr/bin/qwarp$' /tmp/qwarp-deb-files
           grep -Eq 'usr/share/doc/qwarp/TRADEMARKS.md(\.gz)?$' /tmp/qwarp-deb-files
+          grep -Eq 'usr/share/doc/qwarp/LICENSE(\.gz)?$' /tmp/qwarp-deb-files
           grep -Eq 'usr/share/doc/qwarp/Apache-2.0.txt(\.gz)?$' /tmp/qwarp-deb-files
           grep -Eq 'usr/share/doc/qwarp/Glyphs-Poly-MIT.txt(\.gz)?$' /tmp/qwarp-deb-files
           ! grep -Eq '/(warp-cli|warp-svc|warp-svc\.service)$' /tmp/qwarp-deb-files
@@ -287,7 +291,9 @@ jobs:
           test -n "$rpm_file"
           rpm -qlp "$rpm_file" > /tmp/qwarp-rpm-files
           grep -q '/usr/bin/qwarp$' /tmp/qwarp-rpm-files
-          grep -q '/usr/share/doc/qwarp/TRADEMARKS.md$' /tmp/qwarp-rpm-files
+          grep -Eq '/usr/share/licenses/qwarp/LICENSE$' /tmp/qwarp-rpm-files
+          rpm -qp --qf '%{LICENSE}\n' "$rpm_file" | grep -Fx 'GPL-3.0-only AND MIT AND Apache-2.0'
+          grep -q '/usr/share/licenses/qwarp/TRADEMARKS.md$' /tmp/qwarp-rpm-files
           grep -q '/usr/share/licenses/qwarp/Apache-2.0.txt$' /tmp/qwarp-rpm-files
           grep -q '/usr/share/licenses/qwarp/Glyphs-Poly-MIT.txt$' /tmp/qwarp-rpm-files
           ! grep -Eq '/(warp-cli|warp-svc|warp-svc\.service)$' /tmp/qwarp-rpm-files
