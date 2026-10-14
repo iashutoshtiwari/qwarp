@@ -470,6 +470,12 @@
         <translation>Die offiziellen Standard-IP- und Hostnamen-Regeln für den Split-Tunnel wiederherstellen?</translation>
     </message>
     <message>
+        <location filename="../../ui/settings.py" line="1035" />
+        <location filename="../../ui/settings.py" line="584" />
+        <source>Unknown</source>
+        <translation>Unbekannt</translation>
+    </message>
+    <message>
         <location filename="../../ui/settings.py" line="592" />
         <source>Active</source>
         <translation>Aktiv</translation>
@@ -551,11 +557,6 @@
         <location filename="../../ui/settings.py" line="1024" />
         <source>Hide</source>
         <translation>Ausblenden</translation>
-    </message>
-    <message>
-        <location filename="../../ui/settings.py" line="1035" />
-        <source>Unknown</source>
-        <translation>Unbekannt</translation>
     </message>
 </context><context>
     <name>WarpStateManager</name>

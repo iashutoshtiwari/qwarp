@@ -470,6 +470,12 @@
         <translation>公式のデフォルト IP およびホスト名スプリットトンネルルールを復元しますか？</translation>
     </message>
     <message>
+        <location filename="../../ui/settings.py" line="1035" />
+        <location filename="../../ui/settings.py" line="584" />
+        <source>Unknown</source>
+        <translation>不明</translation>
+    </message>
+    <message>
         <location filename="../../ui/settings.py" line="592" />
         <source>Active</source>
         <translation>アクティブ</translation>
@@ -551,11 +557,6 @@
         <location filename="../../ui/settings.py" line="1024" />
         <source>Hide</source>
         <translation>非表示</translation>
-    </message>
-    <message>
-        <location filename="../../ui/settings.py" line="1035" />
-        <source>Unknown</source>
-        <translation>不明</translation>
     </message>
 </context><context>
     <name>WarpStateManager</name>

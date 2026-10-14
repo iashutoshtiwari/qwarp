@@ -1,5 +1,6 @@
 import hashlib
 import shlex
+import shutil
 import subprocess
 import tarfile
 
@@ -103,21 +104,57 @@ def test_source_archive_is_deterministic_and_preserves_existing_output(tmp_path)
     assert result.returncode != 0 and not missing_target.exists()
 
 
-def test_forbidden_member_shell_guard_actually_aborts(tmp_path):
+@pytest.fixture(params=["members", "arch-metadata"])
+def package_shell_guard(request, tmp_path, monkeypatch):
     workflow = (ROOT / ".github/workflows/packages.yml").read_text()
-    workflow_path = "/tmp/package-files"  # noqa: S108 - workflow literal is replaced with tmp_path below
+    if request.param == "members":
+        workflow_path = "/tmp/package-files"  # noqa: S108 - workflow literal is replaced with tmp_path below
+        forbidden = ["usr/bin/warp-cli", "warp-svc", "usr/lib/systemd/system/warp-svc.service", "usr/lib/libwarp.so"]
+        clean = "usr/bin/qwarp\nusr/bin/warp-cli-helper\nusr/lib/libwarp/subdir\n"
+    else:
+        workflow_path = "packaging/arch/.SRCINFO"
+        forbidden = ["\tconflicts = cloudflare-warp-bin", "  install = qwarp.install"]
+        clean = "\tdepends = cloudflare-warp-bin\n\tlicense = GPL-3.0-only\n"
     lines = workflow.splitlines()
-    start = next(i for i, line in enumerate(lines) if "if rg" in line and workflow_path in line)
-    end = next(i for i in range(start, len(lines)) if lines[i].strip() == "fi")
+    start = next(i for i, line in enumerate(lines) if "grep -E" in line and workflow_path in line) - 1
+    end = next(i for i in range(start, len(lines)) if lines[i].strip() == "esac")
     guard = "\n".join(line.strip() for line in lines[start : end + 1])
     members = tmp_path / "members"
     command = guard.replace(workflow_path, shlex.quote(str(members))) + "\necho continued"
-    members.write_text("usr/bin/warp-cli\n")
-    result = subprocess.run(["bash", "-e", "-c", command], capture_output=True, text=True)
-    assert result.returncode != 0 and "continued" not in result.stdout
-    members.write_text("usr/bin/qwarp\n")
-    result = subprocess.run(["bash", "-e", "-c", command], capture_output=True, text=True)
+
+    # Reproduce the runner's lack of rg without adding a test dependency on it.
+    grep = shutil.which("grep")
+    assert grep is not None
+    commands = tmp_path / "bin"
+    commands.mkdir()
+    (commands / "grep").symlink_to(grep)
+    monkeypatch.setenv("PATH", str(commands))
+    return command, members, forbidden, clean
+
+
+def test_forbidden_member_shell_guard_actually_aborts(package_shell_guard):
+    command, members, forbidden, clean = package_shell_guard
+    for entry in forbidden:
+        members.write_text(f"{entry}\n")
+        result = subprocess.run(["/bin/bash", "-e", "-c", command], capture_output=True, text=True)
+        assert result.returncode == 1 and "continued" not in result.stdout
+    members.write_text(clean)
+    result = subprocess.run(["/bin/bash", "-e", "-c", command], capture_output=True, text=True)
     assert result.returncode == 0 and "continued" in result.stdout
+
+
+def test_package_shell_guard_fails_closed_on_unreadable_input(package_shell_guard):
+    command, _members, _forbidden, _clean = package_shell_guard
+    result = subprocess.run(["/bin/bash", "-e", "-c", command], capture_output=True, text=True)
+    assert result.returncode == 2 and "continued" not in result.stdout
+
+
+def test_package_shell_guard_fails_closed_without_grep(package_shell_guard, tmp_path, monkeypatch):
+    command, members, _forbidden, clean = package_shell_guard
+    members.write_text(clean)
+    monkeypatch.setenv("PATH", str(tmp_path / "no-commands"))
+    result = subprocess.run(["/bin/bash", "-e", "-c", command], capture_output=True, text=True)
+    assert result.returncode == 127 and "continued" not in result.stdout
 
 
 @pytest.mark.parametrize("stale", ["PKGBUILD", ".SRCINFO"])

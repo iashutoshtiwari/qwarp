@@ -470,6 +470,12 @@
         <translation>¿Restablecer las reglas oficiales predeterminadas de IP y nombres de host de túnel dividido?</translation>
     </message>
     <message>
+        <location filename="../../ui/settings.py" line="1035" />
+        <location filename="../../ui/settings.py" line="584" />
+        <source>Unknown</source>
+        <translation>Desconocido</translation>
+    </message>
+    <message>
         <location filename="../../ui/settings.py" line="592" />
         <source>Active</source>
         <translation>Activo</translation>
@@ -551,11 +557,6 @@
         <location filename="../../ui/settings.py" line="1024" />
         <source>Hide</source>
         <translation>Ocultar</translation>
-    </message>
-    <message>
-        <location filename="../../ui/settings.py" line="1035" />
-        <source>Unknown</source>
-        <translation>Desconocido</translation>
     </message>
 </context><context>
     <name>WarpStateManager</name>

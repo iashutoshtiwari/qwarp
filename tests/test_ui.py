@@ -150,6 +150,21 @@ def test_current_network_diagnostics_shape_is_rendered(qapp, manager):
     dialog.reject()
 
 
+@pytest.mark.parametrize(
+    "dns,expected",
+    [(["1.1.1.1", "2606:4700:4700::1111"], "1.1.1.1, 2606:4700:4700::1111"), ([], "translated:Unknown")],
+)
+def test_dns_diagnostics_translates_only_the_static_fallback(qapp, manager, dns, expected):
+    dialog = SettingsDialog(manager)
+    try:
+        with patch.object(dialog, "tr", side_effect=lambda text: f"translated:{text}") as translate:
+            dialog._on_query_worker_finished({"dns": dns}, {}, {})
+        assert dialog.lbl_dns.text() == expected
+        assert ", ".join(dns) not in [call.args[0] for call in translate.call_args_list]
+    finally:
+        dialog.reject()
+
+
 def test_delete_registration_requires_confirmation(qapp, manager):
     dialog = SettingsDialog(manager)
     with patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Cancel):

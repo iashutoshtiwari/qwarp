@@ -73,7 +73,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends qt6-l10n-tools
-          python -m pip install build
+          python -m pip install build -e .
       - name: Read application version
         id: version
         run: echo "version=$(PYTHONPATH=src python -c 'from qwarp import __version__; print(__version__)')" >> "$GITHUB_OUTPUT"

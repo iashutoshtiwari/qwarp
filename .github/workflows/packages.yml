@@ -58,7 +58,7 @@ jobs:
         run: |
           pacman -Syu --noconfirm --needed \
             git python python-build python-installer python-pyqt6 \
-            python-setuptools python-wheel qt6-tools ripgrep
+            python-setuptools python-wheel qt6-tools
           useradd --create-home builder
           mkdir -p /tmp/qwarp-arch
           cp packaging/arch/PKGBUILD "/tmp/qwarp-arch/"
@@ -78,12 +78,18 @@ jobs:
           cp /tmp/qwarp-arch/qwarp-*.pkg.tar.zst /tmp/qwarp-packages/
           bsdtar -tf /tmp/qwarp-packages/qwarp-*.pkg.tar.zst > /tmp/package-files
           bsdtar -xOf /tmp/qwarp-packages/qwarp-*.pkg.tar.zst .PKGINFO > /tmp/package-metadata
-          rg -q '^depend = cloudflare-warp-bin$' /tmp/package-metadata
-          rg -q '^depend = python-pyqt6$' /tmp/package-metadata
+          grep -E '^depend = cloudflare-warp-bin$' /tmp/package-metadata > /dev/null
+          grep -E '^depend = python-pyqt6$' /tmp/package-metadata > /dev/null
           for license in GPL-3.0-only MIT Apache-2.0; do
-            rg -q "^license = $license$" /tmp/package-metadata
+            grep -E "^license = $license$" /tmp/package-metadata > /dev/null
           done
-          if rg -q '^\s*(conflicts|install)\s*=' packaging/arch/.SRCINFO; then exit 1; fi
+          grep_status=0
+          grep -E '^[[:space:]]*(conflicts|install)[[:space:]]*=' packaging/arch/.SRCINFO > /dev/null || grep_status=$?
+          case "$grep_status" in
+            1) ;;
+            0) echo 'QWarp must not declare conflicts or install hooks' >&2; exit 1 ;;
+            *) echo 'Unable to validate Arch metadata' >&2; exit "$grep_status" ;;
+          esac
       - name: Build Debian package
         if: matrix.distro == 'debian'
         run: |
@@ -91,7 +97,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             build-essential debhelper dh-python pybuild-plugin-pyproject \
             python3-all python3-setuptools python3-build qt6-l10n-tools \
-            qt6-tools-dev-tools dpkg-dev python3-pyqt6 ripgrep
+            qt6-tools-dev-tools dpkg-dev python3-pyqt6
           tar xzf "dist/release/qwarp-$PACKAGE_VERSION-source.tar.gz" -C /tmp
           cd "/tmp/qwarp-$PACKAGE_VERSION"
           cp -r "$GITHUB_WORKSPACE/packaging/debian" debian
@@ -99,36 +105,39 @@ jobs:
           cp "/tmp/qwarp_${PACKAGE_VERSION}-1_all.deb" /tmp/qwarp-packages/
           dpkg-deb --contents /tmp/qwarp-packages/*.deb > /tmp/package-files
           dpkg-deb --field /tmp/qwarp-packages/*.deb Depends > /tmp/package-metadata
-          rg -q 'cloudflare-warp' /tmp/package-metadata
-          rg -q 'python3-pyqt6' /tmp/package-metadata
+          grep -E 'cloudflare-warp' /tmp/package-metadata > /dev/null
+          grep -E 'python3-pyqt6' /tmp/package-metadata > /dev/null
       - name: Build Fedora package
         if: matrix.distro == 'rpm'
         run: |
           dnf install -y rpm-build python3-devel python3-setuptools \
             python3-build python3-pip python3-wheel pyproject-rpm-macros \
-            qt6-linguist python3-pyqt6 ripgrep
+            qt6-linguist python3-pyqt6
           mkdir -p /tmp/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
           cp "dist/release/qwarp-$PACKAGE_VERSION-source.tar.gz" /tmp/rpmbuild/SOURCES/
           rpmbuild --define '_topdir /tmp/rpmbuild' -bb packaging/rpm/qwarp.spec
           cp /tmp/rpmbuild/RPMS/noarch/qwarp-*.rpm /tmp/qwarp-packages/
           rpm -qlp /tmp/qwarp-packages/*.rpm > /tmp/package-files
           rpm -qp --requires /tmp/qwarp-packages/*.rpm > /tmp/package-metadata
-          rg -q '^cloudflare-warp$' /tmp/package-metadata
-          rg -q '^python3-pyqt6$' /tmp/package-metadata
+          grep -E '^cloudflare-warp$' /tmp/package-metadata > /dev/null
+          grep -E '^python3-pyqt6$' /tmp/package-metadata > /dev/null
           test "$(rpm -qp --qf '%{LICENSE}' /tmp/qwarp-packages/*.rpm)" = 'GPL-3.0-only AND MIT AND Apache-2.0'
       - name: Check owned files and notices
         run: |
-          if rg -q '(^|/)(warp-cli|warp-svc|warp-svc\.service|libwarp[^/]*)$' /tmp/package-files; then
-            echo 'QWarp must not own Cloudflare runtime files' >&2
-            exit 1
-          fi
+          grep_status=0
+          grep -E '(^|/)(warp-cli|warp-svc|warp-svc\.service|libwarp[^/]*)$' /tmp/package-files > /dev/null || grep_status=$?
+          case "$grep_status" in
+            1) ;;
+            0) echo 'QWarp must not own Cloudflare runtime files' >&2; exit 1 ;;
+            *) echo 'Unable to validate package ownership' >&2; exit "$grep_status" ;;
+          esac
           for file in usr/bin/qwarp usr/share/applications/qwarp.desktop \
             usr/share/icons/hicolor/scalable/apps/qwarp.svg \
             LICENSE TRADEMARKS.md Apache-2.0.txt Glyphs-Poly-MIT.txt; do
-            rg -q "$file(\.gz)?$" /tmp/package-files
+            grep -E "$file(\.gz)?$" /tmp/package-files > /dev/null
           done
           for locale in en de es pt it zh ja hi; do
-            rg -q "qwarp_$locale.qm$" /tmp/package-files
+            grep -E "qwarp_$locale.qm$" /tmp/package-files > /dev/null
           done
       - name: Preserve user and service state
         run: |
@@ -161,7 +170,7 @@ jobs:
           chown -R builder:builder /tmp/dummy-warp
           su builder -c 'cd /tmp/dummy-warp && makepkg --noconfirm'
           pacman -U --noconfirm /tmp/dummy-warp/*.pkg.tar.zst /tmp/qwarp-packages/*.pkg.tar.zst
-          /usr/bin/qwarp --version | rg -Fx "QWarp $PACKAGE_VERSION"
+          /usr/bin/qwarp --version | grep -Fx "QWarp $PACKAGE_VERSION"
           pacman -U --noconfirm /tmp/qwarp-packages/*.pkg.tar.zst
           pacman -R --noconfirm qwarp
           pacman -Qo /usr/bin/warp-cli
@@ -181,7 +190,7 @@ jobs:
           chmod 755 /tmp/dummy-warp/usr/bin/warp-cli
           dpkg-deb --build /tmp/dummy-warp /tmp/cloudflare-warp.deb
           sudo apt-get install -y --no-install-recommends /tmp/cloudflare-warp.deb /tmp/qwarp-packages/*.deb
-          /usr/bin/qwarp --version | rg -Fx "QWarp $PACKAGE_VERSION"
+          /usr/bin/qwarp --version | grep -Fx "QWarp $PACKAGE_VERSION"
           sudo apt-get install -y --reinstall /tmp/qwarp-packages/*.deb
           sudo apt-get remove -y qwarp
           dpkg -S /usr/bin/warp-cli
@@ -207,7 +216,7 @@ jobs:
           EOF
           rpmbuild --define '_topdir /tmp/rpmbuild' -bb /tmp/rpmbuild/SPECS/dummy-warp.spec
           dnf install -y /tmp/rpmbuild/RPMS/noarch/cloudflare-warp-*.rpm /tmp/qwarp-packages/*.rpm
-          /usr/bin/qwarp --version | rg -Fx "QWarp $PACKAGE_VERSION"
+          /usr/bin/qwarp --version | grep -Fx "QWarp $PACKAGE_VERSION"
           dnf reinstall -y /tmp/qwarp-packages/*.rpm
           dnf remove -y qwarp
           rpm -qf /usr/bin/warp-cli
