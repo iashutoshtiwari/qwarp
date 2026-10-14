@@ -127,10 +127,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" --paginate --jq '.[].tag_name' > "$RUNNER_TEMP/release-tags"
-          if rg -Fxq "v$RELEASE_VERSION" "$RUNNER_TEMP/release-tags"; then
-            echo 'Published releases are immutable; select a new version.' >&2
-            exit 1
-          fi
+          grep_status=0
+          grep -Fx "v$RELEASE_VERSION" "$RUNNER_TEMP/release-tags" > /dev/null || grep_status=$?
+          case "$grep_status" in
+            1) ;;
+            0) echo 'Published releases are immutable; select a new version.' >&2; exit 1 ;;
+            *) echo 'Unable to validate existing release versions' >&2; exit "$grep_status" ;;
+          esac
       - name: Attest every release artifact
         uses: actions/attest-build-provenance@43d14bc2b83dec42d39ecae14e916627a18bb661 # v3
         with:

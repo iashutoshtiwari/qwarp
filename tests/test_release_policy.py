@@ -157,6 +157,35 @@ def test_package_shell_guard_fails_closed_without_grep(package_shell_guard, tmp_
     assert result.returncode == 127 and "continued" not in result.stdout
 
 
+@pytest.mark.parametrize(
+    "scenario,expected_status",
+    [("existing", 1), ("unused", 0), ("empty", 0), ("missing", 2), ("unreadable", 2), ("no-grep", 127)],
+)
+def test_release_version_shell_guard_fails_closed(tmp_path, monkeypatch, scenario, expected_status):
+    workflow = (ROOT / ".github/workflows/release.yml").read_text()
+    lines = workflow.splitlines()
+    start = next(i for i, line in enumerate(lines) if '"$RUNNER_TEMP/release-tags"' in line) + 1
+    end = next(i for i in range(start, len(lines)) if lines[i].startswith("      - name:"))
+    command = "\n".join(line.strip() for line in lines[start:end]) + "\necho continued"
+    tags = tmp_path / "release-tags"
+    if scenario == "unreadable":
+        tags.mkdir()  # A directory gives a read error even when tests run as root.
+    elif scenario != "missing":
+        tags.write_text(f"v{VERSION}\n" if scenario == "existing" else "" if scenario == "empty" else f"v{VERSION}0\n")
+    grep = shutil.which("grep")
+    assert grep is not None
+    commands = tmp_path / "bin"
+    commands.mkdir()
+    if scenario != "no-grep":
+        (commands / "grep").symlink_to(grep)
+    monkeypatch.setenv("PATH", str(commands))
+    monkeypatch.setenv("RUNNER_TEMP", str(tmp_path))
+    monkeypatch.setenv("RELEASE_VERSION", VERSION)
+    result = subprocess.run(["/bin/bash", "-e", "-c", command], capture_output=True, text=True)
+    assert result.returncode == expected_status
+    assert ("continued" in result.stdout) == (expected_status == 0)
+
+
 @pytest.mark.parametrize("stale", ["PKGBUILD", ".SRCINFO"])
 def test_release_checksum_must_match_both_arch_declarations(candidate, monkeypatch, stale):
     root = candidate / "checkout"
