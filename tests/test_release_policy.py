@@ -5,9 +5,14 @@ import tarfile
 
 import pytest
 
-from scripts.check_build_artifacts import check_no_bundled_native
-from scripts.check_requirements import ROOT, validate_lock
-from scripts.release_policy import public_files, verify_checksums, write_checksums
+from scripts.check_release import (
+    ROOT,
+    check_no_bundled_native,
+    check_source_checksum,
+    public_files,
+    verify_checksums,
+    write_checksums,
+)
 
 VERSION = "0.10.1"
 
@@ -20,7 +25,7 @@ def candidate(tmp_path):
     return tmp_path
 
 
-def test_unfrozen_checksums_cover_every_public_input(candidate):
+def test_checksums_cover_every_public_input(candidate):
     files = verify_checksums(VERSION, candidate)
     assert len(files) == 3
     assert all(hashlib.sha256(p.read_bytes()).hexdigest() in (candidate / "SHA256SUMS").read_text() for p in files)
@@ -32,14 +37,12 @@ def test_unfrozen_checksums_cover_every_public_input(candidate):
     assert len(verify_checksums(VERSION, candidate, require_native=True)) == 5
 
 
-@pytest.mark.parametrize(
-    "name", ["qwarp-0.10.1-linux-x86_64.tar.gz", "qwarp", "qwarp-0.10.2-source.tar.gz", "inventory.json"]
-)
+@pytest.mark.parametrize("name", ["unexpected.tar.gz", "qwarp-0.10.2-source.tar.gz", "notes.json"])
 def test_forbidden_public_artifacts_fail_closed(candidate, name):
     (candidate / name).write_bytes(b"unapproved")
-    with pytest.raises(ValueError, match="publication disabled"):
+    with pytest.raises(ValueError, match="Unexpected release artifacts"):
         public_files(VERSION, candidate)
-    with pytest.raises(ValueError, match="publication disabled"):
+    with pytest.raises(ValueError, match="Unexpected release artifacts"):
         write_checksums(VERSION, candidate)
 
 
@@ -71,24 +74,9 @@ def test_release_rejects_symlinks_and_duplicate_checksums(candidate, tmp_path):
 
 
 @pytest.mark.parametrize("name,content", [("data/renamed", b"\x7fELFabc"), ("data/library.so.6", b"object")])
-def test_renaming_a_frozen_object_cannot_hide_it_in_source(name, content):
-    with pytest.raises(SystemExit, match="native object"):
+def test_application_archives_reject_bundled_native_code(name, content):
+    with pytest.raises(ValueError, match="native object"):
         check_no_bundled_native([name], lambda _: content)
-
-
-def test_all_committed_locks_match_reviewed_constraints():
-    for python in ("3.11", "3.14"):
-        for kind in ("ci", "release"):
-            validate_lock(ROOT / f"requirements/locks/{kind}-py{python}.txt", kind)
-    validate_lock(ROOT / "requirements/locks/minimum-qt-py3.11.txt", "minimum-qt")
-
-
-def test_stale_lock_fails_before_build(tmp_path):
-    source = ROOT / "requirements/locks/ci-py3.11.txt"
-    stale = tmp_path / "stale.txt"
-    stale.write_text(source.read_text().replace("iniconfig==2.3.1", "iniconfig==2.3.0"))
-    with pytest.raises(ValueError, match="Stale dependency lock"):
-        validate_lock(stale, "ci")
 
 
 def test_source_archive_is_deterministic_and_preserves_existing_output(tmp_path):
@@ -115,25 +103,34 @@ def test_source_archive_is_deterministic_and_preserves_existing_output(tmp_path)
     assert result.returncode != 0 and not missing_target.exists()
 
 
-def test_every_publication_path_enforces_unfrozen_policy():
-    release = (ROOT / ".github/workflows/release.yml").read_text()
-    assert "linux-x86_64.tar.gz" not in release
-    assert "--require-native --list" in release
-    assert "--require-native --write-checksums" in release
-    assert "--frozen-local" not in release
-    assert "! grep" not in release
-    assert "! grep" not in (ROOT / ".github/workflows/ci.yml").read_text()
-
-
 def test_forbidden_member_shell_guard_actually_aborts(tmp_path):
-    workflow = (ROOT / ".github/workflows/release.yml").read_text()
+    workflow = (ROOT / ".github/workflows/packages.yml").read_text()
     workflow_path = "/tmp/package-files"  # noqa: S108 - workflow literal is replaced with tmp_path below
-    guard = next(line.strip() for line in workflow.splitlines() if "if grep" in line and workflow_path in line)
+    lines = workflow.splitlines()
+    start = next(i for i, line in enumerate(lines) if "if rg" in line and workflow_path in line)
+    end = next(i for i in range(start, len(lines)) if lines[i].strip() == "fi")
+    guard = "\n".join(line.strip() for line in lines[start : end + 1])
     members = tmp_path / "members"
-    command = guard.replace(workflow_path, shlex.quote(str(members))) + "; echo continued"
+    command = guard.replace(workflow_path, shlex.quote(str(members))) + "\necho continued"
     members.write_text("usr/bin/warp-cli\n")
     result = subprocess.run(["bash", "-e", "-c", command], capture_output=True, text=True)
     assert result.returncode != 0 and "continued" not in result.stdout
     members.write_text("usr/bin/qwarp\n")
     result = subprocess.run(["bash", "-e", "-c", command], capture_output=True, text=True)
     assert result.returncode == 0 and "continued" in result.stdout
+
+
+@pytest.mark.parametrize("stale", ["PKGBUILD", ".SRCINFO"])
+def test_release_checksum_must_match_both_arch_declarations(candidate, monkeypatch, stale):
+    root = candidate / "checkout"
+    arch = root / "packaging/arch"
+    arch.mkdir(parents=True)
+    digest = hashlib.sha256((candidate / f"qwarp-{VERSION}-source.tar.gz").read_bytes()).hexdigest()
+    (arch / "PKGBUILD").write_text(f"sha256sums=('{digest}')\n")
+    (arch / ".SRCINFO").write_text(f"\tsha256sums = {digest}\n")
+    monkeypatch.setattr("scripts.check_release.ROOT", root)
+    check_source_checksum(VERSION, candidate)
+    path = arch / stale
+    path.write_text(path.read_text().replace(digest, "0" * 64))
+    with pytest.raises(ValueError, match="Source checksum mismatch"):
+        check_source_checksum(VERSION, candidate)

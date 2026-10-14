@@ -12,7 +12,7 @@ fi
 mkdir -p "$(dirname "$output")"
 source_items=(
     CHANGELOG.md CONTRIBUTING.md docs LICENSE LICENSES MANIFEST.in README.md
-    TRADEMARKS.md pyproject.toml qwarp.desktop requirements scripts src tests
+    TRADEMARKS.md pyproject.toml qwarp.desktop scripts src tests
     packaging/debian packaging/rpm
 )
 # Direct tar traversal avoids destructive cleanup and copies of generated caches.

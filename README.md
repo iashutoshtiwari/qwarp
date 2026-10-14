@@ -3,7 +3,7 @@
 
 # QWarp
 
-A Qt6-based alternative desktop client for Cloudflare® WARP® on Linux.
+An independent PyQt6 GUI that makes the official Cloudflare® WARP® CLI easier to use on Linux.
 
 [![CI](https://github.com/iashutoshtiwari/qwarp/actions/workflows/ci.yml/badge.svg)](https://github.com/iashutoshtiwari/qwarp/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/iashutoshtiwari/qwarp)](https://github.com/iashutoshtiwari/qwarp/releases/latest)
@@ -13,7 +13,7 @@ A Qt6-based alternative desktop client for Cloudflare® WARP® on Linux.
 </div>
 
 > [!IMPORTANT]
-> QWarp is independently developed and is not affiliated with, authorized, sponsored, or endorsed by Cloudflare, Inc.
+> QWarp is an independent open-source project, not affiliated with, sponsored, or endorsed by Cloudflare, Inc.
 > It controls a separately installed official client and does not distribute or replace `warp-cli`, `warp-svc`, or
 > software published by Cloudflare, Inc. See the project [trademark notice](TRADEMARKS.md).
 
@@ -78,15 +78,6 @@ Download `qwarp-0.10.1-1.fc44.noarch.rpm` from the [latest release](https://gith
 sudo dnf install ./qwarp-0.10.1-1.fc44.noarch.rpm
 ```
 
-### Standalone binary status
-
-Standalone executable distribution is temporarily unavailable for new releases
-pending verification of bundled-dependency notices, matching source, and library
-replacement/rebuild obligations. Existing published releases are unchanged.
-Use a native package or the Python/source installation above. Local frozen builds
-remain available for inspection; see [CONTRIBUTING.md](CONTRIBUTING.md) and the
-[licensing audit](docs/legal/LICENSING-AUDIT.md).
-
 ## Usage and verification
 
 Verify that both the official client and QWarp are functioning:
@@ -123,10 +114,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for environment setup, tests, architectur
 Run quality gates locally:
 
 ```bash
-ruff check src/ tests/
-ruff format src/ tests/ --check --diff
-QT_QPA_PLATFORM=offscreen pytest tests/ -v --tb=short
-python3 scripts/check_locales.py
+uv run --no-sync ruff check src/ tests/ scripts/
+uv run --no-sync ruff format src/ tests/ scripts/ --check
+QT_QPA_PLATFORM=offscreen uv run --no-sync pytest -q --override-ini addopts=''
+uv run --no-sync python scripts/check_locales.py
 ```
 
 Please use [GitHub Issues](https://github.com/iashutoshtiwari/qwarp/issues) for reproducible bug reports and feature requests.
@@ -134,12 +125,12 @@ Please use [GitHub Issues](https://github.com/iashutoshtiwari/qwarp/issues) for 
 ## License
 
 QWarp's independently owned code is released under [GNU GPL version 3 only](LICENSE)
-(`GPL-3.0-only`). Copyright (c) 2026 Ashutosh. Earlier MIT grants remain unaffected.
+(`GPL-3.0-only`). Copyright (c) 2026 Ashutosh Tiwari. Earlier MIT grants remain unaffected.
 
 Bundled artwork retains its MIT and Apache-2.0 licenses; the source and wheel
 license expression is `GPL-3.0-only AND MIT AND Apache-2.0`. See
-[TRADEMARKS.md](TRADEMARKS.md) for file-specific attribution and Cloudflare rights,
-and the [licensing audit](docs/legal/LICENSING-AUDIT.md) for unresolved naming,
-integration, and standalone-binary redistribution risks. This is not legal clearance.
+[TRADEMARKS.md](TRADEMARKS.md) for artwork attribution, Cloudflare rights, and the
+unresolved naming/trademark question. The GPL license grants no rights to
+Cloudflare software or trademarks; a disclaimer is not legal authorization.
 
 Maintained by [Ashutosh Tiwari](https://github.com/iashutoshtiwari).

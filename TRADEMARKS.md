@@ -1,68 +1,61 @@
-# Trademark and third-party artwork notices
+# QWarp licensing, trademarks, and artwork
 
-QWarp is independently developed and is not affiliated with, authorized,
-sponsored, or endorsed by Cloudflare, Inc. QWarp requires a separately
-installed official client and does not distribute Cloudflare software.
+Copyright (c) 2026 Ashutosh Tiwari. All independently owned QWarp source,
+tests, packaging, documentation, and translations are licensed under
+[GNU GPL version 3 only](LICENSE) (`GPL-3.0-only`). The maintainer has confirmed
+ownership and the right to relicense these materials. Earlier MIT grants remain
+unaffected. Third-party artwork and external dependencies retain their licenses;
+the combined source/wheel package expression is `GPL-3.0-only AND MIT AND Apache-2.0`.
 
-Cloudflare, 1.1.1.1, WARP, and WARP+ are trademarks and/or registered
-trademarks of Cloudflare, Inc. in the United States and other jurisdictions.
-All other trademarks are the property of their respective owners.
+Earlier distributions that bundled Python/Qt dependencies were not verified for
+matching source, complete dependency notices, or library replacement/rebuild
+obligations. Discontinuing that distribution does not resolve obligations for
+copies already conveyed; review those artifacts before redistributing them.
 
-References to Cloudflare products identify the software and services with
-which QWarp interoperates. They do not imply affiliation, sponsorship, or
-endorsement.
+## Cloudflare
 
-The project continues to use the name QWarp. Because that name incorporates
-WARP, it carries trademark risk under Cloudflare's guidelines. Cloudflare has
-not approved this name, and this notice is not legal clearance for its use.
+QWarp is an independent open-source GUI for the official Cloudflare WARP CLI.
+It is not affiliated with, sponsored, or endorsed by Cloudflare, Inc. The official
+client must be installed separately; QWarp does not distribute, modify, replace,
+or claim ownership of Cloudflare software.
 
-The maintainer has elected to retain QWarp. This decision does not establish
-permission, non-infringement, or independent legal clearance.
+Cloudflare, 1.1.1.1, WARP, WARP+, and associated marks belong to Cloudflare, Inc.
+and their respective owners. QWarp's GPL license grants no rights over Cloudflare
+software, trademarks, services, or subscriptions and does not override their terms.
 
-- [Cloudflare Trademark Guidelines](https://www.cloudflare.com/trademark/)
-- [Cloudflare WARP client legal information](https://developers.cloudflare.com/warp-client/legal/)
-- [Cloudflare Application Terms](https://www.cloudflare.com/application/terms/)
-- [Cloudflare Application Privacy Policy](https://www.cloudflare.com/application/privacypolicy/)
+The name incorporates WARP and remains an unresolved trademark risk under
+[Cloudflare's guidelines](https://www.cloudflare.com/trademark/). The maintainer
+has elected to retain QWarp; no rights-holder approval or independent legal
+clearance is recorded. This disclaimer does not authorize the name or establish
+contractual permission for every CLI integration.
 
-Cloudflare retains its intellectual-property and trademark rights. QWarp's
-license grants no rights over Cloudflare software, trademarks, services, or
-subscriptions and does not override Cloudflare's terms. Technical separation
-and a documented CLI do not establish contractual authorization for every
-third-party integration.
+See the [client legal information](https://developers.cloudflare.com/warp-client/legal/),
+[Application Terms](https://www.cloudflare.com/application/terms/), and
+[Application Privacy Policy](https://www.cloudflare.com/application/privacypolicy/).
 
-## QWarp licensing scope
+## Artwork
 
-Copyright (c) 2026 Ashutosh. QWarp's independently owned code, tests, build and
-packaging scripts, documentation, and translation catalogs are licensed under
-[GNU GPL version 3 only](LICENSE) (`GPL-3.0-only`). The artwork exceptions below
-retain their own copyrights and licenses. External dependencies retain their
-upstream licenses. Earlier releases' MIT grants remain unaffected.
+The application icon combines modified Glyphs Poly `cloud-1` artwork,
+copyright (c) 2018 Goran Spasojevic, with Google Material Symbols key artwork,
+copyright Google LLC. These upstream copyrights remain applicable.
 
-## Application and tray artwork
-
-The application icon combines modified `cloud-1` artwork from Glyphs Poly,
-copyright (c) 2018 Goran Spasojevic, with Material Symbols key artwork,
-copyright Google LLC. Editing does not extinguish the original copyrights.
-
-| QWarp file under `src/qwarp/assets/` | Origin | Retained license |
+| File under `src/qwarp/assets/` | Origin | License |
 | --- | --- | --- |
 | `app-icon.svg` (cloud paths) | Glyphs Poly `cloud-1` | MIT |
-| `app-icon.svg` (key path), `tray-connected.svg` | Google Material Symbols `vpn_key` | Apache-2.0 |
-| `tray-connecting.svg` | Google Material Symbols `vpn_key` outline | Apache-2.0 |
-| `tray-disconnected.svg` | Google Material Symbols `vpn_key_off` | Apache-2.0 |
-| `tray-error.svg`, `tray-unregistered.svg` | Google Material Symbols `vpn_key_alert`, filled/outline | Apache-2.0 |
-| `gear.svg` | Google Material Symbols `settings` | Apache-2.0 |
+| `app-icon.svg` (key path), `tray-connected.svg` | Material Symbols `vpn_key` | Apache-2.0 |
+| `tray-connecting.svg` | Material Symbols `vpn_key` outline | Apache-2.0 |
+| `tray-disconnected.svg` | Material Symbols `vpn_key_off` | Apache-2.0 |
+| `tray-error.svg`, `tray-unregistered.svg` | Material Symbols `vpn_key_alert`, filled/outline | Apache-2.0 |
+| `gear.svg` | Material Symbols `settings` | Apache-2.0 |
 
-QWarp modifies colors, SVG coordinate representation, sizing, placement,
-composition, and filenames. Modification notices also appear in the SVGs.
-The MIT permission notice and Apache-2.0 text are preserved in `LICENSES/`.
-No endorsement by Goran Spasojevic or Google is implied. These licenses do not
-require an attribution label in the UI.
+QWarp modifies colors, coordinate representation, sizing, placement, composition,
+and filenames. Modification notices appear in the SVGs. The original
+[MIT notice](LICENSES/Glyphs-Poly-MIT.txt) and [Apache-2.0 license](LICENSES/Apache-2.0.txt)
+are preserved. No endorsement by Goran Spasojevic or Google is implied.
+Screenshots include this artwork and retain the same third-party notices.
 
-- [Glyphs Poly source](https://github.com/gorango/glyphs)
-- [Glyphs Poly MIT License](LICENSES/Glyphs-Poly-MIT.txt)
-- [Material Symbols source](https://github.com/google/material-design-icons)
-- [Apache License 2.0](LICENSES/Apache-2.0.txt)
-
-Sources verified 2026-10-13. Exact historical artwork revision records are
-incomplete; see [the audit](docs/legal/LICENSING-AUDIT.md) for evidence and gaps.
+Upstream sources reviewed on 2026-10-13:
+[Glyphs Poly](https://github.com/gorango/glyphs/blob/3a7d130bd3ad694c6da048b8b9f0f97f7a1ded07/sets/rounded/poly/cloud-1.svg)
+and [Material Symbols](https://github.com/google/material-design-icons/tree/49d4db35df873165d6bd6ba09b063c7dafbac2f4/symbols/web).
+Exact historical import revisions were not recorded. Preserve any additional
+applicable upstream notices discovered when updating the artwork.

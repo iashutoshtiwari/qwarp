@@ -1,6 +1,5 @@
 import os
 import re
-import sys
 
 
 def is_x11() -> bool:
@@ -31,9 +30,7 @@ def is_dark_mode(palette=None) -> bool:
 
 
 def get_asset_dir() -> str:
-    """Safely retrieves the assets directory whether running locally or inside a PyInstaller container."""
-    if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-        return os.path.join(sys._MEIPASS, "qwarp", "assets")
+    """Return the assets installed alongside the application package."""
     return os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets")
 
 

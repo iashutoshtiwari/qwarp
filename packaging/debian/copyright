@@ -64,4 +64,5 @@ License: MIT
 
 License: Apache-2.0
  The full Apache License, Version 2.0 is provided in
- LICENSES/Apache-2.0.txt and installed with the package.
+ LICENSES/Apache-2.0.txt and installed with the package. On Debian systems,
+ it is also available in /usr/share/common-licenses/Apache-2.0.

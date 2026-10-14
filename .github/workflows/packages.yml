@@ -1,0 +1,226 @@
+name: Native packages
+
+permissions: {}
+
+on:
+  workflow_call:
+    inputs:
+      artifact:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+      release:
+        default: false
+        type: boolean
+
+jobs:
+  native:
+    name: ${{ matrix.distro }} package
+    runs-on: ${{ matrix.runner }}
+    container: ${{ matrix.container }}
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distro: arch
+            runner: ubuntu-22.04
+            container: archlinux:base-devel
+          - distro: debian
+            # PEP 639 requires setuptools >=77.0.3; Ubuntu 24.04 ships 68.x.
+            runner: ubuntu-26.04
+            container: ""
+          - distro: rpm
+            runner: ubuntu-22.04
+            container: fedora:44
+    env:
+      PACKAGE_VERSION: ${{ inputs.version }}
+      RELEASE_BUILD: ${{ inputs.release }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: ${{ inputs.artifact }}
+          path: dist/release
+      - name: Validate input bundle
+        run: |
+          [[ "$PACKAGE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          (cd dist/release && sha256sum --check SHA256SUMS)
+          mkdir -p /tmp/qwarp-packages
+      - name: Build Arch package
+        if: matrix.distro == 'arch'
+        run: |
+          pacman -Syu --noconfirm --needed \
+            git python python-build python-installer python-pyqt6 \
+            python-setuptools python-wheel qt6-tools ripgrep
+          useradd --create-home builder
+          mkdir -p /tmp/qwarp-arch
+          cp packaging/arch/PKGBUILD "/tmp/qwarp-arch/"
+          cp "dist/release/qwarp-$PACKAGE_VERSION-source.tar.gz" /tmp/qwarp-arch/
+          if [ "$RELEASE_BUILD" != true ]; then
+            source_hash=$(sha256sum "/tmp/qwarp-arch/qwarp-$PACKAGE_VERSION-source.tar.gz" | cut -d' ' -f1)
+            sed -E -i "s/^sha256sums=.*/sha256sums=('${source_hash}')/" /tmp/qwarp-arch/PKGBUILD
+          fi
+          chown -R builder:builder /tmp/qwarp-arch
+          su builder -c 'cd /tmp/qwarp-arch && makepkg --nodeps --cleanbuild --clean --noconfirm'
+          su builder -c 'cd /tmp/qwarp-arch && makepkg --printsrcinfo' > /tmp/generated.SRCINFO
+          if [ "$RELEASE_BUILD" = true ]; then
+            diff -u packaging/arch/.SRCINFO /tmp/generated.SRCINFO
+          else
+            diff -u <(sed '/sha256sums = /d' packaging/arch/.SRCINFO) <(sed '/sha256sums = /d' /tmp/generated.SRCINFO)
+          fi
+          cp /tmp/qwarp-arch/qwarp-*.pkg.tar.zst /tmp/qwarp-packages/
+          bsdtar -tf /tmp/qwarp-packages/qwarp-*.pkg.tar.zst > /tmp/package-files
+          bsdtar -xOf /tmp/qwarp-packages/qwarp-*.pkg.tar.zst .PKGINFO > /tmp/package-metadata
+          rg -q '^depend = cloudflare-warp-bin$' /tmp/package-metadata
+          rg -q '^depend = python-pyqt6$' /tmp/package-metadata
+          for license in GPL-3.0-only MIT Apache-2.0; do
+            rg -q "^license = $license$" /tmp/package-metadata
+          done
+          if rg -q '^\s*(conflicts|install)\s*=' packaging/arch/.SRCINFO; then exit 1; fi
+      - name: Build Debian package
+        if: matrix.distro == 'debian'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            build-essential debhelper dh-python pybuild-plugin-pyproject \
+            python3-all python3-setuptools python3-build qt6-l10n-tools \
+            qt6-tools-dev-tools dpkg-dev python3-pyqt6 ripgrep
+          tar xzf "dist/release/qwarp-$PACKAGE_VERSION-source.tar.gz" -C /tmp
+          cd "/tmp/qwarp-$PACKAGE_VERSION"
+          cp -r "$GITHUB_WORKSPACE/packaging/debian" debian
+          dpkg-buildpackage -us -uc -b
+          cp "/tmp/qwarp_${PACKAGE_VERSION}-1_all.deb" /tmp/qwarp-packages/
+          dpkg-deb --contents /tmp/qwarp-packages/*.deb > /tmp/package-files
+          dpkg-deb --field /tmp/qwarp-packages/*.deb Depends > /tmp/package-metadata
+          rg -q 'cloudflare-warp' /tmp/package-metadata
+          rg -q 'python3-pyqt6' /tmp/package-metadata
+      - name: Build Fedora package
+        if: matrix.distro == 'rpm'
+        run: |
+          dnf install -y rpm-build python3-devel python3-setuptools \
+            python3-build python3-pip python3-wheel pyproject-rpm-macros \
+            qt6-linguist python3-pyqt6 ripgrep
+          mkdir -p /tmp/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+          cp "dist/release/qwarp-$PACKAGE_VERSION-source.tar.gz" /tmp/rpmbuild/SOURCES/
+          rpmbuild --define '_topdir /tmp/rpmbuild' -bb packaging/rpm/qwarp.spec
+          cp /tmp/rpmbuild/RPMS/noarch/qwarp-*.rpm /tmp/qwarp-packages/
+          rpm -qlp /tmp/qwarp-packages/*.rpm > /tmp/package-files
+          rpm -qp --requires /tmp/qwarp-packages/*.rpm > /tmp/package-metadata
+          rg -q '^cloudflare-warp$' /tmp/package-metadata
+          rg -q '^python3-pyqt6$' /tmp/package-metadata
+          test "$(rpm -qp --qf '%{LICENSE}' /tmp/qwarp-packages/*.rpm)" = 'GPL-3.0-only AND MIT AND Apache-2.0'
+      - name: Check owned files and notices
+        run: |
+          if rg -q '(^|/)(warp-cli|warp-svc|warp-svc\.service|libwarp[^/]*)$' /tmp/package-files; then
+            echo 'QWarp must not own Cloudflare runtime files' >&2
+            exit 1
+          fi
+          for file in usr/bin/qwarp usr/share/applications/qwarp.desktop \
+            usr/share/icons/hicolor/scalable/apps/qwarp.svg \
+            LICENSE TRADEMARKS.md Apache-2.0.txt Glyphs-Poly-MIT.txt; do
+            rg -q "$file(\.gz)?$" /tmp/package-files
+          done
+          for locale in en de es pt it zh ja hi; do
+            rg -q "qwarp_$locale.qm$" /tmp/package-files
+          done
+      - name: Preserve user and service state
+        run: |
+          mkdir -p "$HOME/.config/qwarp"
+          printf 'user settings\n' > "$HOME/.config/qwarp/package-test"
+          printf 'client state\n' > /tmp/qwarp-client-state
+          if [ "${{ matrix.distro }}" = debian ]; then
+            sudo install -Dm644 /tmp/qwarp-client-state /var/lib/cloudflare-warp/package-test
+          else
+            install -Dm644 /tmp/qwarp-client-state /var/lib/cloudflare-warp/package-test
+          fi
+          tar --sort=name --mtime='UTC 1970-01-01' -cf - -C / etc/systemd usr/lib/systemd | sha256sum > /tmp/services-before
+      - name: Arch install, upgrade, and removal
+        if: matrix.distro == 'arch'
+        run: |
+          mkdir -p /tmp/dummy-warp
+          cat << 'EOF' > /tmp/dummy-warp/PKGBUILD
+          pkgname=cloudflare-warp-bin
+          pkgver=1.0.0
+          pkgrel=1
+          arch=('any')
+          pkgdesc='Synthetic dependency; no Cloudflare software'
+          license=('MIT')
+          package() {
+            mkdir -p "$pkgdir/usr/bin"
+            printf '#!/bin/sh\nexit 1\n' > "$pkgdir/usr/bin/warp-cli"
+            chmod 755 "$pkgdir/usr/bin/warp-cli"
+          }
+          EOF
+          chown -R builder:builder /tmp/dummy-warp
+          su builder -c 'cd /tmp/dummy-warp && makepkg --noconfirm'
+          pacman -U --noconfirm /tmp/dummy-warp/*.pkg.tar.zst /tmp/qwarp-packages/*.pkg.tar.zst
+          /usr/bin/qwarp --version | rg -Fx "QWarp $PACKAGE_VERSION"
+          pacman -U --noconfirm /tmp/qwarp-packages/*.pkg.tar.zst
+          pacman -R --noconfirm qwarp
+          pacman -Qo /usr/bin/warp-cli
+          test ! -e /usr/bin/qwarp
+      - name: Debian install, upgrade, and removal
+        if: matrix.distro == 'debian'
+        run: |
+          mkdir -p /tmp/dummy-warp/DEBIAN /tmp/dummy-warp/usr/bin
+          cat << 'EOF' > /tmp/dummy-warp/DEBIAN/control
+          Package: cloudflare-warp
+          Version: 1.0.0
+          Architecture: all
+          Maintainer: CI <ci@example.invalid>
+          Description: Synthetic dependency; no Cloudflare software
+          EOF
+          printf '#!/bin/sh\nexit 1\n' > /tmp/dummy-warp/usr/bin/warp-cli
+          chmod 755 /tmp/dummy-warp/usr/bin/warp-cli
+          dpkg-deb --build /tmp/dummy-warp /tmp/cloudflare-warp.deb
+          sudo apt-get install -y --no-install-recommends /tmp/cloudflare-warp.deb /tmp/qwarp-packages/*.deb
+          /usr/bin/qwarp --version | rg -Fx "QWarp $PACKAGE_VERSION"
+          sudo apt-get install -y --reinstall /tmp/qwarp-packages/*.deb
+          sudo apt-get remove -y qwarp
+          dpkg -S /usr/bin/warp-cli
+          test ! -e /usr/bin/qwarp
+      - name: Fedora install, upgrade, and removal
+        if: matrix.distro == 'rpm'
+        run: |
+          cat << 'EOF' > /tmp/rpmbuild/SPECS/dummy-warp.spec
+          Name: cloudflare-warp
+          Version: 1.0.0
+          Release: 1
+          Summary: Synthetic dependency; no Cloudflare software
+          License: MIT
+          BuildArch: noarch
+          %description
+          Synthetic dependency only.
+          %install
+          mkdir -p %{buildroot}/usr/bin
+          printf '#!/bin/sh\nexit 1\n' > %{buildroot}/usr/bin/warp-cli
+          chmod 755 %{buildroot}/usr/bin/warp-cli
+          %files
+          /usr/bin/warp-cli
+          EOF
+          rpmbuild --define '_topdir /tmp/rpmbuild' -bb /tmp/rpmbuild/SPECS/dummy-warp.spec
+          dnf install -y /tmp/rpmbuild/RPMS/noarch/cloudflare-warp-*.rpm /tmp/qwarp-packages/*.rpm
+          /usr/bin/qwarp --version | rg -Fx "QWarp $PACKAGE_VERSION"
+          dnf reinstall -y /tmp/qwarp-packages/*.rpm
+          dnf remove -y qwarp
+          rpm -qf /usr/bin/warp-cli
+          test ! -e /usr/bin/qwarp
+      - name: Check preserved state after removal
+        run: |
+          test "$(cat "$HOME/.config/qwarp/package-test")" = 'user settings'
+          cmp /tmp/qwarp-client-state /var/lib/cloudflare-warp/package-test
+          tar --sort=name --mtime='UTC 1970-01-01' -cf - -C / etc/systemd usr/lib/systemd | sha256sum > /tmp/services-after
+          diff -u /tmp/services-before /tmp/services-after
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: ${{ inputs.artifact }}-${{ matrix.distro }}
+          path: /tmp/qwarp-packages/
+          if-no-files-found: error
+          retention-days: 7

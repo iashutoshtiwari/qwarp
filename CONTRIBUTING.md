@@ -18,16 +18,15 @@ screenshots. For a feature proposal, explain the problem and desired behavior be
 
 ## Set up a development environment
 
-Development requires Linux, Git, Python 3.11 or newer, and Python virtual-environment support. The full QWarp interface
+Development requires Linux, Git, Python 3.11 or newer, and `uv`. The full QWarp interface
 also requires an installed Cloudflare WARP client, but the automated tests do not: they mock daemon and command access.
 
 ```bash
 git clone https://github.com/iashutoshtiwari/qwarp.git
 cd qwarp
-python3 -m venv .venv
+uv venv --python 3.11
+uv pip install --python .venv/bin/python -e ".[dev]"
 source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -c requirements/ci.txt -e ".[dev]"
 ```
 
 Confirm the development environment without touching the host's WARP state:
@@ -47,32 +46,18 @@ From the repository root, run the current source directly:
 PYTHONPATH=src .venv/bin/python -m qwarp.main
 ```
 
-For source, wheel and native-package inputs, install the matching release lock
-and build into a fresh directory without removing existing output:
+Build the wheel, Python sdist, and deterministic native-package source archive
+into a fresh directory:
 
 ```bash
-uv pip install --python .venv/bin/python --require-hashes --only-binary=:all: -r requirements/locks/release-py3.11.txt
-PATH="$PWD/.venv/bin:$PATH" bash scripts/build_artifacts.sh --output-dir dist/local-candidate
+uv run --no-sync bash scripts/build_artifacts.sh --output-dir dist/local-candidate
 ```
 
-Select the lock matching your interpreter (3.11 or 3.14). Add `--frozen-local`
-only for a local inspection build. The executable is placed under
-`dist/local-candidate/local-frozen/qwarp`, outside the public `release/` directory.
-Its `evidence/inventory.json` binds every embedded payload and notice to the
-executable SHA-256. The legal status remains BLOCKED; this manifest does not
-permit redistribution. Never upload the local-frozen directory.
-
-`scripts/clean_build.py` remains an explicit destructive cleanup helper. It
-removes `build/`, `dist/`, and caches; preview with `--dry-run` first. It builds
-unfrozen artifacts by default; `--frozen-local` requests the inspection executable.
-No helper automatically launches QWarp. Use `--help` or `--version` for a
-side-effect-free probe. Normal startup polls the separately installed WARP client.
-
-Builds compile all eight catalogs; review any tracked `.ts` changes. Candidate
-checksums stay in the chosen output directory. Local builds do not update
-committed release versions or Arch checksums. Validate dependency coherence with
-`python scripts/check_requirements.py` and inspect public inputs with
-`python scripts/release_policy.py VERSION OUTPUT/release`.
+Builds compile all eight catalogs; review any tracked `.ts` changes. Existing
+outputs are preserved, and candidate checksums stay in the chosen output
+directory. Builds do not change committed versions or Arch checksums. Validate
+with `uv run --no-sync python scripts/check_release.py --version 0.10.1
+--artifacts dist/local-candidate/release`.
 
 ## Understand the code path
 
@@ -80,10 +65,9 @@ committed release versions or Arch checksums. Validate dependency coherence with
 
 - `src/qwarp/` contains the application and its bundled assets and translations.
 - `tests/` contains deterministic application tests.
-- `docs/` contains audit reports and README screenshots; see the
-  [2026-09-26 audit](docs/audits/2026-09-26.md).
+- `docs/` contains engineering/release references and README screenshots.
 - `packaging/arch/`, `packaging/debian/`, and `packaging/rpm/` contain distribution metadata.
-- `scripts/` contains build and validation tools; `requirements/` pins CI and release dependencies.
+- `scripts/` contains locale and release build/check tools. `pyproject.toml` declares all Python dependencies.
 
 The shared `qwarp.desktop` launcher and legal notices stay at the repository root.
 `build/`, `dist/`, and test/lint caches are disposable generated output; `.venv/`
@@ -123,12 +107,18 @@ Keep changes focused and add deterministic tests for changed behavior. Tests mus
 Run the same core checks used for review:
 
 ```bash
-ruff check src/ tests/
-ruff format src/ tests/ --check --diff
-QT_QPA_PLATFORM=offscreen pytest tests/ -v --tb=short
+uv run --no-sync ruff check src/ tests/ scripts/
+uv run --no-sync ruff format src/ tests/ scripts/ --check
+QT_QPA_PLATFORM=offscreen uv run --no-sync pytest -q --override-ini addopts=''
+uv run --no-sync python scripts/check_locales.py
+shellcheck scripts/*.sh
+actionlint
 ```
 
-`scripts/format.sh` modifies files with Ruff. Use it only when you intend to apply formatting changes.
+Apply Ruff fixes/formatting directly when intended. CI covers Python 3.11 and 3.14
+with current PyQt6, and Python 3.11 with PyQt6/Qt 6.6. There is no dedicated
+type-checker configuration. Dependabot proposes weekly Python and Actions updates,
+grouping minor/patch changes; review and merge them manually after CI passes.
 
 ### User-visible text and translations
 
@@ -150,7 +140,7 @@ offered under `GPL-3.0-only`, without assigning copyright to the maintainer.
 Identify imported code and artwork, their owners, sources, licenses, and changes;
 retain required notices. Third-party artwork retains its existing license.
 This policy does not assert consent from historical contributors or revoke
-previous MIT grants. See [the licensing audit](docs/legal/LICENSING-AUDIT.md).
+previous MIT grants. See [TRADEMARKS.md](TRADEMARKS.md) for attribution and scope.
 
 ## Submit a pull request
 
@@ -159,7 +149,7 @@ Before opening a pull request:
 - Rebase or merge the current `master` branch without rewriting shared history.
 - Run the quality checks above and describe any manual testing.
 - Add tests for behavior changes and documentation for user-visible changes.
-- Keep generated build, wheel, PyInstaller, locale `.qm`, and system package artifacts out of the commit.
+- Keep generated build, wheel, locale `.qm`, and system package artifacts out of the commit.
 - Confirm that no credentials, license keys, account details, or diagnostic secrets are present.
 
 Explain what changed, why it changed, and any compatibility or packaging impact. Maintainers handle version metadata,

@@ -4,13 +4,10 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import pytest
-from packaging.licenses import canonicalize_license_expression
 
-from scripts.check_build_artifacts import (
-    GPL_SHA256,
+from scripts.check_release import (
     LEGAL_FILES,
     LICENSE_EXPRESSION,
-    check_legal_files,
     check_license_metadata,
     check_no_cloudflare_files,
 )
@@ -20,11 +17,13 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def test_canonical_license_and_pep639_scope():
     project = tomllib.loads((ROOT / "pyproject.toml").read_text())
-    assert project["project"]["license"] == canonicalize_license_expression(LICENSE_EXPRESSION)
+    assert project["project"]["license"] == LICENSE_EXPRESSION
     assert project["project"]["license-files"] == ["LICENSE", "LICENSES/*.txt", "TRADEMARKS.md"]
     assert "license-files" not in project.get("tool", {}).get("setuptools", {})
-    check_legal_files(lambda name: (ROOT / name).read_bytes())
-    assert hashlib.sha256((ROOT / "LICENSE").read_bytes()).hexdigest() == GPL_SHA256
+    assert (
+        hashlib.sha256((ROOT / "LICENSE").read_bytes()).hexdigest()
+        == "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+    )
 
 
 def test_third_party_license_texts_preserved_verbatim():
@@ -74,20 +73,11 @@ def test_native_metadata_and_external_dependencies():
         assert all(Path(name).name in content for name in LEGAL_FILES)
 
 
-def test_stale_application_mit_declarations_removed():
-    for name in ("README.md", "TRADEMARKS.md", "pyproject.toml"):
-        content = (ROOT / name).read_text()
-        assert "GPL-3.0-only" in content
-        assert "original code is released under the [MIT" not in content
-        assert "source code is available under the [MIT" not in content
-        assert "License: MIT]" not in content
-
-
 @pytest.mark.parametrize(
     "name", ["usr/bin/warp-cli", "warp-svc", "usr/lib/systemd/system/warp-svc.service", "libwarp.so"]
 )
 def test_artifact_rejects_cloudflare_runtime(name):
-    with pytest.raises(SystemExit, match="Cloudflare runtime"):
+    with pytest.raises(ValueError, match="Cloudflare runtime"):
         check_no_cloudflare_files(["qwarp/main.py", name])
 
 
@@ -96,21 +86,19 @@ def test_artifact_accepts_independent_controller_and_notices():
 
 
 def test_wheel_metadata_rejects_missing_notices_and_wrong_license():
-    metadata = f"Metadata-Version: 2.4\nLicense-Expression: {LICENSE_EXPRESSION}\n"
-    with pytest.raises(SystemExit, match="License-File"):
+    metadata = f"Metadata-Version: 2.4\nLicense-Expression: {LICENSE_EXPRESSION}\nRequires-Python: >=3.11\nRequires-Dist: PyQt6<7,>=6.6\n"
+    with pytest.raises(ValueError, match="License-File"):
         check_license_metadata(metadata.encode())
     metadata += "".join(f"License-File: {name}\n" for name in sorted(LEGAL_FILES))
     check_license_metadata(metadata.encode())
-    with pytest.raises(SystemExit, match="SPDX"):
+    with pytest.raises(ValueError, match="SPDX"):
         check_license_metadata(metadata.replace(LICENSE_EXPRESSION, "MIT").encode())
 
 
-def test_artifact_rejects_noncanonical_gpl():
-    with pytest.raises(SystemExit, match="GPL text"):
-        check_legal_files(lambda _name: b"GPL-3.0-only")
-
-
-@pytest.mark.parametrize("corrupted", ["LICENSES/Apache-2.0.txt", "LICENSES/Glyphs-Poly-MIT.txt"])
-def test_artifact_rejects_changed_third_party_license(corrupted):
-    with pytest.raises(SystemExit, match="Third-party license changed"):
-        check_legal_files(lambda name: b"GPL-3.0-only" if name == corrupted else (ROOT / name).read_bytes())
+def test_active_terms_and_privacy_links():
+    active = "\n".join(
+        (ROOT / path).read_text() for path in ("TRADEMARKS.md", "src/qwarp/ui/settings.py", "src/qwarp/ui/window.py")
+    )
+    assert "https://www.cloudflare.com/application/terms/" in active
+    assert "https://www.cloudflare.com/application/privacypolicy/" in active
+    assert "https://www.cloudflare.com/website-terms/" not in active

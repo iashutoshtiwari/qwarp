@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [Unreleased]
+
+- License independently owned QWarp material under GPL-3.0-only; retain third-party artwork notices.
+- Simplify build and release checks, share native package CI, and group weekly Dependabot updates.
+- Use ordinary Python dependency ranges and system dependencies in native packages.
+- Discontinue standalone executable distribution and remove its build/inventory tooling.
+- Remove generated dependency locks, redundant helpers, and superseded audit reports.
+
 ## [v0.10.1] – 2026-09-27
 
 ### Added
