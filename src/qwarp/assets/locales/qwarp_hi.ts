@@ -470,6 +470,12 @@
         <translation>क्या आधिकारिक डिफ़ॉल्ट IP और होस्टनाम स्प्लिट टनल नियम पुनर्स्थापित करें?</translation>
     </message>
     <message>
+        <location filename="../../ui/settings.py" line="1035" />
+        <location filename="../../ui/settings.py" line="584" />
+        <source>Unknown</source>
+        <translation>अज्ञात</translation>
+    </message>
+    <message>
         <location filename="../../ui/settings.py" line="592" />
         <source>Active</source>
         <translation>सक्रिय</translation>
@@ -551,11 +557,6 @@
         <location filename="../../ui/settings.py" line="1024" />
         <source>Hide</source>
         <translation>छुपाएं</translation>
-    </message>
-    <message>
-        <location filename="../../ui/settings.py" line="1035" />
-        <source>Unknown</source>
-        <translation>अज्ञात</translation>
     </message>
 </context><context>
     <name>WarpStateManager</name>

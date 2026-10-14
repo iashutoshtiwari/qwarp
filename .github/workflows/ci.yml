@@ -10,310 +10,91 @@ on:
 
 jobs:
   quality:
-    name: Python ${{ matrix.python-version }}
+    name: Python ${{ matrix.python }} / Qt ${{ matrix.qt }}
     runs-on: ubuntu-22.04
     permissions:
       contents: read
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.14"]
+        include:
+          - python: "3.11"
+            qt: current
+          - python: "3.14"
+            qt: current
+          - python: "3.11"
+            qt: "6.6"
     steps:
-      - name: Checkout
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.python }}
           cache: pip
-      - name: Install Qt runtime libraries
+          cache-dependency-path: pyproject.toml
+      - name: Install dependencies
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
             libasound2 libdbus-1-3 libegl1 libfontconfig1 libgl1 \
             libxcomposite1 libxcursor1 libxi6 libxkbcommon-x11-0 \
             libxrandr2 libxrender1 libxtst6 qt6-l10n-tools
-      - name: Install project
+          python -m pip install -e '.[dev]'
+      - name: Select minimum Qt
+        if: matrix.qt == '6.6'
+        # These pins exercise the compatibility boundary; application dependencies remain ranges.
+        run: python -m pip install 'PyQt6==6.6.0' 'PyQt6-Qt6==6.6.0'
+      - name: Lint, format, and validate workflows
+        if: matrix.python == '3.11' && matrix.qt == 'current'
         run: |
-          python -m pip install --require-hashes --only-binary=:all: -r requirements/locks/ci-py${{ matrix.python-version }}.txt
-          python -m pip install --no-deps --no-build-isolation -e .
-      - name: Localization QA
-        run: python3 scripts/check_locales.py
-      - name: Ruff
-        run: |
-          ruff check src/ tests/ --output-format=github
-          ruff format src/ tests/ --check --diff
+          ruff check src/ tests/ scripts/ --output-format=github
+          ruff format src/ tests/ scripts/ --check
+          mkdir -p "$RUNNER_TEMP/actionlint"
+          GOBIN="$RUNNER_TEMP/actionlint" go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.11
+          "$RUNNER_TEMP/actionlint/actionlint"
+          shellcheck scripts/*.sh
       - name: Test
         env:
           QT_QPA_PLATFORM: offscreen
-        run: pytest tests/ -v --tb=short
+        run: pytest -q --override-ini addopts='' --tb=short
 
-  minimum-qt:
-    name: Minimum supported Qt binding
+  build:
+    name: Build Python packages and native source
     runs-on: ubuntu-22.04
     permissions:
       contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - name: Set up Python 3.11
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.11"
-          cache: pip
-      - name: Install minimum Qt and test tools
+      - name: Install build tools
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends \
-            libasound2 libdbus-1-3 libegl1 libfontconfig1 libgl1 \
-            libxcomposite1 libxcursor1 libxi6 libxkbcommon-x11-0 \
-            libxrandr2 libxrender1 libxtst6
-          python -m pip install --require-hashes --only-binary=:all: -r requirements/locks/minimum-qt-py3.11.txt
-          python -m pip install --no-deps --no-build-isolation -e .
-      - name: Test minimum Qt
-        env:
-          QT_QPA_PLATFORM: offscreen
-        run: pytest tests/ -v --tb=short
-
-  package:
-    name: Build and smoke-test release artifacts
-    runs-on: ubuntu-22.04
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - name: Set up Python 3.11
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
-        with:
-          python-version: "3.11"
-          cache: pip
-      - name: Install build dependencies
+          sudo apt-get install -y --no-install-recommends qt6-l10n-tools
+          python -m pip install build -e .
+      - name: Read application version
+        id: version
+        run: echo "version=$(PYTHONPATH=src python -c 'from qwarp import __version__; print(__version__)')" >> "$GITHUB_OUTPUT"
+      - name: Build and validate
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends \
-            qt6-l10n-tools libasound2 libdbus-1-3 libegl1 libfontconfig1 \
-            libgl1 libxcomposite1 libxcursor1 libxi6 libxkbcommon-x11-0 \
-            libxrandr2 libxrender1 libxtst6
-          python -m pip install --require-hashes --only-binary=:all: -r requirements/locks/release-py3.11.txt
-      - name: Build artifacts
-        run: bash scripts/build_artifacts.sh
-      - name: Verify locales and release metadata
-        run: |
-          python3 scripts/check_locales.py
+          bash scripts/build_artifacts.sh
+          python scripts/check_locales.py
           git diff --exit-code -- 'src/qwarp/assets/locales/*.ts'
-          # Normal CI validates the current tree, which may legitimately differ
-          # from an already-published immutable release asset.
-          python scripts/check_release.py --version 0.10.1
           (cd dist/release && sha256sum --check SHA256SUMS)
-      - name: Verify standalone binary
-        run: bash scripts/smoke_frozen.sh dist/qwarp-build/qwarp 0.10.1
-      - name: Upload package inputs
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: ci-release-artifacts
           path: dist/release/
+          if-no-files-found: error
           retention-days: 7
 
-  arch-package:
-    name: Validate Arch package ownership
-    needs: package
-    runs-on: ubuntu-22.04
-    container: archlinux:base-devel
+  packages:
+    needs: [quality, build]
     permissions:
       contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - name: Download source artifact
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
-        with:
-          name: ci-release-artifacts
-          path: dist/release
-      - name: Build package without runtime dependency resolution
-        run: |
-          pacman -Syu --noconfirm --needed \
-            git python python-build python-installer python-pyqt6 \
-            python-setuptools python-wheel qt6-tools
-          useradd --create-home builder
-          arch_build_dir=$(mktemp -d /tmp/qwarp-arch.XXXXXX)
-          echo "ARCH_BUILD_DIR=$arch_build_dir" >> "$GITHUB_ENV"
-          cp packaging/arch/PKGBUILD packaging/arch/.SRCINFO "$arch_build_dir/"
-          cp dist/release/qwarp-0.10.1-source.tar.gz "$arch_build_dir/"
-          # PKGBUILD tracks the immutable published release asset. For normal CI,
-          # use the checksum of the just-built current-tree archive only in this
-          # temporary build directory so packaging smoke tests exercise the PR/commit.
-          source_hash=$(sha256sum "$arch_build_dir/qwarp-0.10.1-source.tar.gz" | awk '{print $1}')
-          sed -E -i "s/^sha256sums=.*/sha256sums=('${source_hash}')/" "$arch_build_dir/PKGBUILD"
-          chown -R builder:builder "$arch_build_dir"
-          su builder -c "cd '$arch_build_dir' && makepkg --nodeps --cleanbuild --clean --noconfirm"
-      - name: Verify metadata and owned files
-        run: |
-          su builder -c "cd '$ARCH_BUILD_DIR' && makepkg --printsrcinfo" > /tmp/generated.SRCINFO
-          source_hash=$(sha256sum "$ARCH_BUILD_DIR/qwarp-0.10.1-source.tar.gz" | awk '{print $1}')
-          grep -Fq "sha256sums = ${source_hash}" /tmp/generated.SRCINFO
-          grep -v '^[[:space:]]*sha256sums = ' packaging/arch/.SRCINFO > /tmp/committed-normalized.SRCINFO
-          grep -v '^[[:space:]]*sha256sums = ' /tmp/generated.SRCINFO > /tmp/generated-normalized.SRCINFO
-          diff -u /tmp/committed-normalized.SRCINFO /tmp/generated-normalized.SRCINFO
-          package_file=$(find "$ARCH_BUILD_DIR" -maxdepth 1 -name 'qwarp-*.pkg.tar.zst' -print -quit)
-          test -n "$package_file"
-          bsdtar -tf "$package_file" > /tmp/package-files
-          ! grep -Eq '(^|/)(warp-cli|warp-svc|warp-svc\.service)$' /tmp/package-files
-          grep -q '^usr/bin/qwarp$' /tmp/package-files
-          grep -q '^usr/share/doc/qwarp/TRADEMARKS.md$' /tmp/package-files
-          grep -q '^usr/share/licenses/qwarp/Apache-2.0.txt$' /tmp/package-files
-          grep -q '^usr/share/licenses/qwarp/Glyphs-Poly-MIT.txt$' /tmp/package-files
-          grep -q 'cloudflare-warp-bin' packaging/arch/.SRCINFO
-          ! grep -Eq '^\s*(conflicts|install)\s*=' packaging/arch/.SRCINFO
-      - name: Test pacman installation transaction
-        run: |
-          mkdir -p /tmp/dummy-warp
-          cat << 'EOF' > /tmp/dummy-warp/PKGBUILD
-          pkgname=cloudflare-warp-bin
-          pkgver=1.0.0
-          pkgrel=1
-          arch=('any')
-          pkgdesc="Dummy package to satisfy dependency in CI"
-          package() {
-            mkdir -p "$pkgdir/usr/bin"
-            touch "$pkgdir/usr/bin/warp-cli"
-            chmod +x "$pkgdir/usr/bin/warp-cli"
-          }
-          EOF
-          chown -R builder:builder /tmp/dummy-warp
-          su builder -c "cd /tmp/dummy-warp && makepkg --cleanbuild --noconfirm"
-          package_file=$(find "$ARCH_BUILD_DIR" -maxdepth 1 -name 'qwarp-*.pkg.tar.zst' -print -quit)
-          pacman -U --noconfirm /tmp/dummy-warp/cloudflare-warp-bin-*.pkg.tar.zst "$package_file"
-          /usr/bin/qwarp --version | grep -Fx 'QWarp 0.10.1'
-          pacman -Qo /usr/bin/qwarp
-      - name: Remove temporary Arch build
-        if: always()
-        run: |
-          if [ -n "${ARCH_BUILD_DIR:-}" ]; then
-            rm -rf -- "$ARCH_BUILD_DIR"
-          fi
-
-  debian-package:
-    name: Build Debian package
-    needs: package
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - name: Download source artifact
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
-        with:
-          name: ci-release-artifacts
-          path: dist/release
-      - name: Install dependencies
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends \
-            build-essential debhelper dh-python pybuild-plugin-pyproject \
-            python3-all python3-setuptools python3-build qt6-l10n-tools \
-            qt6-tools-dev-tools dpkg-dev python3-pyqt6
-      - name: Build .deb
-        run: |
-          tar xzf dist/release/qwarp-0.10.1-source.tar.gz
-          cd qwarp-0.10.1
-          cp -r ../packaging/debian debian
-          dpkg-buildpackage -us -uc -b
-      - name: Inspect and smoke-test .deb
-        run: |
-          dpkg-deb --contents qwarp_0.10.1-1_all.deb > /tmp/qwarp-deb-files
-          grep -Eq 'usr/bin/qwarp$' /tmp/qwarp-deb-files
-          grep -Eq 'usr/share/doc/qwarp/TRADEMARKS.md(\.gz)?$' /tmp/qwarp-deb-files
-          grep -Eq 'usr/share/doc/qwarp/Apache-2.0.txt(\.gz)?$' /tmp/qwarp-deb-files
-          grep -Eq 'usr/share/doc/qwarp/Glyphs-Poly-MIT.txt(\.gz)?$' /tmp/qwarp-deb-files
-          ! grep -Eq '/(warp-cli|warp-svc|warp-svc\.service)$' /tmp/qwarp-deb-files
-          dpkg-deb --field qwarp_0.10.1-1_all.deb Depends | grep -q 'cloudflare-warp'
-          mkdir -p /tmp/qwarp-deb-root
-          dpkg-deb --extract qwarp_0.10.1-1_all.deb /tmp/qwarp-deb-root
-          PYTHONPATH=/tmp/qwarp-deb-root/usr/lib/python3/dist-packages \
-            python3 -m qwarp.main --version | grep -Fx 'QWarp 0.10.1'
-      - name: Test apt installation transaction
-        run: |
-          mkdir -p /tmp/dummy-warp-deb/DEBIAN
-          cat << 'EOF' > /tmp/dummy-warp-deb/DEBIAN/control
-          Package: cloudflare-warp
-          Version: 1.0.0
-          Architecture: all
-          Maintainer: CI <ci@example.com>
-          Description: Dummy package for CI dependency satisfaction
-          EOF
-          dpkg-deb --build /tmp/dummy-warp-deb /tmp/cloudflare-warp_1.0.0_all.deb
-          sudo dpkg -i /tmp/cloudflare-warp_1.0.0_all.deb
-          sudo apt-get install -y --no-install-recommends ./qwarp_0.10.1-1_all.deb
-          /usr/bin/qwarp --version | grep -Fx 'QWarp 0.10.1'
-          dpkg -S /usr/bin/qwarp
-      - name: Upload .deb
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: qwarp-deb
-          path: qwarp_0.10.1-1_all.deb
-          retention-days: 7
-
-  rpm-package:
-    name: Build RPM package
-    needs: package
-    runs-on: ubuntu-22.04
-    container: fedora:44
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - name: Download source artifact
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
-        with:
-          name: ci-release-artifacts
-          path: dist/release
-      - name: Install dependencies
-        run: |
-          dnf install -y rpm-build python3-devel python3-setuptools \
-            python3-build python3-pip python3-wheel pyproject-rpm-macros \
-            qt6-linguist rpmdevtools
-      - name: Build .rpm
-        run: |
-          mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-          cp dist/release/qwarp-0.10.1-source.tar.gz ~/rpmbuild/SOURCES/
-          cp packaging/rpm/qwarp.spec ~/rpmbuild/SPECS/
-          rpmbuild -bb ~/rpmbuild/SPECS/qwarp.spec
-      - name: Inspect RPM
-        run: |
-          rpm_file=$(find ~/rpmbuild/RPMS -name 'qwarp-0.10.1-1*.rpm' -print -quit)
-          test -n "$rpm_file"
-          rpm -qlp "$rpm_file" > /tmp/qwarp-rpm-files
-          grep -q '/usr/bin/qwarp$' /tmp/qwarp-rpm-files
-          grep -q '/usr/share/doc/qwarp/TRADEMARKS.md$' /tmp/qwarp-rpm-files
-          grep -q '/usr/share/licenses/qwarp/Apache-2.0.txt$' /tmp/qwarp-rpm-files
-          grep -q '/usr/share/licenses/qwarp/Glyphs-Poly-MIT.txt$' /tmp/qwarp-rpm-files
-          ! grep -Eq '/(warp-cli|warp-svc|warp-svc\.service)$' /tmp/qwarp-rpm-files
-          rpm -qp --requires "$rpm_file" | grep -q 'cloudflare-warp'
-      - name: Test dnf installation transaction
-        run: |
-          cat << 'EOF' > ~/rpmbuild/SPECS/dummy-warp.spec
-          Name: cloudflare-warp
-          Version: 1.0.0
-          Release: 1
-          Summary: Dummy package for CI
-          License: MIT
-          BuildArch: noarch
-          %description
-          Dummy package for CI dependency satisfaction
-          %files
-          EOF
-          rpmbuild -bb ~/rpmbuild/SPECS/dummy-warp.spec
-          dummy_rpm=$(find ~/rpmbuild/RPMS -name 'cloudflare-warp-1.0.0-1*.rpm' -print -quit)
-          rpm_file=$(find ~/rpmbuild/RPMS -name 'qwarp-0.10.1-1*.rpm' -print -quit)
-          dnf install -y "$dummy_rpm" "$rpm_file"
-          /usr/bin/qwarp --version | grep -Fx 'QWarp 0.10.1'
-          rpm -qf /usr/bin/qwarp
-      - name: Upload .rpm
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: qwarp-rpm
-          path: /github/home/rpmbuild/RPMS/noarch/qwarp-0.10.1-1*.rpm
-          retention-days: 7
+    uses: ./.github/workflows/packages.yml
+    with:
+      artifact: ci-release-artifacts
+      version: ${{ needs.build.outputs.version }}

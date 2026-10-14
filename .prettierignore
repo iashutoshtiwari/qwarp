@@ -1,0 +1,3 @@
+# Preserve canonical license text and third-party notices verbatim.
+/LICENSE
+/LICENSES/*.txt

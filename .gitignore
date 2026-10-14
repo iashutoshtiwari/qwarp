@@ -3,11 +3,11 @@ __pycache__/
 build/
 dist/
 *.egg-info/
-*.spec
-!packaging/rpm/qwarp.spec
 .venv/
 venv/
 pkg/
+node_modules/
+*.lock
 
 # Ignore Arch packaging artifacts from makepkg
 *.pkg.tar.zst
@@ -17,7 +17,6 @@ pkg/
 # Ignore compiled Qt translation binaries
 *.qm
 skills-lock.json
-uv.lock
 
 # Local test and lint caches
 .pytest_cache/

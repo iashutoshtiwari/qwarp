@@ -470,6 +470,12 @@
         <translation type="unfinished" />
     </message>
     <message>
+        <location filename="../../ui/settings.py" line="1035" />
+        <location filename="../../ui/settings.py" line="584" />
+        <source>Unknown</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
         <location filename="../../ui/settings.py" line="592" />
         <source>Active</source>
         <translation type="unfinished" />
@@ -550,11 +556,6 @@
         <location filename="../../ui/settings.py" line="1030" />
         <location filename="../../ui/settings.py" line="1024" />
         <source>Hide</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="../../ui/settings.py" line="1035" />
-        <source>Unknown</source>
         <translation type="unfinished" />
     </message>
 </context><context>

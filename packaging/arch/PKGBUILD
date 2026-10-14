@@ -2,10 +2,10 @@
 pkgname=qwarp
 pkgver=0.10.1
 pkgrel=1
-pkgdesc="Qt6-based alternative desktop client for Cloudflare WARP"
+pkgdesc="Independent PyQt6 GUI for the official Cloudflare WARP CLI"
 arch=('x86_64')
 url="https://github.com/iashutoshtiwari/qwarp"
-license=('MIT' 'Apache-2.0')
+license=('GPL-3.0-only' 'MIT' 'Apache-2.0')
 depends=('python' 'python-pyqt6' 'cloudflare-warp-bin')
 makedepends=('python-build' 'python-installer' 'python-wheel' 'python-setuptools' 'qt6-tools')
 
@@ -13,19 +13,15 @@ source=("$pkgname-$pkgver-source.tar.gz::https://github.com/iashutoshtiwari/qwar
 sha256sums=('c8d03b009f3ab1c29b1c21ebc2599a5e2de6b0fd3b052e4aa539d6066f9f767e')
 
 build() {
-  # Enter the directory extracted from the GitHub tarball
-  cd "$pkgname-${pkgver/_/-}"
+  cd "$pkgname-${pkgver/_/-}" || return
 
-  # Gather PyQt translation files before generating the wheel so they are grabbed by setup.py
   bash scripts/build_locales.sh
 
-  # Build the wheel
   python -m build --wheel --no-isolation
 }
 
 package() {
-  # Enter the directory extracted from the GitHub tarball
-  cd "$pkgname-${pkgver/_/-}"
+  cd "$pkgname-${pkgver/_/-}" || return
 
   local _wheels=(dist/*.whl)
 
@@ -34,7 +30,6 @@ package() {
       exit 1
   fi
 
-  # Install the Python package
   python -m installer --destdir="$pkgdir" "${_wheels[0]}"
 
   # Install the desktop entry

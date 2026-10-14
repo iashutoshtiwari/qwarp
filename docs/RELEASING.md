@@ -1,50 +1,55 @@
 # QWarp release procedure
 
-## Scope and review
+## Prepare a candidate
 
-Choose an unused semantic version: patch for compatible fixes and hardening,
-minor for features, major for breaking changes. Work on `release/vX.Y.Z` from
-current master unless the maintainer explicitly selects another base. Preserve
-unrelated work and published history. Keep runtime/UI review separate from final
-version and checksum preparation.
+Use an unused semantic version and preserve published releases and tags. Review
+[TRADEMARKS.md](../TRADEMARKS.md) for attribution and the unresolved naming and
+integration questions. Publish matching QWarp source and build instructions
+alongside packages; dependencies are provided separately by the distribution.
 
-Before review, run Ruff checks and formatting verification, the full offscreen
-suite, localization validation, and focused regression tests. Exercise Python
-3.11 and 3.14 plus minimum-supported Qt. Mock WARP/systemd/polkit boundaries;
-never mutate a real registration or tunnel during automated testing. Build and
-inspect wheel, source, frozen, Arch, Debian, and RPM outputs in disposable
-workspaces. Report unavailable checks as gaps, not passes.
+Synchronize `src/qwarp/__init__.py`, `CHANGELOG.md`, Arch's `pkgver`/`.SRCINFO`,
+Debian's changelog, and the RPM `Version`. Native package revisions are currently
+`1`. Run the checks in [CONTRIBUTING.md](../CONTRIBUTING.md), including all eight
+locales. CI tests Python 3.11/3.14 and Qt 6.6/current, builds all native targets,
+and checks package installation, reinstallation, and removal with synthetic
+WARP dependencies. No automated check should change a real account or service.
 
-The maintainer must review the diff and complete affected-area desktop QA and
-core smoke tests. Only explicit approval permits release preparation. Additional
-runtime/UI changes invalidate that approval and require renewed review.
+```bash
+uv run --no-sync bash scripts/build_artifacts.sh --output-dir dist/candidate
+sha256sum dist/candidate/release/qwarp-X.Y.Z-source.tar.gz
+```
 
-## Preparation after approval
+Record that source hash in `packaging/arch/PKGBUILD`, then regenerate `.SRCINFO`
+with `(cd packaging/arch && makepkg --printsrcinfo > .SRCINFO)`. Arch metadata is
+excluded from the archive, so these checksum edits do not change its bytes.
 
-Synchronize the application version, changelog, CI version probes,
-`packaging/arch/PKGBUILD`, `packaging/arch/.SRCINFO`, and Debian/RPM metadata.
-Compile all eight locales. Build artifacts with `scripts/build_artifacts.sh`.
-Set the candidate source checksum in Arch metadata and regenerate `.SRCINFO`
-using `(cd packaging/arch && makepkg --printsrcinfo > .SRCINFO)`.
+```bash
+uv run --no-sync python scripts/check_release.py --version X.Y.Z \
+  --artifacts dist/candidate/release --release
+```
 
-Validate with `scripts/check_release.py --version X.Y.Z --artifacts dist/release`,
-`scripts/smoke_frozen.sh dist/qwarp-build/qwarp X.Y.Z`, and `sha256sum --check
-SHA256SUMS` inside the artifact directory. Verify package ownership: QWarp must
-not contain Cloudflare binaries, service units, capability hooks, or install
-hooks. Arch must depend on the separately installed `cloudflare-warp-bin`.
+The current 0.10.1 source checksum identifies an older published asset. Cleanup
+changes must ship with a new version and checksum; never replace that release.
+Normal CI validates the current tree without requiring the old checksum to match.
 
-Commit coherent implementation changes separately from final release metadata.
-Push and open a PR only when authorized. Require CI and reviewed approval before
-merging. Keep GitHub Actions SHA-pinned and publishing manually triggered.
+## Review and publish
 
-## Publication
+Review the complete diff, CI results, package contents/dependencies/notices, and
+affected desktop behavior. Complete live QA on a disposable system with a
+separately installed official client: consent/registration, connect/disconnect,
+settings/DNS/protocols, split tunnels, Zero Trust, diagnostics, tray, single
+instance, Wayland/X11, and shutdown. Record any unavailable checks. Runtime
+changes after QA require another review.
 
-Only after the approved commit is merged to master, dispatch the protected
-Release workflow with the selected version and a truthful live-QA attestation.
-The workflow handles final checks, provenance, tags, GitHub assets, and AUR
-publication. Credentials stay in the protected release environment; never copy
-or print them locally. Never replace published tags/assets or force-push AUR.
+After the approved commit is merged to master, manually dispatch the protected
+Release workflow with the version and truthful `live_qa_completed` attestation.
+The workflow checks master has not moved, validates the exact source/checksums,
+uses the same native package jobs as CI, attests the public artifacts, creates
+or validates a tag, and publishes GitHub assets and AUR metadata. The `release`
+environment retains publishing approval and credentials. Actions remain SHA-pinned.
 
-Verify the exact published commit, complete artifacts and checksums, successful
-workflow, and AUR version. An interrupted release must be diagnosed before retry.
-A previous commit's QA attestation does not authorize a changed commit.
+The public bundle contains the wheel, Python sdist, native source archive,
+Debian package, Fedora package, and `SHA256SUMS`. Arch users build from the AUR
+recipe, published using the existing SSH workflow. No automatic merging or
+publishing occurs on dependency PRs. Diagnose an interrupted release before
+retrying; never force-push AUR or replace published tags/assets.

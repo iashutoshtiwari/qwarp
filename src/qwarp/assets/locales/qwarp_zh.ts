@@ -470,6 +470,12 @@
         <translation>是否恢复官方默认的 IP 和主机名分流隧道规则？</translation>
     </message>
     <message>
+        <location filename="../../ui/settings.py" line="1035" />
+        <location filename="../../ui/settings.py" line="584" />
+        <source>Unknown</source>
+        <translation>未知</translation>
+    </message>
+    <message>
         <location filename="../../ui/settings.py" line="592" />
         <source>Active</source>
         <translation>活跃</translation>
@@ -551,11 +557,6 @@
         <location filename="../../ui/settings.py" line="1024" />
         <source>Hide</source>
         <translation>隐藏</translation>
-    </message>
-    <message>
-        <location filename="../../ui/settings.py" line="1035" />
-        <source>Unknown</source>
-        <translation>未知</translation>
     </message>
 </context><context>
     <name>WarpStateManager</name>

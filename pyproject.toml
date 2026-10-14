@@ -5,10 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "qwarp"
 dynamic = ["version"]
-description = "A Wayland-native, Qt6-based alternative desktop client for Cloudflare WARP"
+description = "An independent PyQt6 GUI for the official Cloudflare WARP CLI on Linux"
 readme = "README.md"
 requires-python = ">=3.11"
-license = {text = "MIT AND Apache-2.0"}
+license = "GPL-3.0-only AND MIT AND Apache-2.0"
+license-files = ["LICENSE", "LICENSES/*.txt", "TRADEMARKS.md"]
 dependencies = [
     "PyQt6>=6.6,<7",
 ]
@@ -20,16 +21,13 @@ Changelog = "https://github.com/iashutoshtiwari/qwarp/blob/master/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0",
-    "ruff>=0.4",
-    "build>=1.0",
+    "pytest>=8.3,<10",
+    "ruff>=0.16,<1",
+    "build>=1.6,<2",
 ]
 
 [project.scripts]
 qwarp = "qwarp.main:main"
-
-[tool.setuptools]
-license-files = ["LICENSE", "LICENSES/*.txt", "TRADEMARKS.md"]
 
 [tool.setuptools.dynamic]
 version = {attr = "qwarp.__version__"}

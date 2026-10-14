@@ -1,0 +1,5 @@
+# Official hosted label verified in actions/runner-images on 2026-10-14.
+# actionlint 1.7.11's built-in catalogue predates this hosted image.
+self-hosted-runner:
+  labels:
+    - ubuntu-26.04

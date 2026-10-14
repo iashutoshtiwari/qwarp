@@ -2,8 +2,11 @@ import logging
 import threading
 from unittest.mock import patch
 
+from PyQt6.QtCore import QSettings
+
 from qwarp.core.engine import CliCapabilities, WarpState
 from qwarp.core.state import ActionWorker, StatusWorker, WarpStateManager
+from qwarp.main import has_current_terms_acceptance, remember_terms_acceptance
 
 
 class FakeEngine:
@@ -257,11 +260,17 @@ def test_register_with_org(qapp, wait_until):
     """Register with organization dispatches correctly."""
     engine = FakeEngine()
     manager = WarpStateManager(engine, start_polling=False)
+    settings = QSettings("qwarp-tests", "organization-consent")
+    settings.clear()
+    manager.action_finished.connect(
+        lambda action, success, _message: remember_terms_acceptance(settings, action, success)
+    )
     results = []
     manager.action_finished.connect(lambda *args: results.append(args))
     manager.request_register_with_org("my-corp")
     wait_until(lambda: bool(results))
     assert results[-1] == ("register", True, "")
+    assert has_current_terms_acceptance(settings)
     manager.shutdown()
 
 

@@ -581,7 +581,7 @@ class SettingsDialog(QDialog):
     def _on_query_worker_finished(self, net_info: dict, over_info: dict, split_info: dict) -> None:
         self.lbl_iface.setText(self.tr(net_info.get("interface") or "Unknown"))
         self.lbl_gateway.setText(self.tr(net_info.get("gateway") or "Unknown"))
-        self.lbl_dns.setText(self.tr(", ".join(net_info.get("dns", [])) or "Unknown"))
+        self.lbl_dns.setText(", ".join(net_info.get("dns", [])) or self.tr("Unknown"))
 
         tunnel_status = net_info.get("tunnel_status")
         if not tunnel_status and self.manager.current_state != WarpState.UNKNOWN:

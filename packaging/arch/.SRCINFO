@@ -1,9 +1,10 @@
 pkgbase = qwarp
-	pkgdesc = Qt6-based alternative desktop client for Cloudflare WARP
+	pkgdesc = Independent PyQt6 GUI for the official Cloudflare WARP CLI
 	pkgver = 0.10.1
 	pkgrel = 1
 	url = https://github.com/iashutoshtiwari/qwarp
 	arch = x86_64
+	license = GPL-3.0-only
 	license = MIT
 	license = Apache-2.0
 	makedepends = python-build

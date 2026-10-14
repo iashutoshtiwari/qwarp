@@ -34,19 +34,16 @@ jobs:
           test "$GITHUB_REF" = refs/heads/master
           test "${{ inputs.live_qa_completed }}" = true
           [[ "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
-      - name: Checkout full history
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           fetch-depth: 0
       - name: Verify master did not move
         run: |
           git fetch origin master
           test "$(git rev-parse HEAD)" = "$(git rev-parse origin/master)"
-      - name: Set up Python 3.11
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.11"
-          cache: pip
       - name: Install build and test dependencies
         run: |
           sudo apt-get update -qq
@@ -54,170 +51,41 @@ jobs:
             qt6-l10n-tools libasound2 libdbus-1-3 libegl1 libfontconfig1 \
             libgl1 libxcomposite1 libxcursor1 libxi6 libxkbcommon-x11-0 \
             libxrandr2 libxrender1 libxtst6
-          python -m pip install --require-hashes --only-binary=:all: -r requirements/locks/release-py3.11.txt
-          python -m pip install --no-deps --no-build-isolation -e .
+          python -m pip install -e '.[dev]'
       - name: Quality gates
         env:
           QT_QPA_PLATFORM: offscreen
         run: |
-          ruff check src/ tests/
-          ruff format src/ tests/ --check --diff
-          pytest tests/ -v --tb=short
-      - name: Build release artifacts
-        run: bash scripts/build_artifacts.sh
-      - name: Validate catalogs, metadata, checksums, and release notes
+          ruff check src/ tests/ scripts/
+          ruff format src/ tests/ scripts/ --check
+          pytest -q --override-ini addopts='' --tb=short
+      - name: Build and validate exact release inputs
         run: |
-          python3 scripts/check_locales.py
+          bash scripts/build_artifacts.sh
+          python scripts/check_locales.py
           git diff --exit-code -- 'src/qwarp/assets/locales/*.ts'
-          python scripts/check_release.py \
-            --version "$RELEASE_VERSION" \
-            --artifacts dist/release \
-            --notes-output dist/release/RELEASE_NOTES.md
-          bash scripts/smoke_frozen.sh dist/qwarp-build/qwarp "$RELEASE_VERSION"
-          (cd dist/release && sha256sum --check SHA256SUMS)
-      - name: Upload the exact release bundle
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+          python scripts/check_release.py --version "$RELEASE_VERSION" \
+            --artifacts dist/release --release --notes-output dist/release/RELEASE_NOTES.md
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: qwarp-${{ inputs.version }}-release
           path: dist/release/
           if-no-files-found: error
           retention-days: 14
 
-  arch-package:
-    name: Validate Arch package
+  packages:
     needs: validate-build
-    runs-on: ubuntu-22.04
-    container: archlinux:base-devel
     permissions:
       contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - name: Download exact release bundle
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
-        with:
-          name: qwarp-${{ inputs.version }}-release
-          path: dist/release
-      - name: Build and inspect package
-        run: |
-          pacman -Syu --noconfirm --needed \
-            git python python-build python-installer python-pyqt6 \
-            python-setuptools python-wheel qt6-tools
-          useradd --create-home builder
-          arch_build_dir=$(mktemp -d /tmp/qwarp-arch.XXXXXX)
-          trap 'rm -rf -- "$arch_build_dir"' EXIT
-          cp packaging/arch/PKGBUILD packaging/arch/.SRCINFO "$arch_build_dir/"
-          cp "dist/release/qwarp-$RELEASE_VERSION-source.tar.gz" "$arch_build_dir/"
-          chown -R builder:builder "$arch_build_dir"
-          su builder -c "cd '$arch_build_dir' && makepkg --nodeps --cleanbuild --clean --noconfirm"
-          su builder -c "cd '$arch_build_dir' && makepkg --printsrcinfo" > /tmp/generated.SRCINFO
-          diff -u packaging/arch/.SRCINFO /tmp/generated.SRCINFO
-          package_file=$(find "$arch_build_dir" -maxdepth 1 -name 'qwarp-*.pkg.tar.zst' -print -quit)
-          bsdtar -tf "$package_file" > /tmp/package-files
-          ! grep -Eq '(^|/)(warp-cli|warp-svc|warp-svc\.service)$' /tmp/package-files
-          grep -q '^usr/bin/qwarp$' /tmp/package-files
-          grep -q '^usr/share/doc/qwarp/TRADEMARKS.md$' /tmp/package-files
-          grep -q '^usr/share/licenses/qwarp/Apache-2.0.txt$' /tmp/package-files
-          grep -q '^usr/share/licenses/qwarp/Glyphs-Poly-MIT.txt$' /tmp/package-files
-          grep -q 'cloudflare-warp-bin' packaging/arch/.SRCINFO
-          ! grep -Eq '^\s*(conflicts|install)\s*=' packaging/arch/.SRCINFO
-
-
-  debian-package:
-    name: Build Debian package
-    needs: validate-build
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - name: Download source artifact
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
-        with:
-          name: qwarp-${{ inputs.version }}-release
-          path: dist/release
-      - name: Install dependencies
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends \
-            build-essential debhelper dh-python pybuild-plugin-pyproject \
-            python3-all python3-setuptools python3-build qt6-l10n-tools \
-            qt6-tools-dev-tools dpkg-dev python3-pyqt6
-      - name: Build .deb
-        run: |
-          tar xzf dist/release/qwarp-$RELEASE_VERSION-source.tar.gz
-          cd qwarp-$RELEASE_VERSION
-          cp -r ../packaging/debian debian
-          dpkg-buildpackage -us -uc -b
-      - name: Inspect and smoke-test .deb
-        run: |
-          deb="qwarp_${RELEASE_VERSION}-1_all.deb"
-          dpkg-deb --contents "$deb" > /tmp/qwarp-deb-files
-          grep -Eq 'usr/bin/qwarp$' /tmp/qwarp-deb-files
-          grep -Eq 'usr/share/doc/qwarp/TRADEMARKS.md(\.gz)?$' /tmp/qwarp-deb-files
-          grep -Eq 'usr/share/doc/qwarp/Apache-2.0.txt(\.gz)?$' /tmp/qwarp-deb-files
-          grep -Eq 'usr/share/doc/qwarp/Glyphs-Poly-MIT.txt(\.gz)?$' /tmp/qwarp-deb-files
-          ! grep -Eq '/(warp-cli|warp-svc|warp-svc\.service)$' /tmp/qwarp-deb-files
-          dpkg-deb --field "$deb" Depends | grep -q 'cloudflare-warp'
-          mkdir -p /tmp/qwarp-deb-root
-          dpkg-deb --extract "$deb" /tmp/qwarp-deb-root
-          PYTHONPATH=/tmp/qwarp-deb-root/usr/lib/python3/dist-packages \
-            python3 -m qwarp.main --version | grep -Fx "QWarp $RELEASE_VERSION"
-      - name: Upload .deb
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: qwarp-${{ inputs.version }}-deb
-          path: qwarp_${{ inputs.version }}-1_all.deb
-          retention-days: 7
-
-  rpm-package:
-    name: Build RPM package
-    needs: validate-build
-    runs-on: ubuntu-22.04
-    container: fedora:44
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - name: Download source artifact
-        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
-        with:
-          name: qwarp-${{ inputs.version }}-release
-          path: dist/release
-      - name: Install dependencies
-        run: |
-          dnf install -y rpm-build python3-devel python3-setuptools \
-            python3-build python3-pip python3-wheel pyproject-rpm-macros \
-            qt6-linguist rpmdevtools
-      - name: Build .rpm
-        run: |
-          mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-          cp dist/release/qwarp-$RELEASE_VERSION-source.tar.gz ~/rpmbuild/SOURCES/
-          cp packaging/rpm/qwarp.spec ~/rpmbuild/SPECS/
-          rpmbuild -bb ~/rpmbuild/SPECS/qwarp.spec
-      - name: Inspect RPM
-        run: |
-          rpm_file=$(find ~/rpmbuild/RPMS -name "qwarp-${RELEASE_VERSION}-1*.rpm" -print -quit)
-          test -n "$rpm_file"
-          rpm -qlp "$rpm_file" > /tmp/qwarp-rpm-files
-          grep -q '/usr/bin/qwarp$' /tmp/qwarp-rpm-files
-          grep -q '/usr/share/doc/qwarp/TRADEMARKS.md$' /tmp/qwarp-rpm-files
-          grep -q '/usr/share/licenses/qwarp/Apache-2.0.txt$' /tmp/qwarp-rpm-files
-          grep -q '/usr/share/licenses/qwarp/Glyphs-Poly-MIT.txt$' /tmp/qwarp-rpm-files
-          ! grep -Eq '/(warp-cli|warp-svc|warp-svc\.service)$' /tmp/qwarp-rpm-files
-          rpm -qp --requires "$rpm_file" | grep -q 'cloudflare-warp'
-      - name: Upload .rpm
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: qwarp-${{ inputs.version }}-rpm
-          path: /github/home/rpmbuild/RPMS/noarch/qwarp-${{ inputs.version }}-1*.rpm
-          retention-days: 7
+    uses: ./.github/workflows/packages.yml
+    with:
+      artifact: qwarp-${{ inputs.version }}-release
+      version: ${{ inputs.version }}
+      release: true
 
   publish:
     name: Publish GitHub and AUR
-    needs: [validate-build, arch-package, debian-package, rpm-package]
+    needs: [validate-build, packages]
     runs-on: ubuntu-22.04
     environment: release
     permissions:
@@ -238,12 +106,12 @@ jobs:
       - name: Download .deb artifact
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
-          name: qwarp-${{ inputs.version }}-deb
+          name: qwarp-${{ inputs.version }}-release-debian
           path: dist/release
       - name: Download .rpm artifact
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
-          name: qwarp-${{ inputs.version }}-rpm
+          name: qwarp-${{ inputs.version }}-release-rpm
           path: dist/release
 
       - name: Revalidate commit and checksum every public artifact
@@ -251,17 +119,27 @@ jobs:
           git fetch origin master --tags
           test "$(git rev-parse HEAD)" = "$(git rev-parse origin/master)"
           (cd dist/release && sha256sum --check SHA256SUMS)
-          deb="qwarp_${RELEASE_VERSION}-1_all.deb"
-          rpm=$(find dist/release -name "qwarp-${RELEASE_VERSION}-1*.rpm" -print -quit)
-          test -f "dist/release/$deb"
-          test -n "$rpm"
-          (cd dist/release && sha256sum "$deb" "$(basename "$rpm")" >> SHA256SUMS)
+          python scripts/check_release.py --version "$RELEASE_VERSION" \
+            --artifacts dist/release --release --require-native --write-checksums
           (cd dist/release && sha256sum --check SHA256SUMS)
+      - name: Require an unused release version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" --paginate --jq '.[].tag_name' > "$RUNNER_TEMP/release-tags"
+          grep_status=0
+          grep -Fx "v$RELEASE_VERSION" "$RUNNER_TEMP/release-tags" > /dev/null || grep_status=$?
+          case "$grep_status" in
+            1) ;;
+            0) echo 'Published releases are immutable; select a new version.' >&2; exit 1 ;;
+            *) echo 'Unable to validate existing release versions' >&2; exit "$grep_status" ;;
+          esac
       - name: Attest every release artifact
         uses: actions/attest-build-provenance@43d14bc2b83dec42d39ecae14e916627a18bb661 # v3
         with:
           subject-path: |
-            dist/release/qwarp-${{ inputs.version }}-linux-x86_64.tar.gz
+            dist/release/qwarp-${{ inputs.version }}-py3-none-any.whl
+            dist/release/qwarp-${{ inputs.version }}.tar.gz
             dist/release/qwarp-${{ inputs.version }}-source.tar.gz
             dist/release/qwarp_${{ inputs.version }}-1_all.deb
             dist/release/qwarp-${{ inputs.version }}-1*.rpm
@@ -309,16 +187,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: v${{ inputs.version }}
         run: |
-          files=(
-            "dist/release/qwarp-$RELEASE_VERSION-linux-x86_64.tar.gz"
-            "dist/release/qwarp-$RELEASE_VERSION-source.tar.gz"
-            "dist/release/SHA256SUMS"
-            "dist/release/qwarp_${RELEASE_VERSION}-1_all.deb"
-          )
-          rpm_file=$(find dist/release -name "qwarp-${RELEASE_VERSION}-1*.rpm" -print -quit)
-          if [ -n "$rpm_file" ]; then
-            files+=("$rpm_file")
-          fi
+          python scripts/check_release.py --version "$RELEASE_VERSION" --artifacts dist/release --release --require-native --list > "$RUNNER_TEMP/qwarp-public-files"
+          mapfile -t files < "$RUNNER_TEMP/qwarp-public-files"
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Release $TAG already exists; published releases are immutable." >&2
             exit 1
